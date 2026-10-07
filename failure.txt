@@ -1,0 +1,104 @@
+Wed Oct  7 18:15:10 UTC 2026
+--- compile/lint errors ---
+327:FAILURE: Build failed with an exception.
+328-
+329:* What went wrong:
+330-Execution failed for task ':common:testDebugUnitTest'.
+331-> There were failing tests. See the report at: file:///home/runner/work/DiPlay-CN/DiPlay-CN/common/build/reports/tests/testDebugUnitTest/index.html
+332-
+333-* Try:
+--- log tail ---
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.call(DefaultBuildOperationRunner.java:54)
+	at org.gradle.internal.execution.steps.ExecuteStep.execute(ExecuteStep.java:134)
+	at org.gradle.internal.execution.steps.ExecuteStep$Mutable.execute(ExecuteStep.java:80)
+	at org.gradle.internal.execution.steps.CancelExecutionStep.execute(CancelExecutionStep.java:42)
+	at org.gradle.internal.execution.steps.TimeoutStep.executeWithoutTimeout(TimeoutStep.java:75)
+	at org.gradle.internal.execution.steps.TimeoutStep.execute(TimeoutStep.java:55)
+	at org.gradle.internal.execution.steps.PreCreateOutputParentsStep.execute(PreCreateOutputParentsStep.java:51)
+	at org.gradle.internal.execution.steps.PreCreateOutputParentsStep.execute(PreCreateOutputParentsStep.java:29)
+	at org.gradle.internal.execution.steps.RemovePreviousOutputsStep.executeMutable(RemovePreviousOutputsStep.java:67)
+	at org.gradle.internal.execution.steps.RemovePreviousOutputsStep.executeMutable(RemovePreviousOutputsStep.java:39)
+	at org.gradle.internal.execution.steps.MutableStep.execute(MutableStep.java:26)
+	at org.gradle.internal.execution.steps.BroadcastChangingOutputsStep.execute(BroadcastChangingOutputsStep.java:42)
+	at org.gradle.internal.execution.steps.BroadcastChangingOutputsStep.execute(BroadcastChangingOutputsStep.java:24)
+	at org.gradle.internal.execution.steps.CaptureOutputsAfterExecutionStep.execute(CaptureOutputsAfterExecutionStep.java:69)
+	at org.gradle.internal.execution.steps.CaptureOutputsAfterExecutionStep.execute(CaptureOutputsAfterExecutionStep.java:46)
+	at org.gradle.internal.execution.steps.ResolveInputChangesStep.executeMutable(ResolveInputChangesStep.java:39)
+	at org.gradle.internal.execution.steps.ResolveInputChangesStep.executeMutable(ResolveInputChangesStep.java:28)
+	at org.gradle.internal.execution.steps.MutableStep.execute(MutableStep.java:26)
+	at org.gradle.internal.execution.steps.BuildCacheStep.executeWithoutCache(BuildCacheStep.java:189)
+	at org.gradle.internal.execution.steps.BuildCacheStep.lambda$execute$1(BuildCacheStep.java:76)
+	at org.gradle.internal.Either$Right.fold(Either.java:176)
+	at org.gradle.internal.execution.caching.CachingState.fold(CachingState.java:62)
+	at org.gradle.internal.execution.steps.BuildCacheStep.execute(BuildCacheStep.java:74)
+	at org.gradle.internal.execution.steps.BuildCacheStep.execute(BuildCacheStep.java:49)
+	at org.gradle.internal.execution.steps.StoreExecutionStateStep.executeMutable(StoreExecutionStateStep.java:46)
+	at org.gradle.internal.execution.steps.StoreExecutionStateStep.executeMutable(StoreExecutionStateStep.java:35)
+	at org.gradle.internal.execution.steps.MutableStep.execute(MutableStep.java:26)
+	at org.gradle.internal.execution.steps.SkipUpToDateStep.executeBecause(SkipUpToDateStep.java:75)
+	at org.gradle.internal.execution.steps.SkipUpToDateStep.lambda$execute$2(SkipUpToDateStep.java:53)
+	at org.gradle.internal.execution.steps.SkipUpToDateStep.execute(SkipUpToDateStep.java:53)
+	at org.gradle.internal.execution.steps.SkipUpToDateStep.execute(SkipUpToDateStep.java:35)
+	at org.gradle.internal.execution.steps.legacy.MarkSnapshottingInputsFinishedStep.execute(MarkSnapshottingInputsFinishedStep.java:37)
+	at org.gradle.internal.execution.steps.legacy.MarkSnapshottingInputsFinishedStep.execute(MarkSnapshottingInputsFinishedStep.java:27)
+	at org.gradle.internal.execution.steps.ResolveMutableCachingStateStep.executeDelegate(ResolveMutableCachingStateStep.java:70)
+	at org.gradle.internal.execution.steps.ResolveMutableCachingStateStep.executeDelegate(ResolveMutableCachingStateStep.java:32)
+	at org.gradle.internal.execution.steps.AbstractResolveCachingStateStep.execute(AbstractResolveCachingStateStep.java:69)
+	at org.gradle.internal.execution.steps.AbstractResolveCachingStateStep.execute(AbstractResolveCachingStateStep.java:37)
+	at org.gradle.internal.execution.steps.ResolveChangesStep.executeMutable(ResolveChangesStep.java:63)
+	at org.gradle.internal.execution.steps.ResolveChangesStep.executeMutable(ResolveChangesStep.java:34)
+	at org.gradle.internal.execution.steps.MutableStep.execute(MutableStep.java:26)
+	at org.gradle.internal.execution.steps.ValidateStep$Mutable.executeDelegate(ValidateStep.java:79)
+	at org.gradle.internal.execution.steps.ValidateStep$Mutable.executeDelegate(ValidateStep.java:65)
+	at org.gradle.internal.execution.steps.ValidateStep.execute(ValidateStep.java:99)
+	at org.gradle.internal.execution.steps.ValidateStep$Mutable.execute(ValidateStep.java:65)
+	at org.gradle.internal.execution.steps.CaptureMutableStateBeforeExecutionStep.executeMutable(CaptureMutableStateBeforeExecutionStep.java:86)
+	at org.gradle.internal.execution.steps.CaptureMutableStateBeforeExecutionStep.execute(CaptureMutableStateBeforeExecutionStep.java:65)
+	at org.gradle.internal.execution.steps.CaptureMutableStateBeforeExecutionStep.execute(CaptureMutableStateBeforeExecutionStep.java:45)
+	at org.gradle.internal.execution.steps.SkipEmptyMutableWorkStep.executeWithNonEmptySources(SkipEmptyMutableWorkStep.java:210)
+	at org.gradle.internal.execution.steps.SkipEmptyMutableWorkStep.executeMutable(SkipEmptyMutableWorkStep.java:90)
+	at org.gradle.internal.execution.steps.SkipEmptyMutableWorkStep.executeMutable(SkipEmptyMutableWorkStep.java:53)
+	at org.gradle.internal.execution.steps.MutableStep.execute(MutableStep.java:26)
+	at org.gradle.internal.execution.steps.legacy.MarkSnapshottingInputsStartedStep.execute(MarkSnapshottingInputsStartedStep.java:38)
+	at org.gradle.internal.execution.steps.LoadPreviousExecutionStateStep.executeMutable(LoadPreviousExecutionStateStep.java:36)
+	at org.gradle.internal.execution.steps.LoadPreviousExecutionStateStep.executeMutable(LoadPreviousExecutionStateStep.java:23)
+	at org.gradle.internal.execution.steps.MutableStep.execute(MutableStep.java:26)
+	at org.gradle.internal.execution.steps.HandleStaleOutputsStep.executeMutable(HandleStaleOutputsStep.java:77)
+	at org.gradle.internal.execution.steps.HandleStaleOutputsStep.executeMutable(HandleStaleOutputsStep.java:43)
+	at org.gradle.internal.execution.steps.MutableStep.execute(MutableStep.java:26)
+	at org.gradle.internal.execution.steps.AssignMutableWorkspaceStep.lambda$executeMutable$0(AssignMutableWorkspaceStep.java:34)
+	at org.gradle.api.internal.tasks.execution.TaskExecution$4.withWorkspace(TaskExecution.java:305)
+	at org.gradle.internal.execution.steps.AssignMutableWorkspaceStep.executeMutable(AssignMutableWorkspaceStep.java:30)
+	at org.gradle.internal.execution.steps.AssignMutableWorkspaceStep.executeMutable(AssignMutableWorkspaceStep.java:21)
+	at org.gradle.internal.execution.steps.MutableStep.execute(MutableStep.java:26)
+	at org.gradle.internal.execution.steps.ChoosePipelineStep.execute(ChoosePipelineStep.java:40)
+	at org.gradle.internal.execution.steps.ChoosePipelineStep.execute(ChoosePipelineStep.java:23)
+	at org.gradle.internal.execution.steps.ExecuteWorkBuildOperationFiringStep.lambda$execute$2(ExecuteWorkBuildOperationFiringStep.java:67)
+	at org.gradle.internal.execution.steps.ExecuteWorkBuildOperationFiringStep.execute(ExecuteWorkBuildOperationFiringStep.java:67)
+	at org.gradle.internal.execution.steps.ExecuteWorkBuildOperationFiringStep.execute(ExecuteWorkBuildOperationFiringStep.java:39)
+	at org.gradle.internal.execution.steps.IdentityCacheStep.execute(IdentityCacheStep.java:46)
+	at org.gradle.internal.execution.steps.IdentityCacheStep.execute(IdentityCacheStep.java:34)
+	at org.gradle.internal.execution.steps.IdentifyStep.execute(IdentifyStep.java:56)
+	at org.gradle.internal.execution.steps.IdentifyStep.execute(IdentifyStep.java:38)
+	at org.gradle.internal.execution.impl.DefaultExecutionEngine$1.execute(DefaultExecutionEngine.java:68)
+	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.executeIfValid(ExecuteActionsTaskExecuter.java:132)
+	... 30 more
+
+
+BUILD FAILED in 2m 44s
+246 actionable tasks: 11 executed, 235 up-to-date
+Configuration cache entry reused.
+--- failed tests ---
+./common/build/test-results/testDebugUnitTest/TEST-com.shilapi.xcertplay.PhoneBluetoothReceiverTest.xml-4-  <testcase name="onlySelectedPhoneWithOptInLaunchesOnce" classname="com.shilapi.xcertplay.PhoneBluetoothReceiverTest" time="0.058">
+./common/build/test-results/testDebugUnitTest/TEST-com.shilapi.xcertplay.PhoneBluetoothReceiverTest.xml:5:    <failure message="java.lang.IllegalArgumentException: 12:34:56:78:9a:bc is not a valid Bluetooth address" type="java.lang.IllegalArgumentException">java.lang.IllegalArgumentException: 12:34:56:78:9a:bc is not a valid Bluetooth address
+./common/build/test-results/testDebugUnitTest/TEST-com.shilapi.xcertplay.ClusterSettingsConsentTest.xml-4-  <testcase name="applyingAdbRoutingReleasesItsOldLeaseAndReconnectsOnlyAfterConsent[28]" classname="com.shilapi.xcertplay.ClusterSettingsConsentTest" time="3.163">
+./common/build/test-results/testDebugUnitTest/TEST-com.shilapi.xcertplay.ClusterSettingsConsentTest.xml:5:    <failure message="java.lang.NoSuchMethodError: 'void android.widget.SeekBar.setMinHeight(int)'" type="java.lang.NoSuchMethodError">java.lang.NoSuchMethodError: 'void android.widget.SeekBar.setMinHeight(int)'
+./common/build/test-results/testDebugUnitTest/TEST-com.shilapi.xcertplay.ClusterMapScaleCapabilityTest.xml-4-  <testcase name="unsupportedLargerClusterUsesSupportedNativeSizeBeforeAdvertisingIt" classname="com.shilapi.xcertplay.ClusterMapScaleCapabilityTest" time="1.615"/>
+./common/build/test-results/testDebugUnitTest/TEST-com.shilapi.xcertplay.ClusterMapScaleCapabilityTest.xml-5-  <testcase name="existingNativePresetRetainsItsStartupPathWithoutMetadata" classname="com.shilapi.xcertplay.ClusterMapScaleCapabilityTest" time="0.054"/>
+./common/build/test-results/testDebugUnitTest/TEST-com.shilapi.xcertplay.ClusterMapScaleCapabilityTest.xml-6-  <testcase name="incompatibleAlignmentFallsBackToTheNativeAlignedCanvas" classname="com.shilapi.xcertplay.ClusterMapScaleCapabilityTest" time="0.031"/>
+./common/build/test-results/testDebugUnitTest/TEST-com.shilapi.xcertplay.ClusterMapScaleCapabilityTest.xml-7-  <testcase name="missingCapabilitiesAndSoftwareOnlyKeepTheExistingDefault" classname="com.shilapi.xcertplay.ClusterMapScaleCapabilityTest" time="0.032"/>
+./common/build/test-results/testDebugUnitTest/TEST-com.shilapi.xcertplay.ClusterMapScaleCapabilityTest.xml-8-  <testcase name="capableHardwareRetainsTheSelectedSmallerMapAndItsSavedPreset" classname="com.shilapi.xcertplay.ClusterMapScaleCapabilityTest" time="0.027"/>
+./common/build/test-results/testDebugUnitTest/TEST-com.shilapi.xcertplay.ClusterMapScaleCapabilityTest.xml-9-  <testcase name="theNewPresetRoundTripsThroughTheSettingsPreferences" classname="com.shilapi.xcertplay.ClusterMapScaleCapabilityTest" time="0.025"/>
+./common/build/test-results/testDebugUnitTest/TEST-com.shilapi.xcertplay.ClusterMapScaleCapabilityTest.xml-10-  <testcase name="measuredDilink4ProjectionRetainsItsSaved1920Calibration" classname="com.shilapi.xcertplay.ClusterMapScaleCapabilityTest" time="0.027"/>
+./common/build/test-results/testDebugUnitTest/TEST-com.shilapi.xcertplay.ClusterMapScaleCapabilityTest.xml-11-  <testcase name="smallerDilink3ProjectionAdvertisesItsPanelAndIgnoresThe1920Calibration" classname="com.shilapi.xcertplay.ClusterMapScaleCapabilityTest" time="0.033">
+./common/build/test-results/testDebugUnitTest/TEST-com.shilapi.xcertplay.ClusterMapScaleCapabilityTest.xml:12:    <failure message="java.lang.AssertionError: expected:&lt;AirPlayDisplayConfig(widthPixels=1280, heightPixels=480, widthPhysicalMm=292, heightPhysicalMm=110, fps=30, primaryInputDevice=0, viewArea=null, safeArea=AirPlayInsets(top=28, bottom=168, left=576, right=332), safeAreaDrawOutside=true, initialUrl=maps:/car/instrumentcluster, features=0, viewAreas=null, initialViewArea=0)&gt; but was:&lt;AirPlayDisplayConfig(widthPixels=1280, heightPixels=480, widthPhysicalMm=292, heightPhysicalMm=110, fps=30, primaryInputDevice=0, viewArea=null, safeArea=AirPlayInsets(top=31, bottom=165, left=582, right=326), safeAreaDrawOutside=true, initialUrl=maps:/car/instrumentcluster, features=0, viewAreas=null, initialViewArea=0)&gt;" type="java.lang.AssertionError">java.lang.AssertionError: expected:&lt;AirPlayDisplayConfig(widthPixels=1280, heightPixels=480, widthPhysicalMm=292, heightPhysicalMm=110, fps=30, primaryInputDevice=0, viewArea=null, safeArea=AirPlayInsets(top=28, bottom=168, left=576, right=332), safeAreaDrawOutside=true, initialUrl=maps:/car/instrumentcluster, features=0, viewAreas=null, initialViewArea=0)&gt; but was:&lt;AirPlayDisplayConfig(widthPixels=1280, heightPixels=480, widthPhysicalMm=292, heightPhysicalMm=110, fps=30, primaryInputDevice=0, viewArea=null, safeArea=AirPlayInsets(top=31, bottom=165, left=582, right=326), safeAreaDrawOutside=true, initialUrl=maps:/car/instrumentcluster, features=0, viewAreas=null, initialViewArea=0)&gt;
