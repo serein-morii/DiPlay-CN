@@ -1,0 +1,112 @@
+Thu Oct  8 11:56:22 UTC 2026
+--- compile/lint errors ---
+325:FAILURE: Build failed with an exception.
+326-
+327:* What went wrong:
+328-Execution failed for task ':common:testDebugUnitTest'.
+329-> There were failing tests. See the report at: file:///home/runner/work/DiPlay-CN/DiPlay-CN/common/build/reports/tests/testDebugUnitTest/index.html
+330-
+331-* Try:
+--- log tail ---
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.call(DefaultBuildOperationRunner.java:54)
+	at org.gradle.internal.execution.steps.ExecuteStep.execute(ExecuteStep.java:134)
+	at org.gradle.internal.execution.steps.ExecuteStep$Mutable.execute(ExecuteStep.java:80)
+	at org.gradle.internal.execution.steps.CancelExecutionStep.execute(CancelExecutionStep.java:42)
+	at org.gradle.internal.execution.steps.TimeoutStep.executeWithoutTimeout(TimeoutStep.java:75)
+	at org.gradle.internal.execution.steps.TimeoutStep.execute(TimeoutStep.java:55)
+	at org.gradle.internal.execution.steps.PreCreateOutputParentsStep.execute(PreCreateOutputParentsStep.java:51)
+	at org.gradle.internal.execution.steps.PreCreateOutputParentsStep.execute(PreCreateOutputParentsStep.java:29)
+	at org.gradle.internal.execution.steps.RemovePreviousOutputsStep.executeMutable(RemovePreviousOutputsStep.java:67)
+	at org.gradle.internal.execution.steps.RemovePreviousOutputsStep.executeMutable(RemovePreviousOutputsStep.java:39)
+	at org.gradle.internal.execution.steps.MutableStep.execute(MutableStep.java:26)
+	at org.gradle.internal.execution.steps.BroadcastChangingOutputsStep.execute(BroadcastChangingOutputsStep.java:42)
+	at org.gradle.internal.execution.steps.BroadcastChangingOutputsStep.execute(BroadcastChangingOutputsStep.java:24)
+	at org.gradle.internal.execution.steps.CaptureOutputsAfterExecutionStep.execute(CaptureOutputsAfterExecutionStep.java:69)
+	at org.gradle.internal.execution.steps.CaptureOutputsAfterExecutionStep.execute(CaptureOutputsAfterExecutionStep.java:46)
+	at org.gradle.internal.execution.steps.ResolveInputChangesStep.executeMutable(ResolveInputChangesStep.java:39)
+	at org.gradle.internal.execution.steps.ResolveInputChangesStep.executeMutable(ResolveInputChangesStep.java:28)
+	at org.gradle.internal.execution.steps.MutableStep.execute(MutableStep.java:26)
+	at org.gradle.internal.execution.steps.BuildCacheStep.executeWithoutCache(BuildCacheStep.java:189)
+	at org.gradle.internal.execution.steps.BuildCacheStep.lambda$execute$1(BuildCacheStep.java:76)
+	at org.gradle.internal.Either$Right.fold(Either.java:176)
+	at org.gradle.internal.execution.caching.CachingState.fold(CachingState.java:62)
+	at org.gradle.internal.execution.steps.BuildCacheStep.execute(BuildCacheStep.java:74)
+	at org.gradle.internal.execution.steps.BuildCacheStep.execute(BuildCacheStep.java:49)
+	at org.gradle.internal.execution.steps.StoreExecutionStateStep.executeMutable(StoreExecutionStateStep.java:46)
+	at org.gradle.internal.execution.steps.StoreExecutionStateStep.executeMutable(StoreExecutionStateStep.java:35)
+	at org.gradle.internal.execution.steps.MutableStep.execute(MutableStep.java:26)
+	at org.gradle.internal.execution.steps.SkipUpToDateStep.executeBecause(SkipUpToDateStep.java:75)
+	at org.gradle.internal.execution.steps.SkipUpToDateStep.lambda$execute$2(SkipUpToDateStep.java:53)
+	at org.gradle.internal.execution.steps.SkipUpToDateStep.execute(SkipUpToDateStep.java:53)
+	at org.gradle.internal.execution.steps.SkipUpToDateStep.execute(SkipUpToDateStep.java:35)
+	at org.gradle.internal.execution.steps.legacy.MarkSnapshottingInputsFinishedStep.execute(MarkSnapshottingInputsFinishedStep.java:37)
+	at org.gradle.internal.execution.steps.legacy.MarkSnapshottingInputsFinishedStep.execute(MarkSnapshottingInputsFinishedStep.java:27)
+	at org.gradle.internal.execution.steps.ResolveMutableCachingStateStep.executeDelegate(ResolveMutableCachingStateStep.java:70)
+	at org.gradle.internal.execution.steps.ResolveMutableCachingStateStep.executeDelegate(ResolveMutableCachingStateStep.java:32)
+	at org.gradle.internal.execution.steps.AbstractResolveCachingStateStep.execute(AbstractResolveCachingStateStep.java:69)
+	at org.gradle.internal.execution.steps.AbstractResolveCachingStateStep.execute(AbstractResolveCachingStateStep.java:37)
+	at org.gradle.internal.execution.steps.ResolveChangesStep.executeMutable(ResolveChangesStep.java:63)
+	at org.gradle.internal.execution.steps.ResolveChangesStep.executeMutable(ResolveChangesStep.java:34)
+	at org.gradle.internal.execution.steps.MutableStep.execute(MutableStep.java:26)
+	at org.gradle.internal.execution.steps.ValidateStep$Mutable.executeDelegate(ValidateStep.java:79)
+	at org.gradle.internal.execution.steps.ValidateStep$Mutable.executeDelegate(ValidateStep.java:65)
+	at org.gradle.internal.execution.steps.ValidateStep.execute(ValidateStep.java:99)
+	at org.gradle.internal.execution.steps.ValidateStep$Mutable.execute(ValidateStep.java:65)
+	at org.gradle.internal.execution.steps.CaptureMutableStateBeforeExecutionStep.executeMutable(CaptureMutableStateBeforeExecutionStep.java:86)
+	at org.gradle.internal.execution.steps.CaptureMutableStateBeforeExecutionStep.execute(CaptureMutableStateBeforeExecutionStep.java:65)
+	at org.gradle.internal.execution.steps.CaptureMutableStateBeforeExecutionStep.execute(CaptureMutableStateBeforeExecutionStep.java:45)
+	at org.gradle.internal.execution.steps.SkipEmptyMutableWorkStep.executeWithNonEmptySources(SkipEmptyMutableWorkStep.java:210)
+	at org.gradle.internal.execution.steps.SkipEmptyMutableWorkStep.executeMutable(SkipEmptyMutableWorkStep.java:90)
+	at org.gradle.internal.execution.steps.SkipEmptyMutableWorkStep.executeMutable(SkipEmptyMutableWorkStep.java:53)
+	at org.gradle.internal.execution.steps.MutableStep.execute(MutableStep.java:26)
+	at org.gradle.internal.execution.steps.legacy.MarkSnapshottingInputsStartedStep.execute(MarkSnapshottingInputsStartedStep.java:38)
+	at org.gradle.internal.execution.steps.LoadPreviousExecutionStateStep.executeMutable(LoadPreviousExecutionStateStep.java:36)
+	at org.gradle.internal.execution.steps.LoadPreviousExecutionStateStep.executeMutable(LoadPreviousExecutionStateStep.java:23)
+	at org.gradle.internal.execution.steps.MutableStep.execute(MutableStep.java:26)
+	at org.gradle.internal.execution.steps.HandleStaleOutputsStep.executeMutable(HandleStaleOutputsStep.java:77)
+	at org.gradle.internal.execution.steps.HandleStaleOutputsStep.executeMutable(HandleStaleOutputsStep.java:43)
+	at org.gradle.internal.execution.steps.MutableStep.execute(MutableStep.java:26)
+	at org.gradle.internal.execution.steps.AssignMutableWorkspaceStep.lambda$executeMutable$0(AssignMutableWorkspaceStep.java:34)
+	at org.gradle.api.internal.tasks.execution.TaskExecution$4.withWorkspace(TaskExecution.java:305)
+	at org.gradle.internal.execution.steps.AssignMutableWorkspaceStep.executeMutable(AssignMutableWorkspaceStep.java:30)
+	at org.gradle.internal.execution.steps.AssignMutableWorkspaceStep.executeMutable(AssignMutableWorkspaceStep.java:21)
+	at org.gradle.internal.execution.steps.MutableStep.execute(MutableStep.java:26)
+	at org.gradle.internal.execution.steps.ChoosePipelineStep.execute(ChoosePipelineStep.java:40)
+	at org.gradle.internal.execution.steps.ChoosePipelineStep.execute(ChoosePipelineStep.java:23)
+	at org.gradle.internal.execution.steps.ExecuteWorkBuildOperationFiringStep.lambda$execute$2(ExecuteWorkBuildOperationFiringStep.java:67)
+	at org.gradle.internal.execution.steps.ExecuteWorkBuildOperationFiringStep.execute(ExecuteWorkBuildOperationFiringStep.java:67)
+	at org.gradle.internal.execution.steps.ExecuteWorkBuildOperationFiringStep.execute(ExecuteWorkBuildOperationFiringStep.java:39)
+	at org.gradle.internal.execution.steps.IdentityCacheStep.execute(IdentityCacheStep.java:46)
+	at org.gradle.internal.execution.steps.IdentityCacheStep.execute(IdentityCacheStep.java:34)
+	at org.gradle.internal.execution.steps.IdentifyStep.execute(IdentifyStep.java:56)
+	at org.gradle.internal.execution.steps.IdentifyStep.execute(IdentifyStep.java:38)
+	at org.gradle.internal.execution.impl.DefaultExecutionEngine$1.execute(DefaultExecutionEngine.java:68)
+	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.executeIfValid(ExecuteActionsTaskExecuter.java:132)
+	... 30 more
+
+
+BUILD FAILED in 3m 19s
+246 actionable tasks: 11 executed, 235 up-to-date
+Configuration cache entry reused.
+--- failed tests ---
+./common/build/test-results/testDebugUnitTest/TEST-com.shilapi.xcertplay.CarPlayHostSettingsTest.xml-15-  <testcase name="switchingToUsbPersistsAndPassesUsbToTheRuntime" classname="com.shilapi.xcertplay.CarPlayHostSettingsTest" time="0.266"/>
+./common/build/test-results/testDebugUnitTest/TEST-com.shilapi.xcertplay.CarPlayHostSettingsTest.xml-16-  <testcase name="iphoneAttachmentSwitchesToWiredTransportWithoutFinishing" classname="com.shilapi.xcertplay.CarPlayHostSettingsTest" time="0.275"/>
+./common/build/test-results/testDebugUnitTest/TEST-com.shilapi.xcertplay.CarPlayHostSettingsTest.xml-17-  <testcase name="wifiResetFailureRequiresManualRecoveryAfterCancel" classname="com.shilapi.xcertplay.CarPlayHostSettingsTest" time="0.262"/>
+./common/build/test-results/testDebugUnitTest/TEST-com.shilapi.xcertplay.CarPlayHostSettingsTest.xml-18-  <testcase name="cancelRestoresSafeAreaResetAfterTheWindowChangesSize" classname="com.shilapi.xcertplay.CarPlayHostSettingsTest" time="0.378"/>
+./common/build/test-results/testDebugUnitTest/TEST-com.shilapi.xcertplay.CarPlayHostSettingsTest.xml-19-  <testcase name="usbAttachmentClosesSettingsAndRestartsInPlace" classname="com.shilapi.xcertplay.CarPlayHostSettingsTest" time="0.229"/>
+./common/build/test-results/testDebugUnitTest/TEST-com.shilapi.xcertplay.CarPlayHostSettingsTest.xml-20-  <testcase name="fullSettingsShortcutDiscardsPreviewWithoutRestartingTheSession" classname="com.shilapi.xcertplay.CarPlayHostSettingsTest" time="0.258"/>
+./common/build/test-results/testDebugUnitTest/TEST-com.shilapi.xcertplay.CarPlayHostSettingsTest.xml-21-  <testcase name="configuredFingerCountsOpenTheMountedMenuWithoutLeavingCarPlay" classname="com.shilapi.xcertplay.CarPlayHostSettingsTest" time="0.455"/>
+./common/build/test-results/testDebugUnitTest/TEST-com.shilapi.xcertplay.CarPlayHostSettingsTest.xml-22-  <testcase name="lightAppearanceRepaintsAnOpenMenuWithoutLosingDraftState" classname="com.shilapi.xcertplay.CarPlayHostSettingsTest" time="0.299">
+./common/build/test-results/testDebugUnitTest/TEST-com.shilapi.xcertplay.CarPlayHostSettingsTest.xml:23:    <failure message="java.lang.AssertionError: expected:&lt;-722950&gt; but was:&lt;-1291845632&gt;" type="java.lang.AssertionError">java.lang.AssertionError: expected:&lt;-722950&gt; but was:&lt;-1291845632&gt;
+./common/build/test-results/testDebugUnitTest/TEST-com.shilapi.xcertplay.CarPlayHostDisplaySizeTest.xml-4-  <testcase name="textureTransformFitsTheNegotiatedCanvas" classname="com.shilapi.xcertplay.CarPlayHostDisplaySizeTest" time="2.967"/>
+./common/build/test-results/testDebugUnitTest/TEST-com.shilapi.xcertplay.CarPlayHostDisplaySizeTest.xml-5-  <testcase name="resumingReadsSavedBarsAndRebuildsEvenWhenTheWindowSizeIsUnchanged" classname="com.shilapi.xcertplay.CarPlayHostDisplaySizeTest" time="0.348">
+./common/build/test-results/testDebugUnitTest/TEST-com.shilapi.xcertplay.CarPlayHostDisplaySizeTest.xml:6:    <failure message="java.lang.AssertionError: expected:&lt;1&gt; but was:&lt;0&gt;" type="java.lang.AssertionError">java.lang.AssertionError: expected:&lt;1&gt; but was:&lt;0&gt;
+./common/build/test-results/testDebugUnitTest/TEST-com.shilapi.xcertplay.CarPlayHostDisplaySizeTest.xml-40-  <testcase name="adoptingABackgroundSessionPreservesItsCanvasOnResize" classname="com.shilapi.xcertplay.CarPlayHostDisplaySizeTest" time="0.117"/>
+./common/build/test-results/testDebugUnitTest/TEST-com.shilapi.xcertplay.CarPlayHostDisplaySizeTest.xml-41-  <testcase name="fullscreenApplicationSupportsAllFourBarCombinations" classname="com.shilapi.xcertplay.CarPlayHostDisplaySizeTest" time="0.045"/>
+./common/build/test-results/testDebugUnitTest/TEST-com.shilapi.xcertplay.CarPlayHostDisplaySizeTest.xml-42-  <testcase name="touchesStartingInABarStaySuppressedUntilRelease" classname="com.shilapi.xcertplay.CarPlayHostDisplaySizeTest" time="0.057"/>
+./common/build/test-results/testDebugUnitTest/TEST-com.shilapi.xcertplay.CarPlayHostDisplaySizeTest.xml-43-  <testcase name="savingMenuBarsPreservesAnIndependentCombination" classname="com.shilapi.xcertplay.CarPlayHostDisplaySizeTest" time="0.569"/>
+./common/build/test-results/testDebugUnitTest/TEST-com.shilapi.xcertplay.CarPlayHostDisplaySizeTest.xml-44-  <testcase name="surroundViewOpenAndCloseKeepsTheNegotiatedCanvas" classname="com.shilapi.xcertplay.CarPlayHostDisplaySizeTest" time="0.03"/>
+./common/build/test-results/testDebugUnitTest/TEST-com.shilapi.xcertplay.CarPlayHostDisplaySizeTest.xml-45-  <testcase name="aScaledDownCanvasKeepsTheSessionWhenTheOriginalWindowReturns" classname="com.shilapi.xcertplay.CarPlayHostDisplaySizeTest" time="0.035"/>
+./common/build/test-results/testDebugUnitTest/TEST-com.shilapi.xcertplay.CarPlayHostDisplaySizeTest.xml-46-  <testcase name="adoptingBackgroundClusterRestoresNativeAdbFlagButRejectsTheVirtualFallback" classname="com.shilapi.xcertplay.CarPlayHostDisplaySizeTest" time="0.059"/>
+./common/build/test-results/testDebugUnitTest/TEST-com.shilapi.xcertplay.CarPlayHostDisplaySizeTest.xml-47-  <testcase name="rotationIsHandledEvenIfTheViewSizeIsUnchanged" classname="com.shilapi.xcertplay.CarPlayHostDisplaySizeTest" time="0.028">
+./common/build/test-results/testDebugUnitTest/TEST-com.shilapi.xcertplay.CarPlayHostDisplaySizeTest.xml:48:    <failure message="java.lang.AssertionError: expected:&lt;1&gt; but was:&lt;0&gt;" type="java.lang.AssertionError">java.lang.AssertionError: expected:&lt;1&gt; but was:&lt;0&gt;
