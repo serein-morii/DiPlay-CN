@@ -1,0 +1,120 @@
+Thu Oct  8 09:54:36 UTC 2026
+--- compile/lint errors ---
+294:FAILURE: Build completed with 2 failures.
+295-
+296-1: Task failed with an exception.
+297------------
+298:* What went wrong:
+299-Execution failed for task ':shared:testDebugUnitTest'.
+300-> There were failing tests. See the report at: file:///home/runner/work/DiPlay-CN/DiPlay-CN/shared/build/reports/tests/testDebugUnitTest/index.html
+301-
+302-* Try:
+--
+450:* What went wrong:
+451-Execution failed for task ':common:testDebugUnitTest'.
+452-> There were failing tests. See the report at: file:///home/runner/work/DiPlay-CN/DiPlay-CN/common/build/reports/tests/testDebugUnitTest/index.html
+453-
+454-* Try:
+--- log tail ---
+	at org.gradle.internal.execution.steps.CancelExecutionStep.execute(CancelExecutionStep.java:42)
+	at org.gradle.internal.execution.steps.TimeoutStep.executeWithoutTimeout(TimeoutStep.java:75)
+	at org.gradle.internal.execution.steps.TimeoutStep.execute(TimeoutStep.java:55)
+	at org.gradle.internal.execution.steps.PreCreateOutputParentsStep.execute(PreCreateOutputParentsStep.java:51)
+	at org.gradle.internal.execution.steps.PreCreateOutputParentsStep.execute(PreCreateOutputParentsStep.java:29)
+	at org.gradle.internal.execution.steps.RemovePreviousOutputsStep.executeMutable(RemovePreviousOutputsStep.java:67)
+	at org.gradle.internal.execution.steps.RemovePreviousOutputsStep.executeMutable(RemovePreviousOutputsStep.java:39)
+	at org.gradle.internal.execution.steps.MutableStep.execute(MutableStep.java:26)
+	at org.gradle.internal.execution.steps.BroadcastChangingOutputsStep.execute(BroadcastChangingOutputsStep.java:42)
+	at org.gradle.internal.execution.steps.BroadcastChangingOutputsStep.execute(BroadcastChangingOutputsStep.java:24)
+	at org.gradle.internal.execution.steps.CaptureOutputsAfterExecutionStep.execute(CaptureOutputsAfterExecutionStep.java:69)
+	at org.gradle.internal.execution.steps.CaptureOutputsAfterExecutionStep.execute(CaptureOutputsAfterExecutionStep.java:46)
+	at org.gradle.internal.execution.steps.ResolveInputChangesStep.executeMutable(ResolveInputChangesStep.java:39)
+	at org.gradle.internal.execution.steps.ResolveInputChangesStep.executeMutable(ResolveInputChangesStep.java:28)
+	at org.gradle.internal.execution.steps.MutableStep.execute(MutableStep.java:26)
+	at org.gradle.internal.execution.steps.BuildCacheStep.executeWithoutCache(BuildCacheStep.java:189)
+	at org.gradle.internal.execution.steps.BuildCacheStep.lambda$execute$1(BuildCacheStep.java:76)
+	at org.gradle.internal.Either$Right.fold(Either.java:176)
+	at org.gradle.internal.execution.caching.CachingState.fold(CachingState.java:62)
+	at org.gradle.internal.execution.steps.BuildCacheStep.execute(BuildCacheStep.java:74)
+	at org.gradle.internal.execution.steps.BuildCacheStep.execute(BuildCacheStep.java:49)
+	at org.gradle.internal.execution.steps.StoreExecutionStateStep.executeMutable(StoreExecutionStateStep.java:46)
+	at org.gradle.internal.execution.steps.StoreExecutionStateStep.executeMutable(StoreExecutionStateStep.java:35)
+	at org.gradle.internal.execution.steps.MutableStep.execute(MutableStep.java:26)
+	at org.gradle.internal.execution.steps.SkipUpToDateStep.executeBecause(SkipUpToDateStep.java:75)
+	at org.gradle.internal.execution.steps.SkipUpToDateStep.lambda$execute$2(SkipUpToDateStep.java:53)
+	at java.base/java.util.Optional.orElseGet(Optional.java:364)
+	at org.gradle.internal.execution.steps.SkipUpToDateStep.execute(SkipUpToDateStep.java:53)
+	at org.gradle.internal.execution.steps.SkipUpToDateStep.execute(SkipUpToDateStep.java:35)
+	at org.gradle.internal.execution.steps.legacy.MarkSnapshottingInputsFinishedStep.execute(MarkSnapshottingInputsFinishedStep.java:37)
+	at org.gradle.internal.execution.steps.legacy.MarkSnapshottingInputsFinishedStep.execute(MarkSnapshottingInputsFinishedStep.java:27)
+	at org.gradle.internal.execution.steps.ResolveMutableCachingStateStep.executeDelegate(ResolveMutableCachingStateStep.java:70)
+	at org.gradle.internal.execution.steps.ResolveMutableCachingStateStep.executeDelegate(ResolveMutableCachingStateStep.java:32)
+	at org.gradle.internal.execution.steps.AbstractResolveCachingStateStep.execute(AbstractResolveCachingStateStep.java:69)
+	at org.gradle.internal.execution.steps.AbstractResolveCachingStateStep.execute(AbstractResolveCachingStateStep.java:37)
+	at org.gradle.internal.execution.steps.ResolveChangesStep.executeMutable(ResolveChangesStep.java:63)
+	at org.gradle.internal.execution.steps.ResolveChangesStep.executeMutable(ResolveChangesStep.java:34)
+	at org.gradle.internal.execution.steps.MutableStep.execute(MutableStep.java:26)
+	at org.gradle.internal.execution.steps.ValidateStep$Mutable.executeDelegate(ValidateStep.java:79)
+	at org.gradle.internal.execution.steps.ValidateStep$Mutable.executeDelegate(ValidateStep.java:65)
+	at org.gradle.internal.execution.steps.ValidateStep.execute(ValidateStep.java:99)
+	at org.gradle.internal.execution.steps.ValidateStep$Mutable.execute(ValidateStep.java:65)
+	at org.gradle.internal.execution.steps.CaptureMutableStateBeforeExecutionStep.executeMutable(CaptureMutableStateBeforeExecutionStep.java:86)
+	at org.gradle.internal.execution.steps.CaptureMutableStateBeforeExecutionStep.execute(CaptureMutableStateBeforeExecutionStep.java:65)
+	at org.gradle.internal.execution.steps.CaptureMutableStateBeforeExecutionStep.execute(CaptureMutableStateBeforeExecutionStep.java:45)
+	at org.gradle.internal.execution.steps.SkipEmptyMutableWorkStep.executeWithNonEmptySources(SkipEmptyMutableWorkStep.java:210)
+	at org.gradle.internal.execution.steps.SkipEmptyMutableWorkStep.executeMutable(SkipEmptyMutableWorkStep.java:90)
+	at org.gradle.internal.execution.steps.SkipEmptyMutableWorkStep.executeMutable(SkipEmptyMutableWorkStep.java:53)
+	at org.gradle.internal.execution.steps.MutableStep.execute(MutableStep.java:26)
+	at org.gradle.internal.execution.steps.legacy.MarkSnapshottingInputsStartedStep.execute(MarkSnapshottingInputsStartedStep.java:38)
+	at org.gradle.internal.execution.steps.LoadPreviousExecutionStateStep.executeMutable(LoadPreviousExecutionStateStep.java:36)
+	at org.gradle.internal.execution.steps.LoadPreviousExecutionStateStep.executeMutable(LoadPreviousExecutionStateStep.java:23)
+	at org.gradle.internal.execution.steps.MutableStep.execute(MutableStep.java:26)
+	at org.gradle.internal.execution.steps.HandleStaleOutputsStep.executeMutable(HandleStaleOutputsStep.java:77)
+	at org.gradle.internal.execution.steps.HandleStaleOutputsStep.executeMutable(HandleStaleOutputsStep.java:43)
+	at org.gradle.internal.execution.steps.MutableStep.execute(MutableStep.java:26)
+	at org.gradle.internal.execution.steps.AssignMutableWorkspaceStep.lambda$executeMutable$0(AssignMutableWorkspaceStep.java:34)
+	at org.gradle.api.internal.tasks.execution.TaskExecution$4.withWorkspace(TaskExecution.java:305)
+	at org.gradle.internal.execution.steps.AssignMutableWorkspaceStep.executeMutable(AssignMutableWorkspaceStep.java:30)
+	at org.gradle.internal.execution.steps.AssignMutableWorkspaceStep.executeMutable(AssignMutableWorkspaceStep.java:21)
+	at org.gradle.internal.execution.steps.MutableStep.execute(MutableStep.java:26)
+	at org.gradle.internal.execution.steps.ChoosePipelineStep.execute(ChoosePipelineStep.java:40)
+	at org.gradle.internal.execution.steps.ChoosePipelineStep.execute(ChoosePipelineStep.java:23)
+	at org.gradle.internal.execution.steps.ExecuteWorkBuildOperationFiringStep.lambda$execute$2(ExecuteWorkBuildOperationFiringStep.java:67)
+	at java.base/java.util.Optional.orElseGet(Optional.java:364)
+	at org.gradle.internal.execution.steps.ExecuteWorkBuildOperationFiringStep.execute(ExecuteWorkBuildOperationFiringStep.java:67)
+	at org.gradle.internal.execution.steps.ExecuteWorkBuildOperationFiringStep.execute(ExecuteWorkBuildOperationFiringStep.java:39)
+	at org.gradle.internal.execution.steps.IdentityCacheStep.execute(IdentityCacheStep.java:46)
+	at org.gradle.internal.execution.steps.IdentityCacheStep.execute(IdentityCacheStep.java:34)
+	at org.gradle.internal.execution.steps.IdentifyStep.execute(IdentifyStep.java:56)
+	at org.gradle.internal.execution.steps.IdentifyStep.execute(IdentifyStep.java:38)
+	at org.gradle.internal.execution.impl.DefaultExecutionEngine$1.execute(DefaultExecutionEngine.java:68)
+	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.executeIfValid(ExecuteActionsTaskExecuter.java:132)
+	... 33 more
+
+==============================================================================
+
+BUILD FAILED in 3m 55s
+189 actionable tasks: 34 executed, 155 up-to-date
+Configuration cache entry reused.
+--- failed tests ---
+./shared/build/test-results/testDebugUnitTest/TEST-com.shilapi.xcertplay.media.AudioRebufferCapacityTest.xml-4-  <testcase name="residualAudioCountsTowardRestartBeforeAPausedTrackFills[25]" classname="com.shilapi.xcertplay.media.AudioRebufferCapacityTest" time="2.465">
+./shared/build/test-results/testDebugUnitTest/TEST-com.shilapi.xcertplay.media.AudioRebufferCapacityTest.xml:5:    <failure message="java.util.NoSuchElementException: Array contains no element matching the predicate." type="java.util.NoSuchElementException">java.util.NoSuchElementException: Array contains no element matching the predicate.
+./shared/build/test-results/testDebugUnitTest/TEST-com.shilapi.xcertplay.media.AudioRebufferCapacityTest.xml-33-  <testcase name="residualAudioCountsTowardRestartBeforeAPausedTrackFills[28]" classname="com.shilapi.xcertplay.media.AudioRebufferCapacityTest" time="1.666">
+./shared/build/test-results/testDebugUnitTest/TEST-com.shilapi.xcertplay.media.AudioRebufferCapacityTest.xml:34:    <failure message="java.util.NoSuchElementException: Array contains no element matching the predicate." type="java.util.NoSuchElementException">java.util.NoSuchElementException: Array contains no element matching the predicate.
+./shared/build/test-results/testDebugUnitTest/TEST-com.shilapi.xcertplay.media.AudioRebufferCapacityTest.xml-62-  <testcase name="residualAudioCountsTowardRestartBeforeAPausedTrackFills" classname="com.shilapi.xcertplay.media.AudioRebufferCapacityTest" time="2.675">
+./shared/build/test-results/testDebugUnitTest/TEST-com.shilapi.xcertplay.media.AudioRebufferCapacityTest.xml:63:    <failure message="java.util.NoSuchElementException: Array contains no element matching the predicate." type="java.util.NoSuchElementException">java.util.NoSuchElementException: Array contains no element matching the predicate.
+./common/build/test-results/testDebugUnitTest/TEST-com.shilapi.xcertplay.update.UpdateInstallCompatibilityTest.xml-4-  <testcase name="installationUsesOnlySupportedPermissionApis[25]" classname="com.shilapi.xcertplay.update.UpdateInstallCompatibilityTest" time="1.741">
+./common/build/test-results/testDebugUnitTest/TEST-com.shilapi.xcertplay.update.UpdateInstallCompatibilityTest.xml:5:    <failure message="java.lang.NoSuchFieldException: updateFile" type="java.lang.NoSuchFieldException">java.lang.NoSuchFieldException: updateFile
+./common/build/test-results/testDebugUnitTest/TEST-com.shilapi.xcertplay.update.UpdateInstallCompatibilityTest.xml-34-  <testcase name="installationUsesOnlySupportedPermissionApis[28]" classname="com.shilapi.xcertplay.update.UpdateInstallCompatibilityTest" time="2.168">
+./common/build/test-results/testDebugUnitTest/TEST-com.shilapi.xcertplay.update.UpdateInstallCompatibilityTest.xml:35:    <failure message="java.lang.NoSuchFieldException: updateFile" type="java.lang.NoSuchFieldException">java.lang.NoSuchFieldException: updateFile
+./common/build/test-results/testDebugUnitTest/TEST-com.shilapi.xcertplay.update.UpdateInstallCompatibilityTest.xml-64-  <testcase name="installationUsesOnlySupportedPermissionApis" classname="com.shilapi.xcertplay.update.UpdateInstallCompatibilityTest" time="2.905">
+./common/build/test-results/testDebugUnitTest/TEST-com.shilapi.xcertplay.update.UpdateInstallCompatibilityTest.xml:65:    <failure message="java.lang.NoSuchFieldException: updateFile" type="java.lang.NoSuchFieldException">java.lang.NoSuchFieldException: updateFile
+./common/build/test-results/testDebugUnitTest/TEST-com.shilapi.xcertplay.CarPlayHostSettingsTest.xml-15-  <testcase name="switchingToUsbPersistsAndPassesUsbToTheRuntime" classname="com.shilapi.xcertplay.CarPlayHostSettingsTest" time="0.808"/>
+./common/build/test-results/testDebugUnitTest/TEST-com.shilapi.xcertplay.CarPlayHostSettingsTest.xml-16-  <testcase name="iphoneAttachmentSwitchesToWiredTransportWithoutFinishing" classname="com.shilapi.xcertplay.CarPlayHostSettingsTest" time="0.831"/>
+./common/build/test-results/testDebugUnitTest/TEST-com.shilapi.xcertplay.CarPlayHostSettingsTest.xml-17-  <testcase name="wifiResetFailureRequiresManualRecoveryAfterCancel" classname="com.shilapi.xcertplay.CarPlayHostSettingsTest" time="1.135"/>
+./common/build/test-results/testDebugUnitTest/TEST-com.shilapi.xcertplay.CarPlayHostSettingsTest.xml-18-  <testcase name="cancelRestoresSafeAreaResetAfterTheWindowChangesSize" classname="com.shilapi.xcertplay.CarPlayHostSettingsTest" time="0.425"/>
+./common/build/test-results/testDebugUnitTest/TEST-com.shilapi.xcertplay.CarPlayHostSettingsTest.xml-19-  <testcase name="usbAttachmentClosesSettingsAndRestartsInPlace" classname="com.shilapi.xcertplay.CarPlayHostSettingsTest" time="0.468"/>
+./common/build/test-results/testDebugUnitTest/TEST-com.shilapi.xcertplay.CarPlayHostSettingsTest.xml-20-  <testcase name="fullSettingsShortcutDiscardsPreviewWithoutRestartingTheSession" classname="com.shilapi.xcertplay.CarPlayHostSettingsTest" time="0.533"/>
+./common/build/test-results/testDebugUnitTest/TEST-com.shilapi.xcertplay.CarPlayHostSettingsTest.xml-21-  <testcase name="configuredFingerCountsOpenTheMountedMenuWithoutLeavingCarPlay" classname="com.shilapi.xcertplay.CarPlayHostSettingsTest" time="0.997"/>
+./common/build/test-results/testDebugUnitTest/TEST-com.shilapi.xcertplay.CarPlayHostSettingsTest.xml-22-  <testcase name="lightAppearanceRepaintsAnOpenMenuWithoutLosingDraftState" classname="com.shilapi.xcertplay.CarPlayHostSettingsTest" time="0.64">
+./common/build/test-results/testDebugUnitTest/TEST-com.shilapi.xcertplay.CarPlayHostSettingsTest.xml:23:    <failure message="java.lang.AssertionError: expected:&lt;-14935010&gt; but was:&lt;-1&gt;" type="java.lang.AssertionError">java.lang.AssertionError: expected:&lt;-14935010&gt; but was:&lt;-1&gt;
