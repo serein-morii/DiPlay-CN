@@ -7,8 +7,4 @@
     <string name="connection_stage_session_hint">设备已连接，正在等待 CarPlay 会话和第一帧画面。</string>
     <string name="connection_stage_usb_hint">解锁 iPhone，并在出现提示时允许 USB 连接或信任车机。</string>
     <string name="connection_stage_failed_hint">DiPlay 会自动重试；若停止重试，可点击“重试连接”。反复失败时请从首页保存诊断报告。</string>
-    <string name="card_preview_title">转向卡位置预览</string>
-    <string name="card_preview_full">全屏</string>
-    <string name="card_preview_small">小屏</string>
-    <string name="card_preview_note">按整块仪表面板比例示意位置；实际小屏边界因车型而异。</string>
 </resources>

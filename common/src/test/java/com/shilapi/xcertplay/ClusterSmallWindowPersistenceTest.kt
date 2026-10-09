@@ -71,12 +71,12 @@ class ClusterSmallWindowPersistenceTest {
         prefs.edit().putInt("cluster_marker_horizontal_step", 3).apply()
         prefs.edit().putInt("cluster_marker_vertical_step", -3).apply()
         assertEquals(80, AirPlayPersistence.loadClusterMarkerXPercent(context))
-        assertEquals(16, AirPlayPersistence.loadClusterMarkerYPercent(context))
+        assertEquals(15, AirPlayPersistence.loadClusterMarkerYPercent(context))
 
         prefs.edit().putInt("cluster_marker_horizontal_step", 0).apply()
         prefs.edit().putInt("cluster_marker_vertical_step", 0).apply()
         assertEquals(50, AirPlayPersistence.loadClusterMarkerXPercent(context))
-        assertEquals(46, AirPlayPersistence.loadClusterMarkerYPercent(context))
+        assertEquals(45, AirPlayPersistence.loadClusterMarkerYPercent(context))
     }
 
     @Test fun smallWindowCardThemeDefaultsToFollowAndRoundTrips() {

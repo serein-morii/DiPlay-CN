@@ -7,8 +7,4 @@
     <string name="connection_stage_session_hint">اتصل الجهازان. جارٍ انتظار جلسة CarPlay وأول صورة.</string>
     <string name="connection_stage_usb_hint">افتح قفل iPhone واسمح بطلب USB أو الثقة إذا ظهر.</string>
     <string name="connection_stage_failed_hint">اضغط إعادة المحاولة. إذا فشل مجدداً، احفظ تقرير التشخيص من الصفحة الرئيسية.</string>
-    <string name="card_preview_title">معاينة موضع بطاقة الانعطاف</string>
-    <string name="card_preview_full">شاشة كاملة</string>
-    <string name="card_preview_small">نافذة صغيرة</string>
-    <string name="card_preview_note">موضع نسبي على لوحة العدادات كاملة. تختلف حدود النافذة الصغيرة حسب السيارة.</string>
 </resources>

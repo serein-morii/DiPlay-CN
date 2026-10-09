@@ -191,6 +191,11 @@ internal class ClusterMapPresentation(
         turnCardView?.setOpacity(percent)
     }
 
+    fun setTurnCardExtras(showLanes: Boolean, showArrival: Boolean) {
+        turnCardView?.setShowLanes(showLanes)
+        turnCardView?.setShowArrival(showArrival)
+    }
+
     fun setTurnCardGuidance(guidance: ClusterTurnGuidance?) {
         turnCardView?.setGuidance(guidance)
     }

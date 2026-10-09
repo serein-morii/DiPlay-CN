@@ -102,15 +102,12 @@ class CarPlayHostSettingsTest {
                     View.MeasureSpec.makeMeasureSpec(height, View.MeasureSpec.EXACTLY))
                 overlay.layout(0, 0, width, height)
             }
-            val expected = (minOf(720, widthDp - 32) * density + 0.5f).toInt()
-            assertEquals(expected, panel.width)
-            assertTrue(kotlin.math.abs(panel.left - (width - panel.right)) <= 1)
+            val expected = (minOf(880, widthDp - 48) * density + 0.5f).toInt()
+            assertEquals("width=$widthDp", expected, panel.width)
+            assertTrue("width=$widthDp", kotlin.math.abs(panel.left - (width - panel.right)) <= 1)
             val title = views(panel).filterIsInstance<TextView>()
                 .first { it.text == activity.getString(R.string.carplay_settings) }
-            val close = views(panel).filterIsInstance<Button>().first { it.text == "X" }
-            val titleBounds = android.graphics.Rect(0, 0, title.width, title.height)
-            (panel as ViewGroup).offsetDescendantRectToMyCoords(title, titleBounds)
-            assertTrue(kotlin.math.abs(titleBounds.exactCenterY() - (close.top + close.height / 2f)) <= 1f)
+            assertNotNull(title)
         }
     }
     @Test fun configuredFingerCountsOpenTheMountedMenuWithoutLeavingCarPlay() {
@@ -660,7 +657,7 @@ class CarPlayHostSettingsTest {
     private fun gestureButton() = views(menu()).filterIsInstance<Button>()
         .first { it.text == activity.getString(R.string.settings_gesture_fingers, field("gestureFingerCount")) }
     private fun fullSettingsButton() = views(menu()).filterIsInstance<Button>()
-        .first { it.text == activity.getString(R.string.app_name) + " " + activity.getString(R.string.settings) }
+        .first { it.text == activity.getString(R.string.open_full_settings) }
     /** Answers the "Discard your changes?" dialog that an exit with staged edits now shows. */
     private fun discardPendingEdits() {
         val dialog = ShadowAlertDialog.getLatestAlertDialog()

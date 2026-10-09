@@ -7,8 +7,4 @@
     <string name="connection_stage_session_hint">Пристрої підключено. Очікування сеансу CarPlay і першого кадру.</string>
     <string name="connection_stage_usb_hint">Розблокуйте iPhone і підтвердьте USB або довіру, якщо з’явиться запит.</string>
     <string name="connection_stage_failed_hint">Натисніть повторне підключення. Якщо знову не вдасться, збережіть звіт на головній.</string>
-    <string name="card_preview_title">Попередній перегляд картки повороту</string>
-    <string name="card_preview_full">Повний екран</string>
-    <string name="card_preview_small">Мале вікно</string>
-    <string name="card_preview_note">Положення показано відносно всієї панелі. Межа малого вікна залежить від авто.</string>
 </resources>
