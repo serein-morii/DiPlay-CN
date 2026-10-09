@@ -531,8 +531,6 @@
     <string name="turn_card_overlay_large">Большая</string>
     <string name="reset_turn_card_overlay">Сбросить положение собственной карточки</string>
     <string name="turn_card_overlay_note">DiPlay рисует эту карточку поверх карты; перемещение шагами 2 %. Стеклянную карточку iOS нельзя двигать отдельно. Изменения применяются сразу; карточка остаётся и при движении прямо.</string>
-    <string name="turn_card_show_lanes">Стрелки полос</string>
-    <string name="turn_card_show_lanes_description">Показывает стрелки полос под своей карточкой поворота, когда iPhone их присылает. Вступает в силу сразу.</string>
     <string name="turn_card_show_arrival">Полоса прибытия</string>
     <string name="turn_card_show_arrival_description">Показывает время прибытия, длительность и оставшееся расстояние под своей карточкой поворота. Вступает в силу сразу.</string>
     <string name="turn_card_now">Сейчас</string>

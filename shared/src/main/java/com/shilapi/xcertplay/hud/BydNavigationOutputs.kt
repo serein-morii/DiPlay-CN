@@ -5,7 +5,6 @@ import com.shilapi.xcertplay.iap2.wire.Iap2Frame
 
 /** Nonblocking boundary between phone control messages and vendor services. */
 object BydNavigationOutputs {
-    private const val TAG = "DiPlay-Lane"
     /** Recover a journaled interrupted output when the app opens, even before a phone reconnects. */
     fun onAppOpened(context: Context) {
         BydBluetoothSuspend.onAppOpened(context)
@@ -88,11 +87,6 @@ object BydNavigationOutputs {
         if (frame.messageId == CarPlayCallState.CALL_STATE_UPDATE) {
             BydCarPlayCall.onFrame(frame)
             return
-        }
-        if (frame.messageId == BydHudRouteState.LANE_GUIDANCE_UPDATE) {
-            // Field evidence for the lane strip: whether the iPhone sends 0x5204 at all, and its bytes.
-            android.util.Log.i(TAG, "LaneGuidance ${frame.payload.size}B " +
-                frame.payload.joinToString("") { "%02x".format(it) })
         }
         if (frame.messageId != BydHudRouteState.ROUTE_GUIDANCE_UPDATE &&
             frame.messageId != BydHudRouteState.ROUTE_GUIDANCE_MANEUVER_UPDATE &&

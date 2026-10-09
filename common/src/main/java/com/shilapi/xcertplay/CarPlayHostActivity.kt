@@ -3048,14 +3048,6 @@ class CarPlayHostActivity : ComponentActivity() {
         val infoRows = listOf(
             locationRow,
             settingsSwitchRow(
-                label = getString(R.string.turn_card_show_lanes),
-                checked = overlayShowLanes,
-                description = getString(R.string.turn_card_show_lanes_description),
-            ) { checked ->
-                overlayShowLanes = checked
-                applyClusterTurnOverlay()
-            },
-            settingsSwitchRow(
                 label = getString(R.string.turn_card_show_arrival),
                 checked = overlayShowArrival,
                 description = getString(R.string.turn_card_show_arrival_description),

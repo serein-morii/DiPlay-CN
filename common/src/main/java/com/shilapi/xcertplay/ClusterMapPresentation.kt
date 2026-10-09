@@ -192,7 +192,6 @@ internal class ClusterMapPresentation(
     }
 
     fun setTurnCardExtras(showLanes: Boolean, showArrival: Boolean) {
-        turnCardView?.setShowLanes(showLanes)
         turnCardView?.setShowArrival(showArrival)
     }
 

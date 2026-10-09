@@ -544,8 +544,6 @@
     <string name="turn_card_overlay_large">Велика</string>
     <string name="reset_turn_card_overlay">Скинути положення власної картки</string>
     <string name="turn_card_overlay_note">DiPlay малює цю картку поверх карти; переміщення кроками 2 %. Скляну картку iOS не можна рухати окремо. Зміни застосовуються одразу; картка лишається й під час руху прямо.</string>
-    <string name="turn_card_show_lanes">Стрілки смуг</string>
-    <string name="turn_card_show_lanes_description">Показує стрілки смуг під власною карткою повороту, коли iPhone їх надсилає. Діє одразу.</string>
     <string name="turn_card_show_arrival">Смуга прибуття</string>
     <string name="turn_card_show_arrival_description">Показує час прибуття, тривалість і відстань, що залишилася, під власною карткою повороту. Діє одразу.</string>
     <string name="turn_card_now">Зараз</string>
