@@ -112,7 +112,11 @@ internal object SettingsInformationArchitecture {
         ),
         SettingsCategory.DISPLAY to setOf(SettingsSection.DISPLAY_AND_PERFORMANCE),
         SettingsCategory.AUDIO to setOf(SettingsSection.AUDIO_ROUTING),
-        SettingsCategory.NAVIGATION to setOf(SettingsSection.LOCATION, SettingsSection.BYD_NAVIGATION),
+        SettingsCategory.NAVIGATION to setOf(
+            SettingsSection.LOCATION,
+            SettingsSection.BYD_NAVIGATION,
+            SettingsSection.CLUSTER_MAP,
+        ),
         SettingsCategory.VEHICLE to setOf(
             SettingsSection.CARPLAY_CONTROLS,
             SettingsSection.WHEEL_KEYS,
@@ -120,7 +124,6 @@ internal object SettingsInformationArchitecture {
         ),
         SettingsCategory.DIAGNOSTICS to setOf(SettingsSection.DIAGNOSTICS),
         SettingsCategory.ADVANCED to setOf(
-            SettingsSection.CLUSTER_MAP,
             SettingsSection.EXPERIMENTAL_DISPLAY,
             SettingsSection.ADVANCED_MEDIA,
         ),
@@ -334,6 +337,7 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
         page = savedInstanceState?.getString("page") ?: intent.getStringExtra("page")
             ?: if (setupError == null && SetupGuide.shouldOpenOnLaunch(SetupGuide.seen(this),
                     DiPlayPreferences.phoneAddress(this) != null)) "setup" else "home"
+        adoptAboutAsSettingsCategory()
         render()
         scheduleAutomaticVehicleValidation()
         handleWirelessRecovery()
@@ -363,7 +367,9 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
             AirPlayPersistence.loadLauncherReturnsToCarPlay(this)) {
             page = "home"; render(); openProjection(); return
         }
-        page = intent.getStringExtra("page") ?: "home"; render()
+        page = intent.getStringExtra("page") ?: "home"
+        adoptAboutAsSettingsCategory()
+        render()
         automaticVehicleValidationStarted = false
         scheduleAutomaticVehicleValidation()
         handleWirelessRecovery()
@@ -628,7 +634,6 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
                 "connection" -> connectionSetup(content)
                 "setup" -> setupGuide(content)
                 "settings" -> settingsCategoryContent(content)
-                "about" -> about(content)
                 else -> home(content)
             }
             scroll
@@ -718,10 +723,6 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
     private fun navigateBack() {
         val returnCategory = connectionSettingsReturnCategory
         when {
-            page == "about" -> {
-                page = "settings"
-                settingsCategory = SettingsCategory.OVERVIEW
-            }
             page == "setup" && setupStep > SetupGuide.STEP_CAR -> setupStep--
             page == "setup" -> {
                 closeSetupGuide()
@@ -1175,9 +1176,15 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
     }
 
     private fun openSettingsCategory(category: SettingsCategory) {
-        if (category == SettingsCategory.ABOUT) page = "about"
-        else settingsCategory = category
+        settingsCategory = category
         render()
+    }
+
+    /** Older intents and saved state used a separate about page; keep the left settings rail. */
+    private fun adoptAboutAsSettingsCategory() {
+        if (page != "about") return
+        page = "settings"
+        settingsCategory = SettingsCategory.ABOUT
     }
 
     private fun settingsSectionHeading(title: Int) = label(getString(title), 22, TEXT, true).apply {
@@ -1597,14 +1604,6 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
                 startActivity(Intent(this, CarPlayHostActivity::class.java)
                     .putExtra("picture_controls", true).addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT))
             }, matchButton(0, 56).apply { bottomMargin = dp(24) })
-            if (AppRenamer.available(this)) {
-                choice(card, getString(R.string.app_rename_title), AppRenamer.labels(this),
-                    AppRenamer.current(this), reconnects = false) {
-                    AppRenamer.apply(this, it)
-                    render()
-                }
-                card.addView(label(getString(R.string.app_rename_note), 14, MUTED).apply { setPadding(0, dp(8), 0, dp(6)) })
-            }
             carPlaySizeControl(card)
             resolutionSettingControl(
                 card, R.string.resolution, R.string.custom_resolution_hint,
@@ -2127,21 +2126,8 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
     }
 
     private fun about(content: LinearLayout) {
-        content.addView(label(getString(R.string.diplay), 40, TEXT, true))
-        content.addView(label(getString(R.string.carplay_at_home_in_your_car), 20, MUTED).apply { setPadding(0, dp(8), 0, dp(24)) })
-        val aboutTwoColumns = isExpandedSettingsLayout && resources.configuration.let {
-            SettingsLayoutPolicy.overviewHasTwoColumns(it.screenWidthDp, it.fontScale)
-        }
-        val aboutLeft = if (aboutTwoColumns) column() else content
-        val aboutRight = if (aboutTwoColumns) column() else content
-        if (aboutTwoColumns) {
-            val columns = row().apply { gravity = Gravity.TOP }
-            columns.addView(aboutLeft, LinearLayout.LayoutParams(0, -2, 1f))
-            columns.addView(space(14), LinearLayout.LayoutParams(dp(14), 1))
-            columns.addView(aboutRight, LinearLayout.LayoutParams(0, -2, 1f))
-            content.addView(columns, LinearLayout.LayoutParams(-1, -2))
-        }
-        section(aboutLeft, getString(R.string.about_public_preview_prefix, version())) { card ->
+        settingsPageTitle(content, getString(R.string.about), getString(R.string.carplay_at_home_in_your_car))
+        section(content, getString(R.string.about_public_preview_prefix, version())) { card ->
             card.addView(label(getString(R.string.an_independent_carplay_receiver_for_android_head_units_wir), 17, TEXT))
             val updateStatus = label(AppUpdate.currentVersion(this), 15, MUTED).apply {
                 setPadding(0, dp(10), 0, 0)
@@ -2185,12 +2171,22 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
                 }
             }, matchButton(10, 56))
         }
-        section(aboutRight, getString(R.string.cn_features_title)) { card ->
+        if (AppRenamer.available(this)) {
+            section(content, getString(R.string.app_rename_title)) { card ->
+                choice(card, getString(R.string.app_rename_title), AppRenamer.labels(this),
+                    AppRenamer.current(this), reconnects = false) {
+                    AppRenamer.apply(this, it)
+                    render()
+                }
+                card.addView(label(getString(R.string.app_rename_note), 14, MUTED).apply { setPadding(0, dp(8), 0, dp(6)) })
+            }
+        }
+        section(content, getString(R.string.cn_features_title)) { card ->
             card.addView(label(getString(R.string.cn_features_body), 16, TEXT).apply {
                 setPadding(0, 0, 0, dp(8))
             })
         }
-        section(aboutRight, getString(R.string.cn_changelog_title)) { card ->
+        section(content, getString(R.string.cn_changelog_title)) { card ->
             card.addView(label(cnChangelogText(), 15, MUTED))
         }
         section(content, getString(R.string.made_possible_by_open_source)) { card ->

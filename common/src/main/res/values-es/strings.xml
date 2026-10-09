@@ -397,7 +397,7 @@
     <string name="your_maps_music_and_conversations_carplay_right_here_on_yo">Tus mapas, tu música y tus conversaciones.\nCarPlay, aquí mismo en la pantalla de tu coche.</string>
     <string name="your_phone_your_drive">TU TELÉFONO. TU TRAYECTO.</string>
     <string name="your_report_was_saved_to_the_selected_location">Tu informe se guardó en la ubicación seleccionada.</string>
-    <string name="cluster_waiting_for_map">DiPlay · esperando el mapa de CarPlay</string>
+    <string name="cluster_waiting_for_map">CarPlay · esperando el mapa</string>
     <string name="option_size_large">Grande</string>
     <string name="option_size_medium">Mediano</string>
     <string name="option_size_small">Pequeño</string>

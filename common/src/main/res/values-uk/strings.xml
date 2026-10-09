@@ -410,7 +410,7 @@
     <string name="your_maps_music_and_conversations_carplay_right_here_on_yo">Ваші карти, музика й розмови.\nCarPlay прямо на екрані автомобіля.</string>
     <string name="your_phone_your_drive">ВАШ ТЕЛЕФОН. ВАША ПОЇЗДКА.</string>
     <string name="your_report_was_saved_to_the_selected_location">Звіт збережено у вибраному місці.</string>
-    <string name="cluster_waiting_for_map">DiPlay · очікування карти CarPlay</string>
+    <string name="cluster_waiting_for_map">CarPlay · очікування карти</string>
     <string name="option_size_large">Великий</string>
     <string name="option_size_medium">Середній</string>
     <string name="option_size_small">Малий</string>

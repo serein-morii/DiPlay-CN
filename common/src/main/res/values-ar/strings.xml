@@ -397,7 +397,7 @@
     <string name="your_maps_music_and_conversations_carplay_right_here_on_yo">خرائطك وموسيقاك ومحادثاتك.\nCarPlay، هنا على شاشة سيارتك.</string>
     <string name="your_phone_your_drive">هاتفك. رحلتك.</string>
     <string name="your_report_was_saved_to_the_selected_location">تم حفظ تقريرك في الموقع المحدد.</string>
-    <string name="cluster_waiting_for_map">DiPlay · بانتظار خريطة CarPlay</string>
+    <string name="cluster_waiting_for_map">CarPlay · بانتظار الخريطة</string>
     <string name="option_size_large">كبير</string>
     <string name="option_size_medium">متوسط</string>
     <string name="option_size_small">صغير</string>

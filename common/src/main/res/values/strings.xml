@@ -449,7 +449,7 @@
     <string name="your_maps_music_and_conversations_carplay_right_here_on_yo">Your maps, music and conversations.\nCarPlay, right here on your car display.</string>
     <string name="your_phone_your_drive">YOUR PHONE. YOUR DRIVE.</string>
     <string name="your_report_was_saved_to_the_selected_location">Your report was saved to the selected location.</string>
-    <string name="cluster_waiting_for_map">DiPlay · waiting for the CarPlay map</string>
+    <string name="cluster_waiting_for_map">CarPlay · waiting for the map</string>
     <string name="option_size_large">Large</string>
     <string name="option_size_medium">Medium</string>
     <string name="option_size_small">Small</string>

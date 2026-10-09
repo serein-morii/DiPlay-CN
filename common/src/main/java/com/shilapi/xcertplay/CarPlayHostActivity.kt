@@ -409,6 +409,7 @@ class CarPlayHostActivity : ComponentActivity() {
     private var vpnReady = false
     private var hotspotStatus = HotspotStatus(state = "off")
     private var menuOpen = false
+    private var overlayMenuCategoryTitle: String? = null
     private var latestStage = "Preparing CarPlay"
     private var darkMode = false
     private var appNight = true
@@ -1475,7 +1476,7 @@ class CarPlayHostActivity : ComponentActivity() {
         }
         panel.addView(icon, LinearLayout.LayoutParams(dp(88), dp(88)))
         val title = TextView(this).apply {
-            text = getString(R.string.diplay)
+            text = getString(R.string.carplay)
             gravity = Gravity.CENTER
             typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
         }
@@ -1907,13 +1908,6 @@ class CarPlayHostActivity : ComponentActivity() {
         )
 
         content.addView(
-            settingsCategoryHeader(getString(R.string.automatic_connection)),
-            LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-            ).apply { topMargin = dp(36) },
-        )
-        content.addView(
             settingsSwitchRow(
                 label = getString(R.string.auto_start_on_boot),
                 checked = autoStartOnBoot,
@@ -2016,13 +2010,6 @@ class CarPlayHostActivity : ComponentActivity() {
             ).apply { topMargin = dp(26) },
         )
         content.addView(
-            buildDockSection(),
-            LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-            ).apply { topMargin = dp(26) },
-        )
-        content.addView(
             settingsCategoryHeader(getString(R.string.settings_display)),
             LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
@@ -2107,6 +2094,36 @@ class CarPlayHostActivity : ComponentActivity() {
             ).apply { topMargin = dp(16) },
         )
 
+        content.addView(
+            buildSafeAreaSection(),
+            LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+            ).apply { topMargin = dp(28) },
+        )
+
+        content.addView(
+            buildFullscreenSection(),
+            LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+            ).apply { topMargin = dp(12) },
+        )
+        content.addView(
+            buildDockSection(),
+            LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+            ).apply { topMargin = dp(26) },
+        )
+
+        content.addView(
+            settingsCategoryHeader(getString(R.string.settings_advanced)),
+            LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+            ).apply { topMargin = dp(40) },
+        )
         val hevcRow = DisplaySettingsSection.createHevcRow(
             context = this,
             checked = hevcEnabled,
@@ -2125,9 +2142,8 @@ class CarPlayHostActivity : ComponentActivity() {
             LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT,
-            ).apply { topMargin = dp(28) },
+            ).apply { topMargin = dp(12) },
         )
-
         val softwareHevcRow = DisplaySettingsSection.createSoftwareHevcRow(
             context = this,
             checked = hevcSoftwareDecoderEnabled,
@@ -2150,22 +2166,19 @@ class CarPlayHostActivity : ComponentActivity() {
                 ).apply { topMargin = dp(16) },
             )
         }
-
-        content.addView(
-            buildSafeAreaSection(),
-            LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-            ).apply { topMargin = dp(28) },
-        )
-
-        content.addView(
-            buildFullscreenSection(),
-            LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-            ).apply { topMargin = dp(12) },
-        )
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+            content.addView(
+                menuText(
+                    getString(R.string.settings_android9_compat),
+                    16f,
+                    MENU_SECONDARY,
+                ),
+                LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                ).apply { topMargin = dp(12) },
+            )
+        }
 
         content.addView(
             settingsCategoryHeader(getString(R.string.diagnostics)),
@@ -2182,28 +2195,7 @@ class CarPlayHostActivity : ComponentActivity() {
             ).apply { topMargin = dp(12) },
         )
 
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
-            content.addView(
-                settingsCategoryHeader(getString(R.string.android_9_compatibility)),
-                LinearLayout.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT,
-                ).apply { topMargin = dp(40) },
-            )
-            content.addView(
-                menuText(
-                    getString(R.string.settings_android9_compat),
-                    16f,
-                    MENU_SECONDARY,
-                ),
-                LinearLayout.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT,
-                ).apply { topMargin = dp(12) },
-            )
-        }
-
-        val preview = menuText("", 17f, MENU_SECONDARY)
+        val preview = menuText("", 17f, MENU_SECONDARY).apply { tag = "settings-chrome" }
         content.addView(
             preview,
             LinearLayout.LayoutParams(
@@ -2214,7 +2206,7 @@ class CarPlayHostActivity : ComponentActivity() {
 
         val save = menuButton(getString(R.string.save_and_reconnect), MENU_ACCENT, MENU_BUTTON_TEXT) {
             saveSettingsAndReconnect()
-        }
+        }.apply { tag = "settings-chrome" }
         content.addView(
             save,
             LinearLayout.LayoutParams(
@@ -2225,7 +2217,7 @@ class CarPlayHostActivity : ComponentActivity() {
 
         val exitApplicationButton = menuButton(getString(R.string.exit_application), MENU_DANGER, Color.WHITE) {
             exitApplication()
-        }
+        }.apply { tag = "settings-chrome" }
         content.addView(
             exitApplicationButton,
             LinearLayout.LayoutParams(
@@ -2234,6 +2226,13 @@ class CarPlayHostActivity : ComponentActivity() {
             ).apply { topMargin = dp(12) },
         )
 
+        content.addView(
+            settingsCategoryHeader(getString(R.string.carplay_controls)),
+            LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+            ).apply { topMargin = dp(28) },
+        )
         content.addView(menuButton(getString(R.string.language_app_language), MENU_TRACK_OFF, Color.WHITE) {
             AppLocale.showPicker(this@CarPlayHostActivity)
         }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(12) })
@@ -2270,52 +2269,8 @@ class CarPlayHostActivity : ComponentActivity() {
             ).apply { topMargin = dp(6) },
         )
 
-        // Modern two-column reflow on wide panels: category groups balance across columns with
-        // a hairline divider; the hero stays full-width above. Narrow windows keep one column.
-        if (resources.displayMetrics.widthPixels >= dp(1000) && content.childCount > 6) {
-            val columnLeft = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
-            val columnRight = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
-            val hero = mutableListOf<View>()
-            val groups = mutableListOf<MutableList<View>>()
-            var open = false
-            for (i in 0 until content.childCount) {
-                val child = content.getChildAt(i)
-                if (child.tag == "settings-category") { groups.add(mutableListOf(child)); open = true }
-                else if (open) groups.last().add(child) else hero.add(child)
-            }
-            // Detach first. addView() while the child still belongs to `content` throws
-            // IllegalStateException on the car (1920-wide), which is the connect crash.
-            for (i in content.childCount - 1 downTo 0) content.removeViewAt(i)
-            var leftW = 0
-            var rightW = 0
-            groups.forEach { group ->
-                val target = if (leftW <= rightW) { leftW += group.size; columnLeft } else { rightW += group.size; columnRight }
-                group.forEach { v -> target.addView(v) }
-            }
-            hero.forEach(content::addView)
-            val row = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
-            row.addView(columnLeft, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
-            row.addView(View(this).apply { setBackgroundColor(0x26FFFFFF) },
-                LinearLayout.LayoutParams(dp(1), ViewGroup.LayoutParams.MATCH_PARENT).apply {
-                    leftMargin = dp(16); rightMargin = dp(16)
-                })
-            row.addView(columnRight, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
-            content.addView(row, LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
-        }
-
-        val scroll = ScrollView(this).apply {
-            isFillViewport = true
-            addView(
-                content,
-                ViewGroup.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT,
-                ),
-            )
-        }
         panel.addView(
-            scroll,
+            layoutOverlayMenu(content),
             FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.MATCH_PARENT,
                 FrameLayout.LayoutParams.MATCH_PARENT,
@@ -2656,6 +2611,161 @@ class CarPlayHostActivity : ComponentActivity() {
         )
         return section
     }
+
+    private fun overlayMenuWide(): Boolean = resources.displayMetrics.widthPixels >= dp(1000)
+
+    private fun layoutOverlayMenu(content: LinearLayout): View {
+        val hero = mutableListOf<View>()
+        val groups = mutableListOf<Pair<String, MutableList<View>>>()
+        val chrome = mutableListOf<View>()
+        var current: MutableList<View>? = null
+        for (i in 0 until content.childCount) {
+            val child = content.getChildAt(i)
+            when {
+                child.tag == "settings-category" -> {
+                    val title = overlayMenuCategoryTitle(child)
+                    val group = mutableListOf(child)
+                    groups.add(title to group)
+                    current = group
+                }
+                child.tag == "settings-chrome" -> chrome.add(child)
+                current != null -> current.add(child)
+                else -> hero.add(child)
+            }
+        }
+        for (i in content.childCount - 1 downTo 0) content.removeViewAt(i)
+        val pages = groups.map { it.second }
+        val selectedTitle = overlayMenuCategoryTitle
+            ?.takeIf { title -> groups.any { it.first == title } }
+            ?: groups.firstOrNull()?.first
+        overlayMenuCategoryTitle = selectedTitle
+        val wide = overlayMenuWide() && groups.size > 1
+        fun show(title: String?) {
+            overlayMenuCategoryTitle = title
+            pages.forEachIndexed { index, page ->
+                val visible = groups[index].first == title
+                page.forEach { child ->
+                    child.visibility = when {
+                        !visible -> View.GONE
+                        wide && child.tag == "settings-category" -> View.GONE
+                        else -> View.VISIBLE
+                    }
+                }
+            }
+        }
+        show(selectedTitle)
+        fun rail(onPaint: (ViewGroup) -> Unit = {}): LinearLayout {
+            val rail = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+            groups.forEach { (title, _) ->
+                rail.addView(
+                    overlayMenuRailItem(title, title == selectedTitle) { selected ->
+                        show(selected)
+                        onPaint(rail)
+                    },
+                    LinearLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.WRAP_CONTENT,
+                    ).apply { bottomMargin = dp(8) },
+                )
+            }
+            return rail
+        }
+        fun paintRail(rail: ViewGroup) {
+            for (i in 0 until rail.childCount) {
+                val row = rail.getChildAt(i)
+                val selected = row.contentDescription == overlayMenuCategoryTitle
+                row.isSelected = selected
+                (row as? ViewGroup)?.getChildAt(0)?.setBackgroundColor(
+                    if (selected) MENU_ACCENT else Color.TRANSPARENT,
+                )
+                ((row as? ViewGroup)?.getChildAt(1) as? TextView)?.setTextColor(
+                    if (selected) MENU_ACCENT else MENU_PRIMARY,
+                )
+            }
+        }
+        val body = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(36), dp(28), dp(36), dp(28))
+        }
+        hero.forEach(body::addView)
+        if (wide) {
+            val split = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
+            val rail = rail(::paintRail)
+            split.addView(
+                ScrollView(this).apply { addView(rail) },
+                LinearLayout.LayoutParams(dp(220), ViewGroup.LayoutParams.MATCH_PARENT),
+            )
+            split.addView(View(this).apply { setBackgroundColor(0x26FFFFFF) },
+                LinearLayout.LayoutParams(dp(1), ViewGroup.LayoutParams.MATCH_PARENT).apply {
+                    leftMargin = dp(16); rightMargin = dp(16)
+                })
+            val pageColumn = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+            pages.forEach { page -> page.forEach(pageColumn::addView) }
+            split.addView(
+                ScrollView(this).apply {
+                    isFillViewport = true
+                    addView(pageColumn, ViewGroup.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.WRAP_CONTENT,
+                    ))
+                },
+                LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f),
+            )
+            body.addView(split, LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f))
+            chrome.forEach(body::addView)
+            return body
+        }
+        if (groups.size > 1) {
+            body.addView(rail(::paintRail))
+            pages.forEach { page ->
+                page.forEach { child ->
+                    if (child.tag == "settings-category") child.visibility = View.GONE
+                }
+            }
+        }
+        pages.forEach { page -> page.forEach(body::addView) }
+        chrome.forEach(body::addView)
+        return ScrollView(this).apply {
+            isFillViewport = true
+            addView(body, ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+            ))
+        }
+    }
+
+    private fun overlayMenuCategoryTitle(header: View): String {
+        val head = (header as? ViewGroup)?.getChildAt(0) as? ViewGroup
+        return (head?.getChildAt(1) as? TextView)?.text?.toString().orEmpty()
+    }
+
+    private fun overlayMenuRailItem(title: String, selected: Boolean, onSelect: (String) -> Unit): View =
+        LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            isClickable = true
+            isFocusable = true
+            isSelected = selected
+            contentDescription = title
+            setPadding(dp(8), dp(10), dp(12), dp(10))
+            background = android.graphics.drawable.RippleDrawable(
+                ColorStateList.valueOf(0x33FFFFFF),
+                GradientDrawable().apply {
+                    setColor(Color.TRANSPARENT)
+                    cornerRadius = dp(12).toFloat()
+                },
+                null,
+            )
+            addView(View(this@CarPlayHostActivity).apply {
+                setBackgroundColor(if (selected) MENU_ACCENT else Color.TRANSPARENT)
+            }, LinearLayout.LayoutParams(dp(4), dp(28)).apply { rightMargin = dp(10) })
+            addView(
+                menuText(title, 16f, if (selected) MENU_ACCENT else MENU_PRIMARY, bold = true),
+                LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f),
+            )
+            setOnClickListener { onSelect(title) }
+        }
 
     private fun settingsCategoryHeader(title: String): View = LinearLayout(this).apply {
         tag = "settings-category"

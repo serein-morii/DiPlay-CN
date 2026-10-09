@@ -22,9 +22,13 @@ import android.view.SurfaceHolder
 import android.view.SurfaceView
 import android.view.View
 import android.view.TextureView
+import android.animation.ValueAnimator
 import android.content.res.ColorStateList
+import android.view.animation.LinearInterpolator
 import android.widget.FrameLayout
+import android.widget.LinearLayout
 import android.widget.ProgressBar
+import android.widget.TextView
 import com.shilapi.xcertplay.airplay.CarPlayClusterDisplay
 import com.shilapi.xcertplay.host.R
 import com.shilapi.xcertplay.hud.ClusterTurnGuidance
@@ -42,7 +46,7 @@ internal class ClusterMapPresentation(
     private val theme: DiLink51ClusterLayout.Theme = DiLink51ClusterLayout.theme(context),
     private val onSurface: (Surface?) -> Unit,
 ) : Presentation(context, display) {
-    // The placeholder until the map arrives: a small spinner.
+    // The placeholder until the map arrives: CarPlay-blue pulse rings.
     private var waitingLabel: View? = null
     private var turnCardView: ClusterTurnCardView? = null
     private var videoView: View? = null
@@ -130,9 +134,26 @@ internal class ClusterMapPresentation(
             if (plan == null) setBackgroundColor(placeholder)
             addView(ProgressBar(context).apply {
                 isIndeterminate = true
+                visibility = View.GONE
                 indeterminateTintList = ColorStateList.valueOf(waitingColor)
                 contentDescription = context.getString(R.string.cluster_waiting_for_map)
             }, FrameLayout.LayoutParams((40 * density).toInt(), (40 * density).toInt(), Gravity.CENTER))
+            addView(LinearLayout(context).apply {
+                orientation = LinearLayout.VERTICAL
+                gravity = Gravity.CENTER
+                addView(
+                    CarPlayWaitingPulse(context, Color.rgb(10, 132, 255)),
+                    LinearLayout.LayoutParams((72 * density).toInt(), (72 * density).toInt()),
+                )
+                addView(TextView(context).apply {
+                    text = context.getString(R.string.carplay)
+                    setTextColor(waitingColor)
+                    textSize = 15f
+                    gravity = Gravity.CENTER
+                    letterSpacing = 0.12f
+                    typeface = android.graphics.Typeface.create("sans-serif-medium", android.graphics.Typeface.NORMAL)
+                }, LinearLayout.LayoutParams(-2, -2).apply { topMargin = (14 * density).toInt() })
+            }, FrameLayout.LayoutParams(-2, -2, Gravity.CENTER))
         }
         root.addView(waitingLabel, FrameLayout.LayoutParams(videoParams))
         turnCardView = ClusterTurnCardView(context).apply { visibility = View.GONE }
@@ -243,6 +264,53 @@ internal class ClusterMapPresentation(
             @Suppress("DEPRECATION")
             display.getRealSize(it)
         }
+    }
+}
+
+/** Expanding CarPlay-blue rings while the dashboard map is still arriving. */
+private class CarPlayWaitingPulse(context: Context, private val ringColor: Int) : View(context) {
+    private val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE
+        strokeWidth = 3f * resources.displayMetrics.density
+        color = ringColor
+    }
+    private val core = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.FILL
+        color = ringColor
+    }
+    private var progress = 0f
+    private val animator = ValueAnimator.ofFloat(0f, 1f).apply {
+        duration = 1600
+        repeatCount = ValueAnimator.INFINITE
+        interpolator = LinearInterpolator()
+        addUpdateListener {
+            progress = it.animatedValue as Float
+            invalidate()
+        }
+    }
+
+    override fun onAttachedToWindow() {
+        super.onAttachedToWindow()
+        if (!animator.isStarted) animator.start()
+    }
+
+    override fun onDetachedFromWindow() {
+        animator.cancel()
+        super.onDetachedFromWindow()
+    }
+
+    override fun onDraw(canvas: Canvas) {
+        val cx = width / 2f
+        val cy = height / 2f
+        val maxR = minOf(width, height) / 2f * 0.46f
+        val coreR = 5f * resources.displayMetrics.density
+        for (index in 0..2) {
+            val t = (progress + index / 3f) % 1f
+            paint.alpha = ((1f - t) * 170).toInt()
+            canvas.drawCircle(cx, cy, coreR + t * maxR, paint)
+        }
+        core.alpha = 230
+        canvas.drawCircle(cx, cy, coreR, core)
     }
 }
 
