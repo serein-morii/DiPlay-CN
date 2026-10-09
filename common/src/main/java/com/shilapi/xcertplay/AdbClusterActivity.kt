@@ -84,6 +84,8 @@ class AdbClusterActivity : Activity() {
         turnCard?.setLayout(ClusterActivityOutput.cardX, ClusterActivityOutput.cardY, ClusterActivityOutput.cardSize)
         turnCard?.setOpacity(ClusterActivityOutput.cardOpacity)
         turnCard?.setNightMode(ClusterActivityOutput.cardNight)
+        turnCard?.setShowLanes(ClusterActivityOutput.showLanes)
+        turnCard?.setShowArrival(ClusterActivityOutput.showArrival)
         turnCard?.setGuidance(if (ClusterActivityOutput.streamActive) ClusterActivityOutput.guidance else null)
         updateSafeAreaPreview()
     }
@@ -175,15 +177,21 @@ internal object ClusterActivityOutput {
         private set
     var cardNight = false
         private set
+    var showLanes = true
+        private set
+    var showArrival = true
+        private set
 
     fun setTurnCard(next: com.shilapi.xcertplay.hud.ClusterTurnGuidance?, x: Int, y: Int,
-        size: Int, opacity: Int, night: Boolean) {
+        size: Int, opacity: Int, night: Boolean, lanes: Boolean = true, arrival: Boolean = true) {
         guidance = next
         cardX = x
         cardY = y
         cardSize = size
         cardOpacity = opacity
         cardNight = night
+        showLanes = lanes
+        showArrival = arrival
         activity.get()?.updateTurnCard()
     }
 

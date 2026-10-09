@@ -448,6 +448,10 @@
     <string name="turn_card_overlay_large">大</string>
     <string name="reset_turn_card_overlay">重設自訂轉向卡位置</string>
     <string name="turn_card_overlay_note">此卡由 DiPlay 疊在地圖上，可每次移動 2％。iOS 玻璃卡無法單獨移動。變更後立即生效。有導航時，直行指示也會顯示。</string>
+    <string name="turn_card_show_lanes">車道箭頭</string>
+    <string name="turn_card_show_lanes_description">有車道資訊時，在自訂轉向卡下方畫出目前車道箭頭。立即生效。</string>
+    <string name="turn_card_show_arrival">到達資訊</string>
+    <string name="turn_card_show_arrival_description">在自訂轉向卡下方顯示到達時間、剩餘時間和剩餘距離。立即生效。</string>
     <string name="turn_card_now">即將轉向</string>
     <string name="turn_card_distance_m">%1$d 公尺</string>
     <string name="turn_card_distance_km">%1$.1f 公里</string>

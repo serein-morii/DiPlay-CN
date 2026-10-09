@@ -487,6 +487,10 @@
     <string name="turn_card_overlay_large">Large</string>
     <string name="reset_turn_card_overlay">Reset custom turn card position</string>
     <string name="turn_card_overlay_note">DiPlay draws this card on the map. Move it in 2 % steps. The iOS glass card cannot be moved on its own. Changes apply without reconnecting. The custom card stays on for straight-ahead as well as turns.</string>
+    <string name="turn_card_show_lanes">Lane arrows</string>
+    <string name="turn_card_show_lanes_description">Draw the current lane arrows under the custom turn card when Apple sends them. Applies at once.</string>
+    <string name="turn_card_show_arrival">Arrival strip</string>
+    <string name="turn_card_show_arrival_description">Show arrival time, duration and remaining distance under the custom turn card. Applies at once.</string>
     <string name="turn_card_now">Now</string>
     <string name="turn_card_distance_m">%1$d m</string>
     <string name="turn_card_distance_km">%1$.1f km</string>

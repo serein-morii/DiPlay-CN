@@ -216,6 +216,11 @@ internal class ClusterMapPresentation(
         turnCardView?.setGuidance(guidance)
     }
 
+    fun setTurnCardExtras(showLanes: Boolean, showArrival: Boolean) {
+        turnCardView?.setShowLanes(showLanes)
+        turnCardView?.setShowArrival(showArrival)
+    }
+
     companion object {
         const val TAG = "DiPlay-Cluster"
 

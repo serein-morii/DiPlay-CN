@@ -1898,6 +1898,16 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
                                 render()
                             }, matchButton(10, 56))
                             card.addView(label(getString(R.string.turn_card_overlay_note), 14, MUTED))
+                            toggle(card, getString(R.string.turn_card_show_lanes),
+                                getString(R.string.turn_card_show_lanes_description),
+                                AirPlayPersistence.loadClusterTurnCardShowLanes(this)) {
+                                AirPlayPersistence.saveClusterTurnCardShowLanes(this, it)
+                            }
+                            toggle(card, getString(R.string.turn_card_show_arrival),
+                                getString(R.string.turn_card_show_arrival_description),
+                                AirPlayPersistence.loadClusterTurnCardShowArrival(this)) {
+                                AirPlayPersistence.saveClusterTurnCardShowArrival(this, it)
+                            }
                         }
                         val turnCard = officialCardOnly
                         if (!diLink4) {

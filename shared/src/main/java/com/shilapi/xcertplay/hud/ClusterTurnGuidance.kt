@@ -10,6 +10,10 @@ data class ClusterTurnGuidance(
     val arrivalEpochSeconds: Long? = null,
     val remainingSeconds: Long? = null,
     val remainingMeters: Long? = null,
+    /** Highlighted lane index 0..n-1, or -1 when Apple did not send a highlight. */
+    val laneHighlight: Int = -1,
+    /** One entry per visible lane: 0 unused, 1 straight, 2 left, 3 right. */
+    val lanes: List<Int> = emptyList(),
 ) {
     companion object {
         internal fun from(frame: BydClusterFrame): ClusterTurnGuidance {

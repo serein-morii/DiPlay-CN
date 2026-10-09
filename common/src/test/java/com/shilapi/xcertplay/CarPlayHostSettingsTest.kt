@@ -10,6 +10,7 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.SeekBar
 import android.widget.RadioButton
+import android.widget.Switch
 import android.widget.TextView
 import com.shilapi.xcertplay.airplay.*
 import com.shilapi.xcertplay.host.R
@@ -90,6 +91,27 @@ class CarPlayHostSettingsTest {
         val started = shadowOf(activity).nextStartedActivity
         assertEquals(DiPlayActivity::class.java.name, started.component!!.className)
         assertEquals("settings", started.getStringExtra("page"))
+    }
+
+    @Test
+    @Config(qualifiers = "en-w1920dp-h1080dp-mdpi")
+    fun wideOverlayMenuKeepsConnectionControlsTappable() {
+        invoke("openSettingsMenu")
+        val root = menu()
+        root.measure(
+            View.MeasureSpec.makeMeasureSpec(1920, View.MeasureSpec.EXACTLY),
+            View.MeasureSpec.makeMeasureSpec(1080, View.MeasureSpec.EXACTLY),
+        )
+        root.layout(0, 0, 1920, 1080)
+        val wireless = views(root).filterIsInstance<android.widget.Switch>()
+            .first { it.contentDescription == activity.getString(R.string.wireless_carplay_transport) }
+        assertTrue(wireless.height > 0)
+        assertEquals(View.VISIBLE, wireless.visibility)
+        setField("wirelessEnabled", false)
+        wireless.isChecked = false
+        wireless.performClick()
+        assertTrue(field("wirelessEnabled") as Boolean)
+        assertTrue(resolutionSlider().width >= 0)
     }
 
     @Test fun openFullSettingsButtonAlwaysOpensTheHomeSettingsPage() {

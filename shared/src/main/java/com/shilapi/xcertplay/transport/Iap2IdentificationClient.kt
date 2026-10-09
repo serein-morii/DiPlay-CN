@@ -324,6 +324,7 @@ class Iap2IdentificationClient(private val session: Iap2Session) {
             0x5001, // NowPlayingUpdate
             0x5201, // RouteGuidanceUpdate
             0x5202, // RouteGuidanceManeuverUpdate
+            0x5204, // LaneGuidanceInfoUpdate
             0xae01, // PowerUpdate
             0x4158, // CommunicationsUpdate
             0x4155, // CallStateUpdate

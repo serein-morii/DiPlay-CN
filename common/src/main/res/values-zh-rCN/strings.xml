@@ -449,6 +449,10 @@
     <string name="turn_card_overlay_large">大</string>
     <string name="reset_turn_card_overlay">重置自定义转向卡位置</string>
     <string name="turn_card_overlay_note">此卡由 DiPlay 叠在地图上，可按 2% 步进移动。iOS 玻璃卡无法单独挪动。更改后立即生效。有导航时直行也会显示。</string>
+    <string name="turn_card_show_lanes">车道箭头</string>
+    <string name="turn_card_show_lanes_description">有车道信息时，在自定义转向卡下方画出当前车道箭头。立即生效。</string>
+    <string name="turn_card_show_arrival">到达信息</string>
+    <string name="turn_card_show_arrival_description">在自定义转向卡下方显示到达时间、剩余时间和剩余距离。立即生效。</string>
     <string name="turn_card_now">即将转向</string>
     <string name="turn_card_distance_m">%1$d 米</string>
     <string name="turn_card_distance_km">%1$.1f 公里</string>

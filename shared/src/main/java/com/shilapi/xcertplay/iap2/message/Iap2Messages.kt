@@ -288,6 +288,7 @@ object Iap2ControlMessages {
             u16(0, 42)
             void(1)
             void(2)
+            void(3)
         },
         Iap2Messages.build(Iap2Endpoints.START_POWER_UPDATES) {
             void(4)

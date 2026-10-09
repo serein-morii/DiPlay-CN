@@ -1078,13 +1078,19 @@ class CarPlayHostActivity : ComponentActivity() {
         val effectiveOpacity = if (smallWindow) AirPlayPersistence.loadClusterSmallWindowCardOpacityPercent(this)
         else AirPlayPersistence.loadClusterTurnCardOpacityPercent(this)
         ClusterActivityOutput.setTurnCard(if (overlay) clusterTurnGuidance else null,
-            xPercent, yPercent, sizePercent, effectiveOpacity, effectiveNight)
+            xPercent, yPercent, sizePercent, effectiveOpacity, effectiveNight,
+            AirPlayPersistence.loadClusterTurnCardShowLanes(this),
+            AirPlayPersistence.loadClusterTurnCardShowArrival(this))
         val presentations = (clusterLayers.values + listOfNotNull(clusterPresentation)).distinct()
         for (presentation in presentations) {
             presentation.setTurnCardOverlay(xPercent, yPercent, sizePercent)
             presentation.setTurnCardOpacity(effectiveOpacity)
             presentation.setTurnCardNightMode(effectiveNight)
             presentation.setTurnCardGuidance(if (overlay) clusterTurnGuidance else null)
+            presentation.setTurnCardExtras(
+                AirPlayPersistence.loadClusterTurnCardShowLanes(this),
+                AirPlayPersistence.loadClusterTurnCardShowArrival(this),
+            )
         }
     }
 
@@ -2116,6 +2122,14 @@ class CarPlayHostActivity : ComponentActivity() {
                 ViewGroup.LayoutParams.WRAP_CONTENT,
             ).apply { topMargin = dp(26) },
         )
+        val preview = menuText("", 17f, MENU_SECONDARY)
+        content.addView(
+            preview,
+            LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+            ).apply { topMargin = dp(28) },
+        )
 
         content.addView(
             settingsCategoryHeader(getString(R.string.settings_advanced)),
@@ -2193,15 +2207,6 @@ class CarPlayHostActivity : ComponentActivity() {
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT,
             ).apply { topMargin = dp(12) },
-        )
-
-        val preview = menuText("", 17f, MENU_SECONDARY).apply { tag = "settings-chrome" }
-        content.addView(
-            preview,
-            LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-            ).apply { topMargin = dp(28) },
         )
 
         val save = menuButton(getString(R.string.save_and_reconnect), MENU_ACCENT, MENU_BUTTON_TEXT) {
@@ -2654,22 +2659,6 @@ class CarPlayHostActivity : ComponentActivity() {
             }
         }
         show(selectedTitle)
-        fun rail(onPaint: (ViewGroup) -> Unit = {}): LinearLayout {
-            val rail = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
-            groups.forEach { (title, _) ->
-                rail.addView(
-                    overlayMenuRailItem(title, title == selectedTitle) { selected ->
-                        show(selected)
-                        onPaint(rail)
-                    },
-                    LinearLayout.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                        ViewGroup.LayoutParams.WRAP_CONTENT,
-                    ).apply { bottomMargin = dp(8) },
-                )
-            }
-            return rail
-        }
         fun paintRail(rail: ViewGroup) {
             for (i in 0 until rail.childCount) {
                 val row = rail.getChildAt(i)
@@ -2683,16 +2672,28 @@ class CarPlayHostActivity : ComponentActivity() {
                 )
             }
         }
-        val body = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(dp(36), dp(28), dp(36), dp(28))
+        fun rail(): LinearLayout {
+            val rail = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+            groups.forEach { (title, _) ->
+                rail.addView(
+                    overlayMenuRailItem(title, title == selectedTitle) { selected ->
+                        show(selected)
+                        paintRail(rail)
+                    },
+                    LinearLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.WRAP_CONTENT,
+                    ).apply { bottomMargin = dp(8) },
+                )
+            }
+            return rail
         }
+        val body = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         hero.forEach(body::addView)
         if (wide) {
             val split = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
-            val rail = rail(::paintRail)
             split.addView(
-                ScrollView(this).apply { addView(rail) },
+                ScrollView(this).apply { isFillViewport = true; addView(rail()) },
                 LinearLayout.LayoutParams(dp(220), ViewGroup.LayoutParams.MATCH_PARENT),
             )
             split.addView(View(this).apply { setBackgroundColor(0x26FFFFFF) },
@@ -2711,13 +2712,21 @@ class CarPlayHostActivity : ComponentActivity() {
                 },
                 LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f),
             )
-            body.addView(split, LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f))
-            chrome.forEach(body::addView)
-            return body
+            val chromeColumn = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+            chrome.forEach(chromeColumn::addView)
+            return LinearLayout(this).apply {
+                orientation = LinearLayout.VERTICAL
+                setPadding(dp(36), dp(28), dp(36), dp(28))
+                addView(body, LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
+                addView(split, LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f))
+                addView(chromeColumn, LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
+            }
         }
         if (groups.size > 1) {
-            body.addView(rail(::paintRail))
+            body.addView(rail())
             pages.forEach { page ->
                 page.forEach { child ->
                     if (child.tag == "settings-category") child.visibility = View.GONE

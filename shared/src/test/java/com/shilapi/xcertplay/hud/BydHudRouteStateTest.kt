@@ -24,6 +24,19 @@ class BydHudRouteStateTest {
     }
 
     @Test
+    fun `lane update attaches arrows to the current maneuver`() {
+        val state = populatedState()
+        val change = state.accept(
+            BydHudRouteState.LANE_GUIDANCE_UPDATE,
+            tlvs(tlv(0x01, 1), tlv(0x03, 1, 1, 3)),
+        )
+        assertEquals(BydHudRouteChange.GUIDANCE, change)
+        val apple = state.currentApple()
+        assertEquals(listOf(1, 1, 3), apple?.lanes)
+        assertEquals(1, apple?.laneHighlight)
+    }
+
+    @Test
     fun `maps right-hand u-turn`() {
         val state = BydHudRouteState()
         state.accept(

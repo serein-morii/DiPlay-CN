@@ -528,6 +528,10 @@
     <string name="turn_card_overlay_large">Grande</string>
     <string name="reset_turn_card_overlay">Restablecer posición de la tarjeta personalizada</string>
     <string name="turn_card_overlay_note">DiPlay dibuja esta tarjeta sobre el mapa y se mueve en pasos del 2 %. La tarjeta de cristal de iOS no se puede mover por sí sola. Los cambios son inmediatos y la tarjeta sigue visible al ir recto.</string>
+    <string name="turn_card_show_lanes">Flechas de carril</string>
+    <string name="turn_card_show_lanes_description">Dibuja las flechas de carril bajo la tarjeta de giro personalizada cuando Apple las envía. Se aplica al instante.</string>
+    <string name="turn_card_show_arrival">Franja de llegada</string>
+    <string name="turn_card_show_arrival_description">Muestra la hora de llegada, la duración y la distancia restante bajo la tarjeta de giro personalizada. Se aplica al instante.</string>
     <string name="turn_card_now">Ahora</string>
     <string name="turn_card_distance_m">%1$d m</string>
     <string name="turn_card_distance_km">%1$.1f km</string>
