@@ -2635,11 +2635,15 @@ class CarPlayHostActivity : ComponentActivity() {
             minWidth = 0
             minHeight = 0
             stateListAnimator = null
-            background = GradientDrawable().apply {
-                setColor(overlayPalette.overlayField)
-                setStroke(1, overlayPalette.overlayFieldStroke)
-                cornerRadius = dp(13).toFloat()
-            }
+            background = android.graphics.drawable.RippleDrawable(
+                ColorStateList.valueOf(overlayPalette.overlayAccentTrack),
+                GradientDrawable().apply {
+                    setColor(overlayPalette.overlayField)
+                    setStroke(1, overlayPalette.overlayFieldStroke)
+                    cornerRadius = dp(13).toFloat()
+                },
+                null,
+            )
             setOnClickListener { onClick() }
         }
 
@@ -2789,22 +2793,42 @@ class CarPlayHostActivity : ComponentActivity() {
         return card
     }
 
-    private fun overlayRowContainer(name: String, hint: String? = null, control: View? = null): View =
-        LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.CENTER_VERTICAL
-            setPadding(0, dp(12), 0, dp(12))
-            minimumHeight = dp(52)
-            val detail = LinearLayout(this@CarPlayHostActivity).apply { orientation = LinearLayout.VERTICAL }
-            detail.addView(menuText(name, 15f, MENU_PRIMARY, bold = true))
-            hint?.let {
-                detail.addView(menuText(it, 12f, MENU_SECONDARY).apply { setPadding(0, dp(4), 0, 0) })
-            }
-            addView(detail, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f).apply { marginEnd = dp(14) })
-            control?.let {
-                addView(it, LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT))
-            }
+    /**
+     * A setting row: label (and optional hint) with its control. Inline keeps the control beside the
+     * label; stacked drops it to its own full-width line, which wide controls like a 5-way segment
+     * picker need on the card's remaining width.
+     */
+    private fun overlayRowContainer(
+        name: String,
+        hint: String? = null,
+        control: View? = null,
+        stacked: Boolean = false,
+    ): View = LinearLayout(this).apply {
+        orientation = LinearLayout.VERTICAL
+        setPadding(0, dp(12), 0, dp(12))
+        val detail = LinearLayout(this@CarPlayHostActivity).apply { orientation = LinearLayout.VERTICAL }
+        detail.addView(menuText(name, 15f, MENU_PRIMARY, bold = true))
+        hint?.let {
+            detail.addView(menuText(it, 12f, MENU_SECONDARY).apply { setPadding(0, dp(4), 0, 0) })
         }
+        if (stacked) {
+            addView(detail, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
+            control?.let {
+                addView(it, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { topMargin = dp(10) })
+            }
+        } else {
+            val line = LinearLayout(this@CarPlayHostActivity).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = Gravity.CENTER_VERTICAL
+                minimumHeight = dp(40)
+            }
+            line.addView(detail, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f).apply { marginEnd = dp(14) })
+            control?.let {
+                line.addView(it, LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT))
+            }
+            addView(line, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
+        }
+    }
 
     private fun overlayDeck(cards: List<View>, wide: Boolean): View =
         LinearLayout(this).apply {
@@ -2833,11 +2857,13 @@ class CarPlayHostActivity : ComponentActivity() {
             val pill = RadioButton(this).apply {
                 id = View.generateViewId()
                 text = label
-                textSize = 13f
+                textSize = 14f
+                typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
                 setButtonDrawable(null)
                 gravity = Gravity.CENTER
-                setPadding(dp(12), dp(9), dp(12), dp(9))
-                minWidth = dp(64)
+                setPadding(dp(14), dp(10), dp(14), dp(10))
+                minWidth = dp(68)
+                minHeight = dp(38)
                 setTextColor(ColorStateList(
                     arrayOf(intArrayOf(android.R.attr.state_checked), intArrayOf()),
                     intArrayOf(Color.WHITE, overlayPalette.overlaySecondaryText),
@@ -2845,12 +2871,13 @@ class CarPlayHostActivity : ComponentActivity() {
                 background = android.graphics.drawable.StateListDrawable().apply {
                     addState(intArrayOf(android.R.attr.state_checked), GradientDrawable().apply {
                         setColor(overlayPalette.overlaySegmentOn)
-                        cornerRadius = dp(8).toFloat()
+                        cornerRadius = dp(9).toFloat()
                     })
-                    addState(intArrayOf(), GradientDrawable().apply {
-                        setColor(Color.TRANSPARENT)
-                        cornerRadius = dp(8).toFloat()
-                    })
+                    addState(intArrayOf(), android.graphics.drawable.RippleDrawable(
+                        ColorStateList.valueOf(overlayPalette.overlayAccentTrack),
+                        GradientDrawable().apply { setColor(Color.TRANSPARENT); cornerRadius = dp(9).toFloat() },
+                        null,
+                    ))
                 }
                 tag = value
             }
@@ -3001,6 +3028,7 @@ class CarPlayHostActivity : ComponentActivity() {
                 AirPlayPersistence.saveClusterSmallWindowMode(this, value)
                 if (CarPlayBackgroundSession.active) recoveryPendingAfterMenu = true
             },
+            stacked = true,
         )
         val accessWarning = if (AirPlayPersistence.loadClusterMapEnabled(this) &&
             AirPlayPersistence.loadClusterSmallWindowMode(this) == CLUSTER_SMALL_WINDOW_AUTO &&
@@ -3065,7 +3093,6 @@ class CarPlayHostActivity : ComponentActivity() {
                     )
                 },
                 carPlayNightMode,
-                vertical = !wide,
             ) { mode ->
                 carPlayNightMode = mode
                 nightModeController.configure(
@@ -3078,6 +3105,7 @@ class CarPlayHostActivity : ComponentActivity() {
                 refreshAppAppearance()
                 paintWaitingScreen()
             },
+            stacked = true,
         )
         val resolutionControl = DisplaySettingsSection.createResolutionSlider(
             context = this,
@@ -3160,6 +3188,7 @@ class CarPlayHostActivity : ComponentActivity() {
                 },
                 overlayMediaBufferMillis,
             ) { value -> overlayMediaBufferMillis = value },
+            stacked = true,
         )
         val playRows = listOf(
             settingsSwitchRow(
@@ -3769,7 +3798,9 @@ class CarPlayHostActivity : ComponentActivity() {
                 areas.use(target)
                 CarPlayDock.save(this, dock)
             }
-        })
+        },
+            stacked = true,
+        )
 
     private fun buildDrivingSideSection(): View =
         overlayRowContainer(getString(R.string.driving_side), null, overlaySegmentPills(
