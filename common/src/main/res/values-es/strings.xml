@@ -97,6 +97,7 @@
     <string name="common_cancel">Cancelar</string>
     <string name="a_familiar_drive">Un trayecto familiar.</string>
     <string name="a_previous_wi_fi_direct_connection_is_still_running_reset">Hay una conexión Wi-Fi Direct anterior todavía en ejecución. Restablécela para conectarte.</string>
+    <string name="settings_more">Más</string>
     <string name="about">Acerca de</string>
     <string name="about_diplay">Acerca de DiPlay</string>
     <string name="active">Activo</string>
@@ -616,6 +617,7 @@
     <string name="carplay_call_controls_experimental">Botones de llamadas de CarPlay (experimental)</string>
     <string name="carplay_call_controls_experimental_description">Activa los botones de llamada, voz y reproducción/pausa de DiLink 3 aún sin verificar. Falta probarlos en el vehículo. Desactivado de forma predeterminada; las tarjetas de llamadas del cuadro tienen un ajuste independiente.</string>
     <string name="side_panel">Panel lateral junto a CarPlay (experimental)</string>
+    <string name="side_panel_settings_hint">Muestra el panel de DiPlay junto a CarPlay cuando esta sesión declaró uno; sin panel lateral, el control queda atenuado.</string>
     <string name="side_panel_description">CarPlay puede pasar a dos tercios de la pantalla mientras DiPlay muestra un panel en el resto: del lado del pasajero en una pantalla horizontal, abajo en una vertical (reloj y, si se lee, la batería). Muéstralo y ocúltalo desde el menú de la sesión. Se aplica en la próxima conexión.</string>
     <string name="side_panel_show">Panel lateral</string>
     <string name="side_panel_full_screen">⤢ Pantalla completa</string>

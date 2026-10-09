@@ -100,6 +100,7 @@
     <string name="common_cancel">Скасувати</string>
     <string name="a_familiar_drive">Знайома подорож.</string>
     <string name="a_previous_wi_fi_direct_connection_is_still_running_reset">Попереднє з’єднання Wi-Fi Direct ще активне. Скиньте його, щоб підключитися.</string>
+    <string name="settings_more">Більше</string>
     <string name="about">Про застосунок</string>
     <string name="about_diplay">Про DiPlay</string>
     <string name="active">Активно</string>
@@ -628,6 +629,7 @@
     <string name="carplay_call_controls_experimental">Кнопки викликів CarPlay (експериментально)</string>
     <string name="carplay_call_controls_experimental_description">Увімкнення неперевірених кнопок викликів, голосового керування та відтворення/паузи DiLink 3. Потрібна перевірка в автомобілі. Типово вимкнено; картки викликів на панелі приладів налаштовуються окремо.</string>
     <string name="side_panel">Бічна панель поруч із CarPlay (експериментально)</string>
+    <string name="side_panel_settings_hint">Показує панель DiPlay поруч із CarPlay, якщо сеанс її оголосив; без бічної панелі перемикач неактивний.</string>
     <string name="side_panel_description">CarPlay може переходити на дві третини екрана, а DiPlay показує в решті свою панель: з боку пасажира на горизонтальному екрані, знизу на вертикальному (годинник і заряд, якщо його зчитано). Показуйте й ховайте її з меню під час сесії. Застосовується з наступного підключення.</string>
     <string name="side_panel_show">Бічна панель</string>
     <string name="side_panel_full_screen">⤢ На весь екран</string>

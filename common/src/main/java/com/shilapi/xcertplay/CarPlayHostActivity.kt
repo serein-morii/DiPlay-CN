@@ -410,6 +410,18 @@ class CarPlayHostActivity : ComponentActivity() {
     private var hotspotStatus = HotspotStatus(state = "off")
     private var menuOpen = false
     private var overlayMenuCategoryTitle: String? = null
+    private var overlayMenuCategoryKey: String? = null
+    private var overlayConnectOnOpen = false
+    private var overlayConnectOnBluetooth = false
+    private var overlayShowLanes = true
+    private var overlayShowArrival = true
+    private var overlayClusterMapOnlyNavi = false
+    private var overlayLauncherReturnsToCarPlay = true
+    private var overlayBtSuspend = false
+    private var overlaySmoothVideo = false
+    private var overlayMediaChannel = 0
+    private var overlayNavigationChannel = 0
+    private var overlayMediaBufferMillis = com.shilapi.xcertplay.media.MediaAudioBuffer.DEFAULT_MILLIS
     private var latestStage = "Preparing CarPlay"
     private var darkMode = false
     private var appNight = true
@@ -658,6 +670,17 @@ class CarPlayHostActivity : ComponentActivity() {
         navigationStreamType = AirPlayPersistence.loadNavigationStreamType(this)
         debugLogsEnabled = AirPlayPersistence.loadDebugLogsEnabled(this)
         autoStartOnBoot = AirPlayPersistence.loadAutoStartOnBoot(this)
+        overlayConnectOnOpen = DiPlayPreferences.autoConnect(this)
+        overlayConnectOnBluetooth = DiPlayPreferences.connectOnPhoneBluetooth(this)
+        overlayShowLanes = AirPlayPersistence.loadClusterTurnCardShowLanes(this)
+        overlayShowArrival = AirPlayPersistence.loadClusterTurnCardShowArrival(this)
+        overlayClusterMapOnlyNavi = com.shilapi.xcertplay.hud.BydOutputSettings.clusterStreamPause(this)
+        overlayLauncherReturnsToCarPlay = AirPlayPersistence.loadLauncherReturnsToCarPlay(this)
+        overlayBtSuspend = AirPlayPersistence.loadBtSuspendDuringCarplay(this)
+        overlaySmoothVideo = AirPlayPersistence.loadSmoothVideo(this)
+        overlayMediaChannel = AirPlayPersistence.loadMediaAudioChannel(this)
+        overlayNavigationChannel = AirPlayPersistence.loadNavigationAudioChannel(this)
+        overlayMediaBufferMillis = AirPlayPersistence.loadMediaBufferMillis(this)
         manufacturer = AirPlayPersistence.loadManufacturer(this)
         model = AirPlayPersistence.loadModel(this)
         oemLabel = AirPlayPersistence.loadOemLabel(this)
@@ -1840,30 +1863,12 @@ class CarPlayHostActivity : ComponentActivity() {
                 )
             }
         }
-        if (sessionDisplay?.viewAreas?.sidePanel() != null) {
-            content.addView(Button(this).apply {
-                text = getString(if (sidePanelShown) R.string.side_panel_full_screen else R.string.side_panel_show)
-                textSize = 20f
-                setOnClickListener {
-                    cancelSettingsEdits()
-                    showSidePanel(!sidePanelShown)
-                }
-            }, LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT))
-        }
         content.addView(
             settingsCategoryHeader(getString(R.string.connection)),
             LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT,
             ).apply { topMargin = dp(28) },
-        )
-
-        content.addView(
-            buildMfiTargetSection(),
-            LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-            ).apply { topMargin = dp(14) },
         )
 
         val wirelessRowResult = ConnectionSettingsSection.createWirelessCarPlayRow(
@@ -1898,6 +1903,14 @@ class CarPlayHostActivity : ComponentActivity() {
         )
 
         content.addView(
+            buildMfiTargetSection(),
+            LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+            ).apply { topMargin = dp(14) },
+        )
+
+        content.addView(
             menuText(getString(R.string.hotspot_status), 20f, MENU_SECONDARY),
             LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
@@ -1922,6 +1935,28 @@ class CarPlayHostActivity : ComponentActivity() {
                 autoStartOnBoot = checked
                 appendLog("Boot auto-start ${if (checked) "enabled" else "disabled"}")
             },
+            LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+            ).apply { topMargin = dp(12) },
+        )
+        content.addView(
+            settingsSwitchRow(
+                label = getString(R.string.connect_when_diplay_opens),
+                checked = overlayConnectOnOpen,
+                description = getString(R.string.default_connection_description),
+            ) { checked -> overlayConnectOnOpen = checked },
+            LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+            ).apply { topMargin = dp(12) },
+        )
+        content.addView(
+            settingsSwitchRow(
+                label = getString(R.string.connect_when_iphone_bluetooth_connects),
+                checked = overlayConnectOnBluetooth,
+                description = getString(R.string.connect_when_iphone_bluetooth_connects_description),
+            ) { checked -> overlayConnectOnBluetooth = checked },
             LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT,
@@ -1957,6 +1992,93 @@ class CarPlayHostActivity : ComponentActivity() {
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT,
             ).apply { topMargin = dp(12) },
+        )
+        content.addView(
+            settingsSwitchRow(
+                label = getString(R.string.turn_card_show_lanes),
+                checked = overlayShowLanes,
+                description = getString(R.string.turn_card_show_lanes_description),
+            ) { checked ->
+                overlayShowLanes = checked
+                applyClusterTurnOverlay()
+            },
+            LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+            ).apply { topMargin = dp(12) },
+        )
+        content.addView(
+            settingsSwitchRow(
+                label = getString(R.string.turn_card_show_arrival),
+                checked = overlayShowArrival,
+                description = getString(R.string.turn_card_show_arrival_description),
+            ) { checked ->
+                overlayShowArrival = checked
+                applyClusterTurnOverlay()
+            },
+            LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+            ).apply { topMargin = dp(12) },
+        )
+        content.addView(
+            settingsSwitchRow(
+                label = getString(R.string.dashboard_map_only_in_small_and_full_navi),
+                checked = overlayClusterMapOnlyNavi,
+                description = getString(R.string.dashboard_map_only_in_small_and_full_navi_description),
+            ) { checked -> overlayClusterMapOnlyNavi = checked },
+            LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+            ).apply { topMargin = dp(12) },
+        )
+
+        content.addView(
+            settingsCategoryHeader(getString(R.string.settings_display)),
+            LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+            ).apply { topMargin = dp(36) },
+        )
+        val nightModes = CarPlayNightMode.entries
+        content.addView(
+            settingsChoiceRow(
+                label = getString(R.string.carplay_night_mode),
+                options = nightModes.map { mode ->
+                    mode to getString(
+                        when (mode) {
+                            CarPlayNightMode.SYSTEM -> R.string.carplay_night_system
+                            CarPlayNightMode.AMBIENT -> R.string.carplay_night_ambient
+                            CarPlayNightMode.DAY -> R.string.carplay_night_day
+                            CarPlayNightMode.NIGHT -> R.string.carplay_night_night
+                            CarPlayNightMode.SCHEDULE -> R.string.carplay_night_schedule
+                        },
+                    )
+                },
+                selected = carPlayNightMode,
+            ) { mode ->
+                carPlayNightMode = mode
+                nightModeController.configure(
+                    carPlayNightMode,
+                    nightModeOrNull(resources.configuration.uiMode) ?: false,
+                    ambientLightThreshold,
+                    ambientDelaySeconds,
+                    nightSchedule,
+                )
+                refreshAppAppearance()
+                paintWaitingScreen()
+            },
+            LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+            ).apply { topMargin = dp(12) },
+        )
+        content.addView(
+            menuButton(getString(R.string.picture_adjustments), MENU_TRACK_OFF, Color.WHITE) {
+                cancelSettingsEdits()
+                openPicturePanel()
+            },
+            LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(12) },
         )
 
         if (advancedAudioChannelMappingSupported) {
@@ -2015,6 +2137,96 @@ class CarPlayHostActivity : ComponentActivity() {
                 ViewGroup.LayoutParams.WRAP_CONTENT,
             ).apply { topMargin = dp(26) },
         )
+        content.addView(
+            settingsSwitchRow(
+                label = getString(R.string.settings_launcher_returns_to_carplay),
+                checked = overlayLauncherReturnsToCarPlay,
+                description = getString(R.string.settings_launcher_returns_to_carplay_description),
+            ) { checked -> overlayLauncherReturnsToCarPlay = checked },
+            LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+            ).apply { topMargin = dp(12) },
+        )
+
+        content.addView(
+            settingsCategoryHeader(getString(R.string.audio)),
+            LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+            ).apply { topMargin = dp(36) },
+        )
+        content.addView(
+            buildStepSliderSection(
+                title = getString(R.string.contrib_audio_home_media_channel_label),
+                values = AirPlayPersistence.AUDIO_CHANNELS.toList(),
+                selectedValue = overlayMediaChannel,
+                label = { "$it" },
+                onValueChanged = { value -> overlayMediaChannel = value },
+            ),
+            LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+            ).apply { topMargin = dp(12) },
+        )
+        content.addView(
+            buildStepSliderSection(
+                title = getString(R.string.contrib_audio_home_nav_channel_label),
+                values = AirPlayPersistence.AUDIO_CHANNELS.toList(),
+                selectedValue = overlayNavigationChannel,
+                label = { "$it" },
+                onValueChanged = { value -> overlayNavigationChannel = value },
+            ),
+            LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+            ).apply { topMargin = dp(12) },
+        )
+        content.addView(
+            settingsChoiceRow(
+                label = getString(R.string.music_buffer),
+                options = com.shilapi.xcertplay.media.MediaAudioBuffer.presets.map { millis ->
+                    millis to getString(
+                        when (millis) {
+                            500 -> R.string.s_500_ms
+                            1000 -> R.string.s_1000_ms_most_stable
+                            else -> R.string.s_300_ms_default
+                        },
+                    )
+                },
+                selected = overlayMediaBufferMillis,
+            ) { value -> overlayMediaBufferMillis = value },
+            LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+            ).apply { topMargin = dp(12) },
+        )
+        content.addView(
+            settingsSwitchRow(
+                label = getString(R.string.bt_suspend_during_carplay),
+                checked = overlayBtSuspend,
+                description = getString(R.string.bt_suspend_during_carplay_description),
+            ) { checked -> overlayBtSuspend = checked },
+            LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+            ).apply { topMargin = dp(12) },
+        )
+        content.addView(
+            settingsSwitchRow(
+                label = getString(R.string.smooth_video),
+                checked = overlaySmoothVideo,
+                description = getString(R.string.smooth_video_description),
+            ) { checked ->
+                overlaySmoothVideo = checked
+                appendLog("Smooth video ${if (checked) "enabled" else "disabled"}; applies when settings close")
+            },
+            LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+            ).apply { topMargin = dp(12) },
+        )
+
         content.addView(
             settingsCategoryHeader(getString(R.string.settings_display)),
             LinearLayout.LayoutParams(
@@ -2101,6 +2313,19 @@ class CarPlayHostActivity : ComponentActivity() {
         )
 
         content.addView(
+            settingsSwitchRow(
+                label = getString(R.string.side_panel_show),
+                checked = sidePanelShown,
+                enabled = sessionDisplay?.viewAreas?.sidePanel() != null,
+                description = getString(R.string.side_panel_settings_hint),
+            ) { checked -> showSidePanel(checked) },
+            LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+            ).apply { topMargin = dp(12) },
+        )
+
+        content.addView(
             buildSafeAreaSection(),
             LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
@@ -2132,7 +2357,7 @@ class CarPlayHostActivity : ComponentActivity() {
         )
 
         content.addView(
-            settingsCategoryHeader(getString(R.string.settings_advanced)),
+            settingsCategoryHeader(getString(R.string.settings_more)),
             LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT,
@@ -2346,6 +2571,18 @@ class CarPlayHostActivity : ComponentActivity() {
         AirPlayPersistence.saveManualHotspotSecurity(this, manualHotspotSecurity)
         AirPlayPersistence.saveLocationReportingEnabled(this, locationReportingEnabled)
         AirPlayPersistence.saveAutoStartOnBoot(this, autoStartOnBoot)
+        DiPlayPreferences.saveAutoConnect(this, overlayConnectOnOpen)
+        DiPlayPreferences.saveConnectOnPhoneBluetooth(this, overlayConnectOnBluetooth)
+        AirPlayPersistence.saveClusterTurnCardShowLanes(this, overlayShowLanes)
+        AirPlayPersistence.saveClusterTurnCardShowArrival(this, overlayShowArrival)
+        com.shilapi.xcertplay.hud.BydOutputSettings.setClusterStreamPause(this, overlayClusterMapOnlyNavi)
+        AirPlayPersistence.saveLauncherReturnsToCarPlay(this, overlayLauncherReturnsToCarPlay)
+        AirPlayPersistence.saveBtSuspendDuringCarplay(this, overlayBtSuspend)
+        AirPlayPersistence.saveSmoothVideo(this, overlaySmoothVideo)
+        AirPlayPersistence.saveMediaAudioChannel(this, overlayMediaChannel)
+        AirPlayPersistence.saveNavigationAudioChannel(this, overlayNavigationChannel)
+        AirPlayPersistence.saveMediaBufferMillis(this, overlayMediaBufferMillis)
+        AirPlayPersistence.saveCarPlayNightMode(this, carPlayNightMode)
         AirPlayPersistence.saveAdvancedAudioChannelMapping(this, advancedAudioChannelMapping)
         AirPlayPersistence.saveDisplayScaleTenths(this, displayScaleTenths)
         AirPlayPersistence.saveDisplayScalePercent(this, displayScalePercent)
@@ -3153,7 +3390,7 @@ class CarPlayHostActivity : ComponentActivity() {
             },
         ) { label, checked, onChanged ->
             section.addView(
-                settingsSwitchRow(getString(label), checked, getString(label), onChanged),
+                settingsSwitchRow(getString(label), checked, getString(label), onChanged = onChanged),
                 LinearLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.WRAP_CONTENT,
@@ -3337,6 +3574,7 @@ class CarPlayHostActivity : ComponentActivity() {
         label: String,
         checked: Boolean,
         description: String,
+        enabled: Boolean = true,
         onChanged: (Boolean) -> Unit,
     ): View = SettingsWidgets.createSwitchRow(
         context = this,
@@ -3345,6 +3583,7 @@ class CarPlayHostActivity : ComponentActivity() {
         checked = checked,
         theme = settingsOverlayTheme,
         contentDescription = description,
+        enabled = enabled,
         onChanged = onChanged,
     ).rowView
 

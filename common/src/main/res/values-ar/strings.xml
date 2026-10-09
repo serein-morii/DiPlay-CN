@@ -97,6 +97,7 @@
     <string name="common_cancel">إلغاء</string>
     <string name="a_familiar_drive">رحلة مألوفة.</string>
     <string name="a_previous_wi_fi_direct_connection_is_still_running_reset">ما زال اتصال Wi-Fi Direct السابق قيد التشغيل. أعد ضبطه للاتصال.</string>
+    <string name="settings_more">المزيد</string>
     <string name="about">حول</string>
     <string name="about_diplay">حول DiPlay</string>
     <string name="active">نشط</string>
@@ -616,6 +617,7 @@
     <string name="carplay_call_controls_experimental">أزرار مكالمات CarPlay (تجريبي)</string>
     <string name="carplay_call_controls_experimental_description">تفعيل أزرار المكالمات والصوت والتشغيل/الإيقاف المؤقت غير المتحقق منها في DiLink 3. لا يزال يلزم اختبارها في السيارة. معطلة افتراضيًا؛ بطاقات مكالمات لوحة العدادات لها إعداد منفصل.</string>
     <string name="side_panel">لوحة جانبية بجوار CarPlay (تجريبي)</string>
+    <string name="side_panel_settings_hint">يعرض لوحة DiPlay بجانب CarPlay عندما يعلنها الاتصال الحالي؛ بدون لوحة جانبية يظهر المفتاح معطّلًا.</string>
     <string name="side_panel_description">يمكن نقل CarPlay إلى ثلثي الشاشة بينما يعرض DiPlay لوحة في الباقي: على جانب الراكب في الشاشة الأفقية، وفي الأسفل في الشاشة العمودية (الساعة، والبطارية إذا تمت قراءتها). أظهرها وأخفها من قائمة الجلسة. يُطبَّق عند الاتصال التالي.</string>
     <string name="side_panel_show">اللوحة الجانبية</string>
     <string name="side_panel_full_screen">⤢ ملء الشاشة</string>

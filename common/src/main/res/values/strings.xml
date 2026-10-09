@@ -360,6 +360,7 @@
     <string name="settings_display">Display</string>
     <string name="settings_navigation">Navigation</string>
     <string name="settings_vehicle">Vehicle</string>
+    <string name="settings_more">More</string>
     <string name="settings_advanced">Advanced</string>
     <string name="settings_advanced_subtitle">Experimental and vehicle-specific controls for experienced users.</string>
     <string name="settings_advanced_caution_title">Change with care</string>
@@ -713,6 +714,7 @@
     <string name="carplay_call_controls_experimental">CarPlay call keys (experimental)</string>
     <string name="carplay_call_controls_experimental_description">Opt in to unverified DiLink 3 call, voice and play/pause keys. Vehicle testing is still required. Disabled by default; dashboard call cards are a separate setting.</string>
     <string name="side_panel">Side panel next to CarPlay (experimental)</string>
+    <string name="side_panel_settings_hint">Shows DiPlay\’s panel beside CarPlay when this session declared one; unavailable sessions are greyed out.</string>
     <string name="side_panel_description">CarPlay can move to two thirds of the screen while DiPlay shows a panel in the rest: on the passenger\'s side of a landscape screen, at the bottom of a portrait one (clock and, where it is read, the battery). Show and hide it from the in-session menu. Applies at the next connection.</string>
     <string name="side_panel_show">Side panel</string>
     <string name="side_panel_full_screen">⤢ Full screen</string>

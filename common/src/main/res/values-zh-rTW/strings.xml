@@ -90,6 +90,7 @@
     <string name="settings_mfi_address_hint">位址必須以 http\:// 或 https\:// 開頭。權杖為選用項目，將以 Authorization bearer token 傳送。</string>
     <string name="a_familiar_drive">熟悉的駕駛體驗。</string>
     <string name="a_previous_wi_fi_direct_connection_is_still_running_reset">先前的 Wi-Fi Direct 連線仍在執行。請重設後再連線。</string>
+    <string name="settings_more">更多</string>
     <string name="about">關於</string>
     <string name="about_diplay">關於 DiPlay</string>
     <string name="active">已啟用</string>
@@ -685,6 +686,7 @@
     <string name="manual_grant_reason_adboff">此車機尚未啟用本機 ADB（連接埠 5555）。\n您可以在系統設定中手動啟用無障礙服務，或啟用網路 ADB。</string>
     <string name="retry_auto_grant">重試自動授權</string>
     <string name="side_panel">CarPlay 旁的側邊面板（實驗性）</string>
+    <string name="side_panel_settings_hint">本次連線宣告了側欄時，可在 CarPlay 旁顯示 DiPlay 面板；沒有側欄時開關置灰。</string>
     <string name="side_panel_description">CarPlay 可移至螢幕的三分之二，其餘位置顯示 DiPlay 面板：橫向螢幕時位於乘客側，直向螢幕時位於底部（顯示時鐘，以及可讀取時的電量）。可在連線期間的選單中顯示或隱藏。下次連線時生效。</string>
     <string name="side_panel_full_screen">⤢ 全螢幕</string>
     <string name="side_panel_show">側邊面板</string>

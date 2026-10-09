@@ -91,6 +91,7 @@
     <string name="settings_mfi_address_hint">地址必须以 http:// 或 https:// 开头。令牌为可选项，将作为 Authorization bearer token 发送。</string>
     <string name="a_familiar_drive">熟悉的驾乘体验。</string>
     <string name="a_previous_wi_fi_direct_connection_is_still_running_reset">之前的 Wi-Fi Direct 连接仍在运行。请重置后再连接。</string>
+    <string name="settings_more">更多</string>
     <string name="about">关于</string>
     <string name="about_diplay">关于 DiPlay</string>
     <string name="active">已启用</string>
@@ -676,6 +677,7 @@
     <string name="carplay_call_controls_experimental">CarPlay 通话按键（实验性）</string>
     <string name="carplay_call_controls_experimental_description">启用尚未验证的 DiLink 3 通话、语音和播放/暂停按键。仍需实车测试。默认关闭；仪表通话卡片为独立设置。</string>
     <string name="side_panel">CarPlay 旁的侧边面板（实验性）</string>
+    <string name="side_panel_settings_hint">本次连接声明了侧栏时，可在 CarPlay 旁显示 DiPlay 面板；没有侧栏时开关置灰。</string>
     <string name="side_panel_description">CarPlay 可移到屏幕的三分之二，DiPlay 在其余部分显示自己的面板：横屏时在乘客一侧，竖屏时在底部（时钟，以及已读取时的电量）。可在会话菜单中显示或隐藏。下次连接时生效。</string>
     <string name="side_panel_show">侧边面板</string>
     <string name="side_panel_full_screen">⤢ 全屏</string>

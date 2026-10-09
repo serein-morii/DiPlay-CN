@@ -55,14 +55,14 @@ internal data class DiPlayPalette(
             focusRing = Color.rgb(166, 200, 255),
             systemBar = Color.rgb(12, 17, 27),
             systemBarIconsAreDark = false,
-            overlayBackground = Color.rgb(12, 16, 19),
-            overlayPrimaryText = Color.WHITE,
-            overlaySecondaryText = Color.rgb(170, 180, 190),
-            overlayAccent = Color.rgb(127, 205, 154),
-            overlayOnAccent = Color.rgb(8, 17, 11),
-            overlayAccentTrack = Color.rgb(78, 143, 102),
-            overlayTrackOff = Color.rgb(64, 74, 80),
-            overlayDanger = Color.rgb(190, 45, 45),
+            overlayBackground = Color.rgb(19, 31, 46),
+            overlayPrimaryText = Color.rgb(240, 246, 255),
+            overlaySecondaryText = Color.rgb(144, 163, 188),
+            overlayAccent = Color.rgb(39, 136, 251),
+            overlayOnAccent = Color.rgb(9, 20, 33),
+            overlayAccentTrack = Color.rgb(23, 74, 135),
+            overlayTrackOff = Color.rgb(71, 90, 113),
+            overlayDanger = Color.rgb(240, 115, 115),
         )
 
         val LIGHT = DiPlayPalette(
