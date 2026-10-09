@@ -1,0 +1,14 @@
+<resources>
+    <string name="connect_when_iphone_bluetooth_connects">الاتصال عند عودة اتصال iPhone المحدد</string>
+    <string name="connect_when_iphone_bluetooth_connects_description">بعد تنشيط السيارة، افتح DiPlay وشغّل CarPlay اللاسلكي عند اتصال iPhone المحدد عبر Bluetooth. قد تمنع بعض الأجهزة التشغيل في الخلفية.</string>
+    <string name="connection_stage_diagnostic_hint">إذا طال الانتظار، ارجع إلى الصفحة الرئيسية واحفظ تقرير التشخيص.</string>
+    <string name="connection_stage_bluetooth_hint">تأكد من قرب iPhone المحدد وفتح قفله واتصاله ببلوتوث السيارة.</string>
+    <string name="connection_stage_wifi_hint">أبقِ Wi-Fi قيد التشغيل في السيارة وiPhone أثناء إنشاء الاتصال.</string>
+    <string name="connection_stage_session_hint">اتصل الجهازان. جارٍ انتظار جلسة CarPlay وأول صورة.</string>
+    <string name="connection_stage_usb_hint">افتح قفل iPhone واسمح بطلب USB أو الثقة إذا ظهر.</string>
+    <string name="connection_stage_failed_hint">اضغط إعادة المحاولة. إذا فشل مجدداً، احفظ تقرير التشخيص من الصفحة الرئيسية.</string>
+    <string name="card_preview_title">معاينة موضع بطاقة الانعطاف</string>
+    <string name="card_preview_full">شاشة كاملة</string>
+    <string name="card_preview_small">نافذة صغيرة</string>
+    <string name="card_preview_note">موضع نسبي على لوحة العدادات كاملة. تختلف حدود النافذة الصغيرة حسب السيارة.</string>
+</resources>

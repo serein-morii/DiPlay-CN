@@ -1,0 +1,14 @@
+<resources>
+    <string name="connect_when_iphone_bluetooth_connects">Conectar al volver a enlazar el iPhone seleccionado</string>
+    <string name="connect_when_iphone_bluetooth_connects_description">Al despertar el coche, abrir DiPlay e iniciar CarPlay inalámbrico cuando el iPhone seleccionado se conecte por Bluetooth. Algunas unidades restringen el inicio en segundo plano.</string>
+    <string name="connection_stage_diagnostic_hint">Si tarda demasiado, vuelva a inicio y guarde un informe de diagnóstico.</string>
+    <string name="connection_stage_bluetooth_hint">Compruebe que el iPhone seleccionado esté cerca, desbloqueado y conectado al Bluetooth del coche.</string>
+    <string name="connection_stage_wifi_hint">Mantenga el Wi-Fi activado en el coche y el iPhone mientras se establece la conexión.</string>
+    <string name="connection_stage_session_hint">Los dispositivos están conectados. Esperando la sesión de CarPlay y la primera imagen.</string>
+    <string name="connection_stage_usb_hint">Desbloquee el iPhone y acepte la solicitud de USB o confianza si aparece.</string>
+    <string name="connection_stage_failed_hint">Pulse Reintentar conexión. Si vuelve a fallar, guarde un informe desde inicio.</string>
+    <string name="card_preview_title">Vista previa de la tarjeta de giro</string>
+    <string name="card_preview_full">Pantalla completa</string>
+    <string name="card_preview_small">Ventana pequeña</string>
+    <string name="card_preview_note">Posición proporcional en el cuadro completo. El borde real de la ventana pequeña depende del coche.</string>
+</resources>

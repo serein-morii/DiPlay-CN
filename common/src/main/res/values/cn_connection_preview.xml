@@ -1,0 +1,14 @@
+<resources>
+    <string name="connect_when_iphone_bluetooth_connects">Connect when the selected iPhone reconnects</string>
+    <string name="connect_when_iphone_bluetooth_connects_description">After the car wakes, open DiPlay and start wireless CarPlay when the selected iPhone connects over Bluetooth. Some head units restrict background launches.</string>
+    <string name="connection_stage_diagnostic_hint">If this takes too long, return to the home screen and save a diagnostic report.</string>
+    <string name="connection_stage_bluetooth_hint">Check that the selected iPhone is nearby, unlocked, and connected to the car over Bluetooth.</string>
+    <string name="connection_stage_wifi_hint">Keep Wi-Fi on for both the car and iPhone while the wireless link starts.</string>
+    <string name="connection_stage_session_hint">The devices are connected. Waiting for the CarPlay session and first picture.</string>
+    <string name="connection_stage_usb_hint">Unlock the iPhone and allow the USB or trust prompt if it appears.</string>
+    <string name="connection_stage_failed_hint">DiPlay will retry. If retries stop, use Retry connection; repeated failures can be saved in a diagnostic report.</string>
+    <string name="card_preview_title">Turn-card placement preview</string>
+    <string name="card_preview_full">Full screen</string>
+    <string name="card_preview_small">Small window</string>
+    <string name="card_preview_note">Proportional position on the full cluster panel. The actual small-window edge varies by car.</string>
+</resources>

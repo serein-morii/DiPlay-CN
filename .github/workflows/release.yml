@@ -1,0 +1,153 @@
+name: Release Chinese APK
+
+on:
+  push:
+    tags:
+      - 'v*-cn.*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      OFFICIAL_APK_URL: https://github.com/shihabal3amri/DiPlay/releases/download/v0.2.14/DiPlay-0.2.14.apk
+      OFFICIAL_APK_SHA256: 62b31f79db32bc7c85013ae830460b697a5952fad571ed0030b97341dde0b2e3
+    steps:
+      - uses: actions/checkout@v4
+      - name: Reject credential files in public source
+        run: python3 scripts/check_public_tree.py
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools platforms;android-37.0 build-tools;36.0.0 ndk;28.2.13676358
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Provision runtime identity from official v0.2.14 APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          apk="$RUNNER_TEMP/DiPlay-0.2.14.apk"
+          assets="$RUNNER_TEMP/auth-assets"
+          curl -fsSL -o "$apk" "$OFFICIAL_APK_URL"
+          python3 scripts/extract_official_identity.py "$apk" "$assets" "$OFFICIAL_APK_SHA256"
+          echo "DIPLAY_AUTH_ASSETS_DIR=$assets" >> "$GITHUB_ENV"
+      - name: The release notes must use the version placeholder
+        run: grep -q '{{VERSION}}' docs/GITHUB_RELEASE.md
+      - name: The tag must match the app versionName
+        run: |
+          version=$(grep -o 'versionName = "[^"]*"' mobile/build.gradle.kts | cut -d'"' -f2)
+          tag="${GITHUB_REF_NAME#v}"
+          if [ "$version" != "$tag" ]; then
+            echo "::error::tag $GITHUB_REF_NAME does not match versionName $version"
+            exit 1
+          fi
+      - name: Test and build standalone release APK
+        run: ./gradlew :shared:testDebugUnitTest :common:testDebugUnitTest :mobile:lintRelease :mobile:assembleStandaloneRelease --stacktrace > gradle.log 2>&1 || { cat gradle.log | tail -120; exit 1; }
+      - name: Verify identity is inside the APK and not in git
+        run: |
+          set -euo pipefail
+          python3 scripts/check_public_tree.py
+          python3 scripts/verify_apk_identity.py mobile/build/outputs/apk/release/mobile-release.apk
+      - name: Prepare release files
+        shell: bash
+        run: |
+          set -euo pipefail
+          apk="DiPlay-cn-${GITHUB_REF_NAME}.apk"
+          cp mobile/build/outputs/apk/release/mobile-release.apk "$apk"
+          sha256sum "$apk" > "$apk.sha256"
+          cp docs/GITHUB_RELEASE.md release-notes.md
+          sed -i "s/{{VERSION}}/${GITHUB_REF_NAME#v}/g" release-notes.md
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          apk="DiPlay-cn-${GITHUB_REF_NAME}.apk"
+          gh release delete "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --yes || true
+          gh release create "$GITHUB_REF_NAME" \
+            "$apk#DiPlay CN" \
+            "$apk.sha256#SHA-256" \
+            --repo "$GITHUB_REPOSITORY" \
+            --verify-tag \
+            --title "DiPlay CN ${GITHUB_REF_NAME#v}" \
+            --notes-file release-notes.md
+      - name: Sync APK to Gitee
+        env:
+          GITEE_TOKEN: ${{ secrets.GITEE_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -z "${GITEE_TOKEN:-}" ]; then
+            echo "::error::GITEE_TOKEN secret is not configured"
+            exit 1
+          fi
+          api="https://gitee.com/api/v5/repos/oneeyear/DiPlay-CN"
+          id="$(curl -fsS "$api/releases/tags/$GITHUB_REF_NAME?access_token=$GITEE_TOKEN" | python3 -c 'import json,sys; print(json.load(sys.stdin).get("id") or "")' || true)"
+          if [ -z "$id" ]; then
+            code="$(curl -sS -o /tmp/gitee-create.json -w '%{http_code}' -X POST "$api/releases" \
+              --data-urlencode "access_token=$GITEE_TOKEN" \
+              --data-urlencode "tag_name=$GITHUB_REF_NAME" \
+              --data-urlencode "name=DiPlay CN ${GITHUB_REF_NAME#v}" \
+              --data-urlencode "target_commitish=main" \
+              --data-urlencode "body=$(cat release-notes.md)")"
+            id="$(python3 -c 'import json; print(json.load(open("/tmp/gitee-create.json")).get("id") or "")' 2>/dev/null || true)"
+            if [ -z "$id" ]; then
+              echo "::warning::Gitee release creation failed (HTTP $code): $(head -c 400 /tmp/gitee-create.json 2>/dev/null)"
+            fi
+          fi
+          if [ -z "$id" ]; then
+            echo "::error::could not create or find the Gitee release"
+            exit 1
+          fi
+          verify_asset() {
+            local file="$1" url downloaded
+            url="$(curl -fsS --retry 3 --max-time 30 "$api/releases/tags/$GITHUB_REF_NAME" |
+              python3 -c 'import json,sys; name=sys.argv[1]; assets=json.load(sys.stdin).get("assets", []); print(next((a.get("browser_download_url", "") for a in assets if a.get("name") == name), ""))' "$file")"
+            [ -n "$url" ] || return 1
+            downloaded="$(mktemp)"
+            if ! curl -fsSL --retry 3 --max-time 600 "$url" -o "$downloaded"; then
+              rm -f "$downloaded"
+              return 1
+            fi
+            if ! cmp -s "$file" "$downloaded"; then
+              rm -f "$downloaded"
+              echo "::error::Gitee asset $file differs from the GitHub release artifact"
+              exit 1
+            fi
+            rm -f "$downloaded"
+          }
+          for f in "DiPlay-cn-$GITHUB_REF_NAME.apk" "DiPlay-cn-$GITHUB_REF_NAME.apk.sha256"; do
+            if verify_asset "$f"; then
+              echo "Gitee asset already verified: $f"
+              continue
+            fi
+            ok=""
+            for attempt in 1 2 3; do
+              if curl -fsS --max-time 600 -X POST "$api/releases/$id/attach_files" \
+                  -F "access_token=$GITEE_TOKEN" -F "file=@$f" >/dev/null; then
+                ok=1; break
+              fi
+              echo "attach $f attempt $attempt failed; retrying in 15s"
+              sleep 15
+            done
+            if [ -z "$ok" ]; then
+              echo "::error::attaching $f failed after retries"
+              exit 1
+            fi
+            verified=""
+            for attempt in 1 2 3; do
+              if verify_asset "$f"; then verified=1; break; fi
+              sleep 10
+            done
+            if [ -z "$verified" ]; then
+              echo "::error::Gitee asset $f could not be downloaded and verified"
+              exit 1
+            fi
+          done
+          echo "Gitee release assets verified: id=$id"

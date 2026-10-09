@@ -6,8 +6,8 @@ This public preview is an independent receiver, not an Apple-certified CarPlay a
 | --- | --- |
 | Head unit | Android 7.1+ (API 25+) APK; Android 7.1–8.1 support is not yet confirmed on a vehicle, and Android 7.x has no local-only hotspot (use the car hotspot, Wi-Fi Direct or Existing Wi-Fi); Android 7.0 and older are unsupported; Wi-Fi Direct has a firmware-dependent legacy Android 7.1–9 path with unverified requested frequency, and modern verified frequency on Android 10+ |
 | Phone | Standard, non-jailbroken iPhone with CarPlay enabled; device/iOS compatibility varies |
-| Physical evidence | Previous private builds: wired and wireless picture, touch and audio confirmed on the development car with iPhone XS / iOS 18.7.10 |
-| Other cars | Mixed community reports across DiLink generations; not a certified model support list |
+| Physical evidence | CN field testing is on a **2025 BYD Han DM-i with DiLink 5.0**. Other models and other head-unit systems are not guaranteed; test on your car or adapt the source. Earlier private builds also confirmed wired/wireless picture, touch and audio on the development car with iPhone XS / iOS 18.7.10. |
+| Other cars | Mixed community reports across DiLink generations; not a certified model support list. Features that work on the Han DM-i / DiLink 5.0 may fail elsewhere. |
 | 0.2.14 evidence | Automated source/build validation and attributed contributor tests; no new complete-release vehicle test or universal model support is claimed. Earlier DiLink5.1 HUD/hotspot results remain historical evidence. |
 | Wi-Fi | Auto uses eligible saved/aligned channels; beside a 5 GHz station, explicit 2.4 GHz precedes other 5 GHz/unpinned default fallbacks. Manual channels stay explicit; no band/performance guarantee. |
 | Video | Default H.264 / 30 fps; 60 fps and HEVC increase device-specific demands |

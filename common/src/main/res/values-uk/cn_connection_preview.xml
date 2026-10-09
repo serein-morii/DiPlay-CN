@@ -1,0 +1,14 @@
+<resources>
+    <string name="connect_when_iphone_bluetooth_connects">Підключати після повторного з’єднання вибраного iPhone</string>
+    <string name="connect_when_iphone_bluetooth_connects_description">Після пробудження авто відкривати DiPlay і запускати бездротовий CarPlay, коли вибраний iPhone підключиться через Bluetooth. Деякі пристрої обмежують фоновий запуск.</string>
+    <string name="connection_stage_diagnostic_hint">Якщо очікування затягнулося, поверніться на головну та збережіть звіт діагностики.</string>
+    <string name="connection_stage_bluetooth_hint">Переконайтеся, що вибраний iPhone поруч, розблокований і підключений до Bluetooth авто.</string>
+    <string name="connection_stage_wifi_hint">Не вимикайте Wi-Fi в авто та на iPhone під час підключення.</string>
+    <string name="connection_stage_session_hint">Пристрої підключено. Очікування сеансу CarPlay і першого кадру.</string>
+    <string name="connection_stage_usb_hint">Розблокуйте iPhone і підтвердьте USB або довіру, якщо з’явиться запит.</string>
+    <string name="connection_stage_failed_hint">Натисніть повторне підключення. Якщо знову не вдасться, збережіть звіт на головній.</string>
+    <string name="card_preview_title">Попередній перегляд картки повороту</string>
+    <string name="card_preview_full">Повний екран</string>
+    <string name="card_preview_small">Мале вікно</string>
+    <string name="card_preview_note">Положення показано відносно всієї панелі. Межа малого вікна залежить від авто.</string>
+</resources>

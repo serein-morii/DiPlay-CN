@@ -34,7 +34,7 @@ class Iap2RouteGuidanceSubscriptionTest {
 
         assertEquals(0x5200, frame.messageId)
         assertArrayEquals(
-            byteArrayOf(0, 6, 0, 0, 0, 42, 0, 4, 0, 1, 0, 4, 0, 2),
+            byteArrayOf(0, 6, 0, 0, 0, 42, 0, 4, 0, 1, 0, 4, 0, 2, 0, 4, 0, 3),
             frame.payload,
         )
     }

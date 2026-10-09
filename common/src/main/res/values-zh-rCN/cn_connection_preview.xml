@@ -1,0 +1,14 @@
+<resources>
+    <string name="connect_when_iphone_bluetooth_connects">已选 iPhone 重连蓝牙时自动连接</string>
+    <string name="connect_when_iphone_bluetooth_connects_description">车机唤醒后，已选 iPhone 连上蓝牙时打开 DiPlay 并启动无线 CarPlay。部分车机会限制后台启动。</string>
+    <string name="connection_stage_diagnostic_hint">如果长时间停在这里，可返回首页保存诊断报告。</string>
+    <string name="connection_stage_bluetooth_hint">确认已选 iPhone 在附近、已解锁，并已连接车机蓝牙。</string>
+    <string name="connection_stage_wifi_hint">无线连接建立期间，请保持车机和 iPhone 的 Wi-Fi 开启。</string>
+    <string name="connection_stage_session_hint">设备已连接，正在等待 CarPlay 会话和第一帧画面。</string>
+    <string name="connection_stage_usb_hint">解锁 iPhone，并在出现提示时允许 USB 连接或信任车机。</string>
+    <string name="connection_stage_failed_hint">DiPlay 会自动重试；若停止重试，可点击“重试连接”。反复失败时请从首页保存诊断报告。</string>
+    <string name="card_preview_title">转向卡位置预览</string>
+    <string name="card_preview_full">全屏</string>
+    <string name="card_preview_small">小屏</string>
+    <string name="card_preview_note">按整块仪表面板比例示意位置；实际小屏边界因车型而异。</string>
+</resources>

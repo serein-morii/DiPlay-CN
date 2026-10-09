@@ -29,6 +29,7 @@ object ClusterTurnCardOverlay {
 
     const val DEFAULT_SIZE_PERCENT = 55
 
+
     fun card(
         panelWidth: Int,
         panelHeight: Int,

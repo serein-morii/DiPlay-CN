@@ -22,7 +22,7 @@ import com.shilapi.xcertplay.hud.ClusterTurnGuidance
  *
  * Visual language follows Apple's turn banners: a dark glass capsule with a hairline stroke,
  * the maneuver glyph in a soft chip on the left, distance and road stacked on the right.
- * Maneuver glyphs are Material Symbols (Apache 2.0), tinted the system blue; the roundabout
+     * Maneuver glyphs are Material Symbols (Apache 2.0), tinted white; the roundabout
  * exit number sits in a small badge on the glyph.
  */
 internal class ClusterTurnCardView(context: Context) : View(context) {
@@ -31,6 +31,8 @@ internal class ClusterTurnCardView(context: Context) : View(context) {
     private var xPercent = ClusterTurnCardOverlay.DEFAULT_X_PERCENT
     private var yPercent = ClusterTurnCardOverlay.DEFAULT_Y_PERCENT
     private var sizePercent = ClusterTurnCardOverlay.DEFAULT_SIZE_PERCENT
+    private var showLanes = true
+    private var showArrival = true
 
     private val accent = Color.rgb(10, 132, 255)
     /** Card opacity as percent; 100 keeps the historical fully-opaque look available. */
@@ -56,10 +58,10 @@ internal class ClusterTurnCardView(context: Context) : View(context) {
         color = Color.argb(224, 235, 235, 240); typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
     }
     private val rect = RectF()
+    init { applyPalette() }
+
     private var glyph: Drawable? = null
     private var glyphTag: Int = -1
-
-    init { applyPalette() }
 
     fun setLayout(xPercent: Int, yPercent: Int, sizePercent: Int) {
         this.xPercent = xPercent
@@ -91,19 +93,31 @@ internal class ClusterTurnCardView(context: Context) : View(context) {
             glassPaint.color = Color.argb(alpha, 12, 14, 18)
             chipPaint.color = Color.argb((alpha * 0.18f).toInt().coerceAtLeast(12), 255, 255, 255)
             strokePaint.color = Color.argb((alpha * 0.16f).toInt().coerceAtLeast(10), 255, 255, 255)
-            distancePaint.color = Color.argb(255, 240, 242, 246)
-            roadPaint.color = Color.argb(179, 176, 182, 192)
-            infoPaint.color = Color.argb(224, 226, 228, 236)
+            distancePaint.color = Color.WHITE
+            roadPaint.color = Color.argb(245, 248, 248, 252)
+            infoPaint.color = Color.WHITE
             badgePaint.color = accent
         } else {
             glassPaint.color = Color.argb(alpha, 28, 28, 30)
             chipPaint.color = Color.argb((alpha * 0.18f).toInt().coerceAtLeast(12), 255, 255, 255)
             strokePaint.color = Color.argb((alpha * 0.15f).toInt().coerceAtLeast(10), 255, 255, 255)
             distancePaint.color = Color.WHITE
-            roadPaint.color = Color.argb(179, 199, 199, 204)
-            infoPaint.color = Color.argb(224, 235, 235, 240)
+            roadPaint.color = Color.argb(245, 248, 248, 252)
+            infoPaint.color = Color.WHITE
             badgePaint.color = accent
         }
+    }
+
+    fun setShowLanes(enabled: Boolean) {
+        if (enabled == showLanes) return
+        showLanes = enabled
+        invalidate()
+    }
+
+    fun setShowArrival(enabled: Boolean) {
+        if (enabled == showArrival) return
+        showArrival = enabled
+        invalidate()
     }
 
     fun setGuidance(next: ClusterTurnGuidance?) {
@@ -161,7 +175,61 @@ internal class ClusterTurnCardView(context: Context) : View(context) {
                 textLeft, card.top + h * 0.72f, roadPaint,
             )
         }
-        drawInfoStrip(canvas, next, card.left, (card.top + h).toInt(), w.toInt(), h.toInt())
+        var below = (card.top + h).toInt()
+        below = drawLaneStrip(canvas, next, card.left, below, w.toInt(), h.toInt())
+        drawInfoStrip(canvas, next, card.left, below, w.toInt(), h.toInt())
+    }
+
+    /** Lane arrows sit under the instruction card and above the arrival strip. */
+    private fun drawLaneStrip(canvas: Canvas, next: ClusterTurnGuidance, left: Int, belowTop: Int, width: Int, cardHeight: Int): Int {
+        if (!showLanes || next.lanes.isEmpty()) return belowTop
+        val count = next.lanes.size.coerceAtMost(8)
+        val h = (cardHeight * 0.38f).coerceAtLeast(28f)
+        val gap = cardHeight * 0.05f
+        val top = (belowTop + gap).coerceAtMost(height - h)
+        val stripWidth = width
+        val stripLeft = left.toFloat()
+        rect.set(stripLeft, top, stripLeft + stripWidth, top + h)
+        canvas.drawRoundRect(rect, h / 2f, h / 2f, glassPaint)
+        canvas.drawRoundRect(rect, h / 2f, h / 2f, strokePaint)
+        val cell = stripWidth / count.toFloat()
+        val arrowH = h * 0.55f
+        val highlight = next.laneHighlight
+        for (index in 0 until count) {
+            val cx = stripLeft + cell * index + cell / 2f
+            val cy = top + h * 0.52f
+            val on = highlight < 0 || index == highlight
+            drawLaneArrow(canvas, cx, cy, arrowH, next.lanes[index], on)
+        }
+        return (top + h).toInt()
+    }
+
+    private fun drawLaneArrow(canvas: Canvas, cx: Float, cy: Float, size: Float, kind: Int, on: Boolean) {
+        val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = if (on) Color.WHITE else Color.argb(90, 255, 255, 255)
+            style = Paint.Style.STROKE
+            strokeWidth = size * 0.16f
+            strokeCap = Paint.Cap.ROUND
+            strokeJoin = Paint.Join.ROUND
+        }
+        val half = size / 2f
+        when (kind) {
+            2 -> {
+                canvas.drawLine(cx + half * 0.35f, cy, cx - half * 0.25f, cy, paint)
+                canvas.drawLine(cx - half * 0.25f, cy, cx - half * 0.05f, cy - half * 0.35f, paint)
+                canvas.drawLine(cx - half * 0.25f, cy, cx - half * 0.05f, cy + half * 0.35f, paint)
+            }
+            3 -> {
+                canvas.drawLine(cx - half * 0.35f, cy, cx + half * 0.25f, cy, paint)
+                canvas.drawLine(cx + half * 0.25f, cy, cx + half * 0.05f, cy - half * 0.35f, paint)
+                canvas.drawLine(cx + half * 0.25f, cy, cx + half * 0.05f, cy + half * 0.35f, paint)
+            }
+            else -> {
+                canvas.drawLine(cx, cy + half * 0.4f, cx, cy - half * 0.35f, paint)
+                canvas.drawLine(cx, cy - half * 0.35f, cx - half * 0.28f, cy - half * 0.05f, paint)
+                canvas.drawLine(cx, cy - half * 0.35f, cx + half * 0.28f, cy - half * 0.05f, paint)
+            }
+        }
     }
 
     /** The arrival/duration/distance pill that hangs under the card, like the stock nav bar. */
@@ -196,6 +264,7 @@ internal class ClusterTurnCardView(context: Context) : View(context) {
     private fun dp(value: Float): Float = value * resources.displayMetrics.density
 
     private fun infoParts(next: ClusterTurnGuidance): List<String> {
+        if (!showArrival) return emptyList()
         val parts = mutableListOf<String>()
         next.arrivalEpochSeconds?.takeIf { it > 0 }?.let { epoch ->
             val time = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date(epoch * 1000L))
@@ -218,10 +287,9 @@ internal class ClusterTurnCardView(context: Context) : View(context) {
 
     /** Draws the tinted Material Symbols glyph; the roundabout exit number gets a corner badge. */
     private fun drawGlyph(canvas: Canvas, next: ClusterTurnGuidance, left: Float, top: Float, side: Float, exit: Int?) {
-        if (next.icon == 0) return
         val resId = glyphRes(next.icon)
         if (resId != glyphTag) {
-            glyph = ContextCompat.getDrawable(context, resId)?.mutate()?.apply { setTint(accent) }
+            glyph = ContextCompat.getDrawable(context, resId)?.mutate()?.apply { setTint(Color.WHITE) }
             glyphTag = resId
         }
         val inset = side * 0.10f

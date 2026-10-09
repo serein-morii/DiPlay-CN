@@ -1,0 +1,76 @@
+name: Gitee attach
+
+# Manual fallback when the release workflow's own Gitee sync stalls.
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Published GitHub release tag (for example v0.2.15-cn.3)'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  attach:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Attach release assets to Gitee
+        env:
+          GITEE_TOKEN: ${{ secrets.GITEE_TOKEN }}
+          TAG: ${{ inputs.tag }}
+        run: |
+          set -euo pipefail
+          [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+-cn\.[0-9]+$ ]] || {
+            echo "::error::invalid release tag: $TAG"; exit 1;
+          }
+          [ -n "${GITEE_TOKEN:-}" ] || { echo "::error::GITEE_TOKEN is missing"; exit 1; }
+          api="https://gitee.com/api/v5/repos/oneeyear/DiPlay-CN"
+          apk="DiPlay-cn-$TAG.apk"
+          base="https://github.com/serein-morii/DiPlay-CN/releases/download/$TAG"
+          curl -fsSL --retry 5 -o "$apk" "$base/$apk"
+          curl -fsSL --retry 5 -o "$apk.sha256" "$base/$apk.sha256"
+          expected=$(cut -d' ' -f1 "$apk.sha256")
+          actual=$(sha256sum "$apk" | cut -d' ' -f1)
+          [ "$expected" = "$actual" ] || { echo "::error::downloaded APK hash mismatch"; exit 1; }
+          id="$(curl -fsS "$api/releases/tags/$TAG?access_token=$GITEE_TOKEN" | python3 -c 'import json,sys; print(json.load(sys.stdin).get("id") or "")' || true)"
+          if [ -z "$id" ]; then
+            code="$(curl -sS -o /tmp/gitee-create.json -w '%{http_code}' -X POST "$api/releases" \
+              --data-urlencode "access_token=$GITEE_TOKEN" \
+              --data-urlencode "tag_name=$TAG" \
+              --data-urlencode "name=DiPlay CN ${TAG#v}" \
+              --data-urlencode "target_commitish=main" \
+              --data-urlencode "body=See https://github.com/serein-morii/DiPlay-CN/releases/tag/$TAG")"
+            id="$(python3 -c 'import json; print(json.load(open("/tmp/gitee-create.json")).get("id") or "")' 2>/dev/null || true)"
+            [ -n "$id" ] || { echo "::error::Gitee release creation failed (HTTP $code)"; exit 1; }
+          fi
+          verify_asset() {
+            local file="$1" downloaded
+            downloaded="$(mktemp)"
+            if curl -fsSL --retry 2 --max-time 600 \
+                -o "$downloaded" "https://gitee.com/oneeyear/DiPlay-CN/releases/download/$TAG/$file" && \
+                cmp -s "$file" "$downloaded"; then
+              rm -f "$downloaded"
+              return 0
+            fi
+            rm -f "$downloaded"
+            return 1
+          }
+          for f in "$apk.sha256" "$apk"; do
+            if verify_asset "$f"; then echo "Gitee asset already verified: $f"; continue; fi
+            ok=""
+            for attempt in 1 2 3 4 5; do
+              if curl -fsS --max-time 600 -X POST "$api/releases/$id/attach_files" \
+                  -F "access_token=$GITEE_TOKEN" -F "file=@$f" >/dev/null || verify_asset "$f"; then
+                ok=1; break
+              fi
+              echo "attach $f attempt $attempt failed; retrying in 15s"
+              sleep 15
+            done
+            [ -n "$ok" ] || { echo "::error::attaching $f failed after retries"; exit 1; }
+            verify_asset "$f" || { echo "::error::Gitee asset $f failed byte-for-byte verification"; exit 1; }
+          done
+          echo "Gitee attach verified: $TAG id=$id"

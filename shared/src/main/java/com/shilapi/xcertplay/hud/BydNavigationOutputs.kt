@@ -89,7 +89,8 @@ object BydNavigationOutputs {
             return
         }
         if (frame.messageId != BydHudRouteState.ROUTE_GUIDANCE_UPDATE &&
-            frame.messageId != BydHudRouteState.ROUTE_GUIDANCE_MANEUVER_UPDATE) return
+            frame.messageId != BydHudRouteState.ROUTE_GUIDANCE_MANEUVER_UPDATE &&
+            frame.messageId != BydHudRouteState.LANE_GUIDANCE_UPDATE) return
         val owned = frame // Iap2Frame is immutable and defensively copies its payload.
         updateOverlay(owned)
         if (useStandalone) standalone.submit { BydStandaloneNavigationBridge.onFrame(owned) }
@@ -129,6 +130,8 @@ object BydNavigationOutputs {
                 arrivalEpochSeconds = apple.arrivalEpochSeconds,
                 remainingSeconds = apple.remainingSeconds,
                 remainingMeters = apple.remainingMeters,
+                laneHighlight = apple.laneHighlight,
+                lanes = apple.lanes,
             )
         }
     }

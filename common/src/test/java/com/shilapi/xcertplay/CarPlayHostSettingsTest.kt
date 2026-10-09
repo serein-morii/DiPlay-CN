@@ -10,6 +10,7 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.SeekBar
 import android.widget.RadioButton
+import android.widget.Switch
 import android.widget.TextView
 import com.shilapi.xcertplay.airplay.*
 import com.shilapi.xcertplay.host.R
@@ -125,6 +126,59 @@ class CarPlayHostSettingsTest {
             assertNull(shadowOf(activity).nextStartedActivity)
             invoke("cancelSettingsEdits")
         }
+    }
+
+    @Test fun swipeTargetHomeOpensDiPlaySettingsInsteadOfTheMenu() {
+        AirPlayPersistence.saveSwipeOpensFullSettings(activity, true)
+        invoke("loadPersistedSettings")
+        gesture(3)
+        assertFalse(field("menuOpen") as Boolean)
+        val started = shadowOf(activity).nextStartedActivity
+        assertEquals(DiPlayActivity::class.java.name, started.component!!.className)
+        assertEquals("settings", started.getStringExtra("page"))
+    }
+
+    @Test
+    @Config(qualifiers = "en-w1920dp-h1080dp-mdpi")
+    fun wideOverlayMenuKeepsConnectionControlsTappable() {
+        invoke("openSettingsMenu")
+        val root = menu()
+        root.measure(
+            View.MeasureSpec.makeMeasureSpec(1920, View.MeasureSpec.EXACTLY),
+            View.MeasureSpec.makeMeasureSpec(1080, View.MeasureSpec.EXACTLY),
+        )
+        root.layout(0, 0, 1920, 1080)
+        val wireless = views(root).filterIsInstance<android.widget.Switch>()
+            .first { it.contentDescription == activity.getString(R.string.wireless_carplay_transport) }
+        assertTrue(wireless.height > 0)
+        assertEquals(View.VISIBLE, wireless.visibility)
+        setField("wirelessEnabled", false)
+        wireless.isChecked = false
+        wireless.performClick()
+        assertTrue(field("wirelessEnabled") as Boolean)
+        assertTrue(resolutionSlider().width >= 0)
+    }
+
+    @Test fun openFullSettingsButtonAlwaysOpensTheHomeSettingsPage() {
+        invoke("openSettingsMenu")
+        views(menu()).filterIsInstance<Button>()
+            .first { it.text == activity.getString(R.string.open_full_settings) }
+            .performClick()
+        assertFalse(field("menuOpen") as Boolean)
+        val started = shadowOf(activity).nextStartedActivity
+        assertEquals(DiPlayActivity::class.java.name, started.component!!.className)
+        assertEquals("settings", started.getStringExtra("page"))
+    }
+
+    @Test fun overlaySwipeTargetChoiceIsKeptWithoutSavingTheMenu() {
+        assertFalse(AirPlayPersistence.loadSwipeOpensFullSettings(activity))
+        invoke("openSettingsMenu")
+        views(menu()).filterIsInstance<RadioButton>()
+            .first { it.text == activity.getString(R.string.settings_swipe_target_full) }
+            .performClick()
+        assertTrue(AirPlayPersistence.loadSwipeOpensFullSettings(activity))
+        invoke("cancelSettingsEdits")
+        assertTrue(AirPlayPersistence.loadSwipeOpensFullSettings(activity))
     }
 
     @Test fun wrongFingerCountsAndNonDownwardSwipesDoNotOpenTheMenu() {
@@ -306,9 +360,11 @@ class CarPlayHostSettingsTest {
         assertNotSame(oldMenu, menu())
         assertEquals("Unsaved hotspot", field("manualHotspotSsid"))
         assertEquals(false, field("appNight"))
+        // The sheet overlay dims the video; the palette-driven surface is the panel inside it.
+        val panel = (menu() as android.view.ViewGroup).getChildAt(0)
         assertEquals(
             DiPlayPalette.LIGHT.overlayBackground,
-            (menu().background as android.graphics.drawable.ColorDrawable).color,
+            (panel.background as android.graphics.drawable.GradientDrawable).color?.defaultColor,
         )
         val heading = views(menu()).filterIsInstance<TextView>()
             .first { it.text == activity.getString(R.string.carplay_settings) }

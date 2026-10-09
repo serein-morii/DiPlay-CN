@@ -28,8 +28,38 @@ object AppLocale {
     private const val KEY_LANGUAGE = "app_language"
 
     private const val KEY_MIGRATED = "app_language_platform_migrated"
+    private const val KEY_CN_DEFAULT = "app_language_cn_default"
+
+    private fun supportedLanguages(): Set<String> = setOf("en", "zh", "ar", "ru", "es")
+
+    private fun deviceLanguage(context: Context): String {
+        val tag = if (Build.VERSION.SDK_INT >= 24) {
+            context.resources.configuration.locales[0].toLanguageTag()
+        } else {
+            @Suppress("DEPRECATION")
+            context.resources.configuration.locale.toLanguageTag()
+        }
+        return tag.substringBefore('-').lowercase(Locale.ROOT)
+    }
+
+    private fun applyCnDefaultIfNeeded(context: Context) {
+        val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        if (prefs.getBoolean(KEY_CN_DEFAULT, false)) return
+        val deviceLanguage = deviceLanguage(context)
+        val fallback = if (deviceLanguage in supportedLanguages()) null else SIMPLIFIED_CHINESE
+        if (Build.VERSION.SDK_INT >= 33) {
+            val manager = context.getSystemService(LocaleManager::class.java)
+            if (manager.applicationLocales.isEmpty && !prefs.contains(KEY_LANGUAGE) && fallback != null) {
+                manager.applicationLocales = LocaleList(locale(fallback)!!)
+            }
+        } else if (!prefs.contains(KEY_LANGUAGE) && fallback != null) {
+            prefs.edit().putString(KEY_LANGUAGE, fallback).apply()
+        }
+        prefs.edit().putBoolean(KEY_CN_DEFAULT, true).apply()
+    }
 
     fun preference(context: Context): String {
+        applyCnDefaultIfNeeded(context)
         if (Build.VERSION.SDK_INT >= 33) {
             val locales = context.getSystemService(LocaleManager::class.java).applicationLocales
             if (locales.isEmpty) return SYSTEM
@@ -65,6 +95,7 @@ object AppLocale {
 
     /** On Android 13+, the OS is the single source of truth for the app language. */
     fun wrap(context: Context): Context {
+        applyCnDefaultIfNeeded(context)
         if (Build.VERSION.SDK_INT >= 33) {
             val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
             if (!prefs.getBoolean(KEY_MIGRATED, false)) {

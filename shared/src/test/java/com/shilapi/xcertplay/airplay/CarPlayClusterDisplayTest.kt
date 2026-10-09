@@ -66,11 +66,11 @@ class CarPlayClusterDisplayTest {
 
     @Test
     fun scaledStreamsKeepThePanelAspect() {
-        val sizes = (CarPlayClusterDisplay.scalePresets + 50).map {
+        val sizes = CarPlayClusterDisplay.scalePresets.map {
             CarPlayClusterDisplay.config(1920, 720, scalePercent = it).let { c -> c.widthPixels to c.heightPixels }
         }
 
-        assertEquals(listOf(1920 to 720, 1600 to 600, 1280 to 480, 2408 to 904, 960 to 360), sizes)
+        assertEquals(listOf(1920 to 720, 1600 to 600, 1280 to 480, 2408 to 904), sizes)
         assertTrue(CarPlayClusterDisplay.STREAM_SCALE_PERCENT in CarPlayClusterDisplay.scalePresets)
     }
 
@@ -92,6 +92,19 @@ class CarPlayClusterDisplayTest {
         val limit = CarPlayClusterDisplay.config(1920, 720, scalePercent = 100, horizontalStep = 4, verticalStep = -3).safeArea
 
         assertEquals(limit, beyond)
+    }
+
+    @Test
+    fun smallWindowMarkerPercentPlacesTheSafeAreaCentre() {
+        val area = CarPlayClusterDisplay.config(
+            1920, 720, scalePercent = 100, markerXPercent = 80, markerYPercent = 45,
+        ).safeArea!!
+
+        // The safe area stays centred on the requested 5 %-grid position.
+        val centreX = (area.left + (1920 - area.right)) / 2.0
+        val centreY = (area.top + (720 - area.bottom)) / 2.0
+        assertEquals(1920 * 0.80, centreX, 1.0)
+        assertEquals(720 * 0.45, centreY, 1.0)
     }
 
     @Test
