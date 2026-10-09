@@ -326,6 +326,7 @@
     <string name="safe_area_waiting_for_activity_size">Zona segura: esperando el tamaño de la actividad</string>
     <string name="save">Guardar</string>
     <string name="save_1_1">Guardar 1:1</string>
+    <string name="settings_save_notice">Los cambios se aplican al pulsar Guardar y reconectar</string>
     <string name="save_and_reconnect">Guardar y reconectar</string>
     <string name="save_details">Guardar datos</string>
     <string name="save_diagnostic_report">Guardar informe de diagnóstico</string>

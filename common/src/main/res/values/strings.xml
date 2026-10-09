@@ -338,6 +338,7 @@
     <string name="safe_area_waiting_for_activity_size">Safe area: waiting for activity size</string>
     <string name="save">Save</string>
     <string name="save_1_1">Save 1:1</string>
+    <string name="settings_save_notice">Changes apply after you tap Save and reconnect</string>
     <string name="save_and_reconnect">Save and reconnect</string>
     <string name="save_details">Save details</string>
     <string name="save_diagnostic_report">Save diagnostic report</string>

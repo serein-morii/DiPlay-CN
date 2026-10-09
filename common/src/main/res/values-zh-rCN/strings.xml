@@ -338,6 +338,7 @@
     <string name="safe_area_waiting_for_activity_size">安全区域：正在等待活动窗口尺寸</string>
     <string name="save">保存</string>
     <string name="save_1_1">保存 1:1 图片</string>
+    <string name="settings_save_notice">设置修改后，点击「保存并重连」生效</string>
     <string name="save_and_reconnect">保存并重新连接</string>
     <string name="save_details">保存详情</string>
     <string name="save_diagnostic_report">保存诊断报告</string>

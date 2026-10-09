@@ -31,6 +31,16 @@ internal data class DiPlayPalette(
     val overlayAccentTrack: Int,
     val overlayTrackOff: Int,
     val overlayDanger: Int,
+    val overlaySurfaceTop: Int,
+    val overlaySurfaceBottom: Int,
+    val overlayStroke: Int,
+    val overlayField: Int,
+    val overlayFieldStroke: Int,
+    val overlaySegmentOn: Int,
+    val overlayTopbar: Int,
+    val overlaySidebar: Int,
+    val overlayFooter: Int,
+    val overlayHairline: Int,
 ) {
     companion object {
         fun of(night: Boolean): DiPlayPalette = if (night) DARK else LIGHT
@@ -63,6 +73,16 @@ internal data class DiPlayPalette(
             overlayAccentTrack = Color.rgb(23, 74, 135),
             overlayTrackOff = Color.rgb(71, 90, 113),
             overlayDanger = Color.rgb(240, 115, 115),
+            overlaySurfaceTop = Color.rgb(23, 38, 58),
+            overlaySurfaceBottom = Color.rgb(19, 31, 46),
+            overlayStroke = Color.rgb(41, 59, 81),
+            overlayField = Color.rgb(16, 27, 43),
+            overlayFieldStroke = Color.rgb(58, 77, 101),
+            overlaySegmentOn = Color.rgb(28, 117, 229),
+            overlayTopbar = Color.rgb(17, 29, 43),
+            overlaySidebar = Color.rgb(11, 22, 37),
+            overlayFooter = Color.rgb(14, 26, 41),
+            overlayHairline = Color.rgb(43, 58, 76),
         )
 
         val LIGHT = DiPlayPalette(
@@ -93,6 +113,16 @@ internal data class DiPlayPalette(
             overlayAccentTrack = Color.rgb(35, 100, 58),
             overlayTrackOff = Color.rgb(168, 180, 190),
             overlayDanger = Color.rgb(155, 48, 48),
+            overlaySurfaceTop = Color.rgb(255, 255, 255),
+            overlaySurfaceBottom = Color.rgb(244, 247, 250),
+            overlayStroke = Color.rgb(199, 211, 226),
+            overlayField = Color.rgb(242, 246, 251),
+            overlayFieldStroke = Color.rgb(185, 200, 218),
+            overlaySegmentOn = Color.rgb(36, 105, 200),
+            overlayTopbar = Color.rgb(234, 240, 248),
+            overlaySidebar = Color.rgb(244, 247, 250),
+            overlayFooter = Color.rgb(231, 237, 245),
+            overlayHairline = Color.rgb(217, 226, 236),
         )
     }
 }

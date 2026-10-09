@@ -326,6 +326,7 @@
     <string name="safe_area_waiting_for_activity_size">المنطقة الآمنة: بانتظار حجم النشاط</string>
     <string name="save">حفظ</string>
     <string name="save_1_1">حفظ 1:1</string>
+    <string name="settings_save_notice">تُطبَّق التغييرات بعد الضغط على «حفظ وإعادة الاتصال»</string>
     <string name="save_and_reconnect">حفظ وإعادة الاتصال</string>
     <string name="save_details">حفظ البيانات</string>
     <string name="save_diagnostic_report">حفظ تقرير التشخيص</string>

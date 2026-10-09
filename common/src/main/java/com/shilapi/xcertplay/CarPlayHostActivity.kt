@@ -42,6 +42,7 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
 import android.widget.FrameLayout
+import android.widget.HorizontalScrollView
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.RadioButton
@@ -409,7 +410,6 @@ class CarPlayHostActivity : ComponentActivity() {
     private var vpnReady = false
     private var hotspotStatus = HotspotStatus(state = "off")
     private var menuOpen = false
-    private var overlayMenuCategoryTitle: String? = null
     private var overlayMenuCategoryKey: String? = null
     private var overlayConnectOnOpen = false
     private var overlayConnectOnBluetooth = false
@@ -1800,13 +1800,15 @@ class CarPlayHostActivity : ComponentActivity() {
         }
     }
 
+    private data class OverlayCategory(val key: String, val title: String, val icon: Int, val subtitle: String)
+
     private fun buildSettingsMenu(): View {
         val overlay = FrameLayout(this).apply {
             setBackgroundColor(0xB3000000.toInt())
             isClickable = true
         }
         val panel = FrameLayout(this).apply {
-            setBackgroundDrawable(android.graphics.drawable.GradientDrawable().apply {
+            setBackgroundDrawable(GradientDrawable().apply {
                 setColor(MENU_BACKGROUND)
                 cornerRadii = floatArrayOf(
                     dp(28).toFloat(), dp(28).toFloat(), dp(28).toFloat(), dp(28).toFloat(),
@@ -1814,719 +1816,126 @@ class CarPlayHostActivity : ComponentActivity() {
                 )
             })
         }
-        val content = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            gravity = Gravity.CENTER_HORIZONTAL
-            setPadding(dp(48), dp(36), dp(48), dp(36))
+        val wide = overlayMenuWide()
+
+        val topbar = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            minimumHeight = dp(68)
+            setPadding(dp(24), dp(10), dp(24), dp(10))
+            setBackgroundColor(overlayPalette.overlayTopbar)
         }
-        content.addView(
-            menuText(getString(R.string.carplay_settings), 30f, MENU_PRIMARY, bold = true).apply {
-                setPadding(dp(4), 0, 0, dp(2))
-            },
-            LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-            ),
+        topbar.addView(
+            menuText(getString(R.string.carplay_settings), 20f, MENU_PRIMARY, bold = true),
+            LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT),
         )
-        // Keep the full settings at the top — the in-session menu covers only a subset.
-        content.addView(menuButton(getString(R.string.open_full_settings), MENU_ACCENT, Color.WHITE) {
-            cancelSettingsEdits()
-            showDiPlayHome("settings")
-        }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(16) })
-        // CN: live small-window state so 自动 mode is observable straight from CarPlay.
-        if (AirPlayPersistence.loadClusterMapEnabled(this) &&
-            AirPlayPersistence.loadClusterSmallWindowMode(this) != 0) {
-            val mode = AirPlayPersistence.loadClusterSmallWindowMode(this)
-            val state = when {
-                mode == CLUSTER_SMALL_WINDOW_ON -> getString(R.string.settings_cluster_menu_small_state_small)
-                smallWindowActive() -> getString(R.string.settings_cluster_menu_small_state_small)
-                adbNaviMode == com.shilapi.xcertplay.hud.BydClusterNaviMode.FULL ||
-                    detectedCluster.mapVisible -> getString(R.string.settings_cluster_menu_small_state_full)
-                else -> getString(R.string.settings_cluster_menu_small_state_unknown)
-            }
-            content.addView(
-                menuText("${getString(R.string.settings_cluster_menu_small_title)} · $state", 15f, MENU_ACCENT).apply {
-                    setPadding(dp(12), dp(6), dp(12), dp(6))
-                    setBackgroundDrawable(android.graphics.drawable.GradientDrawable().apply {
-                        setColor(0x1F0A84FF); cornerRadius = dp(12).toFloat()
-                    })
-                },
-                LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT),
-            )
-            if (mode == CLUSTER_SMALL_WINDOW_AUTO && adbNaviMode == null &&
-                !DiLink51ClusterMonitor.hasAccess(this)) {
-                content.addView(
-                    menuText(getString(R.string.cluster_small_window_access_missing), 14f, MENU_DANGER).apply {
-                        setPadding(dp(4), dp(4), 0, 0)
-                    },
-                    LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT),
-                )
-            }
-        }
-        content.addView(
-            settingsCategoryHeader(getString(R.string.connection)),
-            LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-            ).apply { topMargin = dp(28) },
-        )
-
-        val wirelessRowResult = ConnectionSettingsSection.createWirelessCarPlayRow(
-            context = this,
-            checked = wirelessEnabled,
-            theme = settingsOverlayTheme,
-        ) { checked ->
-            if (wirelessEnabled == checked) return@createWirelessCarPlayRow
-            wirelessEnabled = checked
-            hotspotStatus = HotspotStatus(state = if (wirelessEnabled) getString(R.string.hotspot_state_stopped) else getString(R.string.hotspot_state_off))
-            updateHotspotStatusBlock()
-            appendLog(
-                "Wireless CarPlay ${if (wirelessEnabled) "enabled" else "disabled"}; " +
-                    "applies when settings close",
-            )
-            requestStartupPrerequisites()
-        }
-        content.addView(
-            wirelessRowResult.rowView,
-            LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-            ).apply { topMargin = dp(14) },
-        )
-
-        content.addView(
-            buildHotspotModeSection(),
-            LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-            ).apply { topMargin = dp(28) },
-        )
-
-        content.addView(
-            buildMfiTargetSection(),
-            LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-            ).apply { topMargin = dp(14) },
-        )
-
-        content.addView(
-            menuText(getString(R.string.hotspot_status), 20f, MENU_SECONDARY),
-            LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-            ).apply { topMargin = dp(14) },
-        )
-        val hotspotStatusView = menuText("", 16f, MENU_ACCENT)
-        content.addView(
-            hotspotStatusView,
-            LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-            ).apply { topMargin = dp(6) },
-        )
-
-        content.addView(
-            settingsSwitchRow(
-                label = getString(R.string.auto_start_on_boot),
-                checked = autoStartOnBoot,
-                description = getString(R.string.start_carplay_automatically_after_device_boot),
-            ) { checked ->
-                autoStartOnBoot = checked
-                appendLog("Boot auto-start ${if (checked) "enabled" else "disabled"}")
-            },
-            LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-            ).apply { topMargin = dp(12) },
-        )
-        content.addView(
-            settingsSwitchRow(
-                label = getString(R.string.connect_when_diplay_opens),
-                checked = overlayConnectOnOpen,
-                description = getString(R.string.default_connection_description),
-            ) { checked -> overlayConnectOnOpen = checked },
-            LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-            ).apply { topMargin = dp(12) },
-        )
-        content.addView(
-            settingsSwitchRow(
-                label = getString(R.string.connect_when_iphone_bluetooth_connects),
-                checked = overlayConnectOnBluetooth,
-                description = getString(R.string.connect_when_iphone_bluetooth_connects_description),
-            ) { checked -> overlayConnectOnBluetooth = checked },
-            LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-            ).apply { topMargin = dp(12) },
-        )
-
-        content.addView(
-            settingsCategoryHeader(getString(R.string.settings_navigation)),
-        )
-        content.addView(
-            settingsChoiceRow(
-                label = getString(R.string.settings_cluster_menu_small_title),
-                options = listOf(
-                    0 to getString(R.string.cluster_small_window_off),
-                    1 to getString(R.string.cluster_small_window_on),
-                    2 to getString(R.string.cluster_small_window_auto),
-                ),
-                selected = AirPlayPersistence.loadClusterSmallWindowMode(this),
-            ) { value ->
-                AirPlayPersistence.saveClusterSmallWindowMode(this, value)
-                if (CarPlayBackgroundSession.active) {
-                    recoveryPendingAfterMenu = true
-                }
-            },
-            LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-            ).apply { topMargin = dp(36) },
-        )
-        content.addView(
-            buildLocationReportingSection(),
-            LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-            ).apply { topMargin = dp(12) },
-        )
-        content.addView(
-            settingsSwitchRow(
-                label = getString(R.string.turn_card_show_lanes),
-                checked = overlayShowLanes,
-                description = getString(R.string.turn_card_show_lanes_description),
-            ) { checked ->
-                overlayShowLanes = checked
-                applyClusterTurnOverlay()
-            },
-            LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-            ).apply { topMargin = dp(12) },
-        )
-        content.addView(
-            settingsSwitchRow(
-                label = getString(R.string.turn_card_show_arrival),
-                checked = overlayShowArrival,
-                description = getString(R.string.turn_card_show_arrival_description),
-            ) { checked ->
-                overlayShowArrival = checked
-                applyClusterTurnOverlay()
-            },
-            LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-            ).apply { topMargin = dp(12) },
-        )
-        content.addView(
-            settingsSwitchRow(
-                label = getString(R.string.dashboard_map_only_in_small_and_full_navi),
-                checked = overlayClusterMapOnlyNavi,
-                description = getString(R.string.dashboard_map_only_in_small_and_full_navi_description),
-            ) { checked -> overlayClusterMapOnlyNavi = checked },
-            LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-            ).apply { topMargin = dp(12) },
-        )
-
-        content.addView(
-            settingsCategoryHeader(getString(R.string.settings_display)),
-            LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-            ).apply { topMargin = dp(36) },
-        )
-        val nightModes = CarPlayNightMode.entries
-        content.addView(
-            settingsChoiceRow(
-                label = getString(R.string.carplay_night_mode),
-                options = nightModes.map { mode ->
-                    mode to getString(
-                        when (mode) {
-                            CarPlayNightMode.SYSTEM -> R.string.carplay_night_system
-                            CarPlayNightMode.AMBIENT -> R.string.carplay_night_ambient
-                            CarPlayNightMode.DAY -> R.string.carplay_night_day
-                            CarPlayNightMode.NIGHT -> R.string.carplay_night_night
-                            CarPlayNightMode.SCHEDULE -> R.string.carplay_night_schedule
-                        },
-                    )
-                },
-                selected = carPlayNightMode,
-            ) { mode ->
-                carPlayNightMode = mode
-                nightModeController.configure(
-                    carPlayNightMode,
-                    nightModeOrNull(resources.configuration.uiMode) ?: false,
-                    ambientLightThreshold,
-                    ambientDelaySeconds,
-                    nightSchedule,
-                )
-                refreshAppAppearance()
-                paintWaitingScreen()
-            },
-            LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-            ).apply { topMargin = dp(12) },
-        )
-        content.addView(
-            menuButton(getString(R.string.picture_adjustments), MENU_TRACK_OFF, Color.WHITE) {
+        topbar.addView(
+            overlayChromeButton(getString(R.string.open_full_settings)) {
                 cancelSettingsEdits()
-                openPicturePanel()
+                showDiPlayHome("settings")
             },
-            LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(12) },
+            LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { marginStart = dp(14) },
         )
+        topbar.addView(View(this), LinearLayout.LayoutParams(0, 1, 1f))
+        topbar.addView(
+            buildOverlayStatusPill(),
+            LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { marginEnd = dp(12) },
+        )
+        topbar.addView(overlayChromeButton("×") { cancelSettingsEdits() }.apply {
+            contentDescription = getString(R.string.discard_changes_and_exit_settings)
+        })
 
-        if (advancedAudioChannelMappingSupported) {
-            content.addView(
-                settingsCategoryHeader(getString(R.string.audio)),
-                LinearLayout.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT,
-                ).apply { topMargin = dp(36) },
-            )
-            content.addView(
-                settingsSwitchRow(
-                    label = getString(R.string.advanced_audio_channel_mapping),
-                    checked = advancedAudioChannelMapping,
-                    description = getString(R.string.use_usage_content_type_routing_instead_of_stream_type),
-                ) { checked ->
-                    advancedAudioChannelMapping = checked
-                    appendLog(
-                        "Advanced audio channel mapping ${if (checked) "enabled" else "disabled"}; " +
-                            "applies when settings close",
-                    )
-                    updateResolutionMenu()
-                },
-                LinearLayout.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT,
-                ).apply { topMargin = dp(12) },
-            )
+        val categories = listOf(
+            OverlayCategory("connection", getString(R.string.connection), R.drawable.ic_dp_connection, getString(R.string.settings_connection_summary)),
+            OverlayCategory("navigation", getString(R.string.settings_navigation), R.drawable.ic_dp_navigation, getString(R.string.settings_navigation_summary)),
+            OverlayCategory("display", getString(R.string.settings_display), R.drawable.ic_dp_display, getString(R.string.settings_display_summary)),
+            OverlayCategory("sound", getString(R.string.audio), R.drawable.ic_dp_audio, getString(R.string.settings_audio_summary)),
+            OverlayCategory("vehicle", getString(R.string.settings_vehicle), R.drawable.ic_dp_vehicle, getString(R.string.settings_vehicle_summary)),
+            OverlayCategory("more", getString(R.string.settings_more), R.drawable.ic_dp_advanced, getString(R.string.settings_advanced_subtitle)),
+        )
+        val pages = buildOverlayPages(categories, wide)
+        val selectedKey = overlayMenuCategoryKey?.takeIf { key -> pages.containsKey(key) } ?: categories.first().key
+        overlayMenuCategoryKey = selectedKey
+        pages.forEach { (key, page) -> page.visibility = if (key == selectedKey) View.VISIBLE else View.GONE }
+        fun select(key: String) {
+            overlayMenuCategoryKey = key
+            pages.forEach { (candidate, page) ->
+                page.visibility = if (candidate == key) View.VISIBLE else View.GONE
+            }
         }
 
-        content.addView(
-            settingsCategoryHeader(getString(R.string.settings_vehicle)),
-            LinearLayout.LayoutParams(
+        val mainColumn = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(32), dp(24), dp(32), dp(32))
+        }
+        pages.values.forEach(mainColumn::addView)
+        val mainScroll = ScrollView(this).apply {
+            isFillViewport = true
+            addView(mainColumn, ViewGroup.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT,
-            ).apply { topMargin = dp(36) },
-        )
-        content.addView(
-            buildIdentitySettingsSection(),
-            LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-            ).apply { topMargin = dp(12) },
-        )
-        content.addView(
-            buildAirPlayIconSection(),
-            LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-            ).apply { topMargin = dp(26) },
-        )
-        content.addView(
-            buildDrivingSideSection(),
-            LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-            ).apply { topMargin = dp(26) },
-        )
-        content.addView(
-            settingsSwitchRow(
-                label = getString(R.string.settings_launcher_returns_to_carplay),
-                checked = overlayLauncherReturnsToCarPlay,
-                description = getString(R.string.settings_launcher_returns_to_carplay_description),
-            ) { checked -> overlayLauncherReturnsToCarPlay = checked },
-            LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-            ).apply { topMargin = dp(12) },
-        )
+            ))
+        }
 
-        content.addView(
-            settingsCategoryHeader(getString(R.string.audio)),
-            LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-            ).apply { topMargin = dp(36) },
+        val bodyRow = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
+        if (wide) {
+            val railScroll = ScrollView(this).apply {
+                isFillViewport = true
+                setBackgroundColor(overlayPalette.overlaySidebar)
+                addView(buildOverlayRail(categories, selectedKey) { key -> select(key) })
+            }
+            bodyRow.addView(railScroll, LinearLayout.LayoutParams(dp(220), ViewGroup.LayoutParams.MATCH_PARENT))
+            bodyRow.addView(
+                View(this).apply { setBackgroundColor(overlayPalette.overlayStroke) },
+                LinearLayout.LayoutParams(1, ViewGroup.LayoutParams.MATCH_PARENT),
+            )
+            bodyRow.addView(mainScroll, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f))
+        } else {
+            val chips = HorizontalScrollView(this).apply {
+                isHorizontalScrollBarEnabled = false
+                setBackgroundColor(overlayPalette.overlaySidebar)
+                addView(buildOverlayRail(categories, selectedKey, horizontal = true) { key -> select(key) })
+            }
+            val column = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+            column.addView(chips, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
+            column.addView(mainScroll, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f))
+            bodyRow.addView(column, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
+        }
+
+        val footer = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            minimumHeight = dp(64)
+            setPadding(dp(24), dp(10), dp(24), dp(10))
+            setBackgroundColor(overlayPalette.overlayFooter)
+        }
+        footer.addView(
+            overlayChromeButton("⇥  " + getString(R.string.exit_application)) { exitApplication() },
+            LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT),
         )
-        content.addView(
-            buildStepSliderSection(
-                title = getString(R.string.contrib_audio_home_media_channel_label),
-                values = AirPlayPersistence.AUDIO_CHANNELS.toList(),
-                selectedValue = overlayMediaChannel,
-                label = { "$it" },
-                onValueChanged = { value -> overlayMediaChannel = value },
-            ),
-            LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-            ).apply { topMargin = dp(12) },
-        )
-        content.addView(
-            buildStepSliderSection(
-                title = getString(R.string.contrib_audio_home_nav_channel_label),
-                values = AirPlayPersistence.AUDIO_CHANNELS.toList(),
-                selectedValue = overlayNavigationChannel,
-                label = { "$it" },
-                onValueChanged = { value -> overlayNavigationChannel = value },
-            ),
-            LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-            ).apply { topMargin = dp(12) },
-        )
-        content.addView(
-            settingsChoiceRow(
-                label = getString(R.string.music_buffer),
-                options = com.shilapi.xcertplay.media.MediaAudioBuffer.presets.map { millis ->
-                    millis to getString(
-                        when (millis) {
-                            500 -> R.string.s_500_ms
-                            1000 -> R.string.s_1000_ms_most_stable
-                            else -> R.string.s_300_ms_default
-                        },
-                    )
-                },
-                selected = overlayMediaBufferMillis,
-            ) { value -> overlayMediaBufferMillis = value },
-            LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-            ).apply { topMargin = dp(12) },
-        )
-        content.addView(
-            settingsSwitchRow(
-                label = getString(R.string.bt_suspend_during_carplay),
-                checked = overlayBtSuspend,
-                description = getString(R.string.bt_suspend_during_carplay_description),
-            ) { checked -> overlayBtSuspend = checked },
-            LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-            ).apply { topMargin = dp(12) },
-        )
-        content.addView(
-            settingsSwitchRow(
-                label = getString(R.string.smooth_video),
-                checked = overlaySmoothVideo,
-                description = getString(R.string.smooth_video_description),
-            ) { checked ->
-                overlaySmoothVideo = checked
-                appendLog("Smooth video ${if (checked) "enabled" else "disabled"}; applies when settings close")
+        footer.addView(
+            menuText(getString(R.string.settings_save_notice), 12f, MENU_SECONDARY).apply {
+                gravity = Gravity.CENTER
+                visibility = if (wide) View.VISIBLE else View.GONE
             },
-            LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-            ).apply { topMargin = dp(12) },
-        )
-
-        content.addView(
-            settingsCategoryHeader(getString(R.string.settings_display)),
-            LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-            ).apply { topMargin = dp(40) },
-        )
-
-        val resolutionControl = DisplaySettingsSection.createResolutionSlider(
-            context = this,
-            initialPercent = displayScalePercent,
-            theme = settingsOverlayTheme,
-        ) { percent ->
-            displayScalePercent = percent
-            displayScaleTenths = CarPlayDisplayScale.sanitize((percent + 5) / 10)
-            updateResolutionMenu()
-        }
-        val resolutionValue = resolutionControl.valueTextView
-        content.addView(
-            resolutionControl.container,
-            LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-            ),
-        )
-
-        content.addView(
-            buildStepSliderSection(
-                title = getString(R.string.frame_rate),
-                values = (
-                    AirPlayDisplaySettings.MIN_FPS..AirPlayDisplaySettings.MAX_FPS
-                    step AirPlayDisplaySettings.FPS_STEP
-                    ).toList(),
-                selectedValue = fps,
-                label = { "$it fps" },
-                onValueChanged = { value ->
-                    fps = value
-                    updateResolutionMenu()
-                },
-            ),
-            LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-            ).apply { topMargin = dp(24) },
-        )
-
-        content.addView(
-            settingsChoiceRow(
-                label = getString(R.string.physical_size_basis),
-                options = listOf(
-                    AirPlayPhysicalSizeBasis.WIDTH to getString(R.string.widest_width),
-                    AirPlayPhysicalSizeBasis.HEIGHT to getString(R.string.longest_height),
-                ),
-                selected = physicalSizeBasis,
-            ) { value ->
-                physicalSizeBasis = value
-                updateResolutionMenu()
-            },
-            LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-            ).apply { topMargin = dp(24) },
-        )
-
-        content.addView(
-            buildStepSliderSection(
-                title = getString(R.string.physical_length),
-                values = (
-                    AirPlayDisplaySettings.MIN_WIDTH_PHYSICAL_MM..
-                        AirPlayDisplaySettings.MAX_WIDTH_PHYSICAL_MM
-                    step AirPlayDisplaySettings.WIDTH_PHYSICAL_MM_STEP
-                    ).toList(),
-                selectedValue = widthPhysicalMm,
-                label = { "$it mm" },
-                onValueChanged = { value ->
-                    widthPhysicalMm = value
-                    updateResolutionMenu()
-                },
-            ),
-            LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-            ).apply { topMargin = dp(16) },
-        )
-
-        content.addView(
-            settingsSwitchRow(
-                label = getString(R.string.side_panel_show),
-                checked = sidePanelShown,
-                enabled = sessionDisplay?.viewAreas?.sidePanel() != null,
-                description = getString(R.string.side_panel_settings_hint),
-            ) { checked -> showSidePanel(checked) },
-            LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-            ).apply { topMargin = dp(12) },
-        )
-
-        content.addView(
-            buildSafeAreaSection(),
-            LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-            ).apply { topMargin = dp(28) },
-        )
-
-        content.addView(
-            buildFullscreenSection(),
-            LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-            ).apply { topMargin = dp(12) },
-        )
-        content.addView(
-            buildDockSection(),
-            LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-            ).apply { topMargin = dp(26) },
-        )
-        val preview = menuText("", 17f, MENU_SECONDARY)
-        content.addView(
-            preview,
-            LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-            ).apply { topMargin = dp(28) },
-        )
-
-        content.addView(
-            settingsCategoryHeader(getString(R.string.settings_more)),
-            LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-            ).apply { topMargin = dp(40) },
-        )
-        val hevcRow = DisplaySettingsSection.createHevcRow(
-            context = this,
-            checked = hevcEnabled,
-            theme = settingsOverlayTheme,
-        ) { checked ->
-            if (hevcEnabled == checked) return@createHevcRow
-            hevcEnabled = checked
-            appendLog(
-                "HEVC (H.265) ${if (hevcEnabled) "enabled" else "disabled"}; " +
-                    "applies when settings close",
-            )
-            updateResolutionMenu()
-        }
-        content.addView(
-            hevcRow.rowView,
-            LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-            ).apply { topMargin = dp(12) },
-        )
-        val softwareHevcRow = DisplaySettingsSection.createSoftwareHevcRow(
-            context = this,
-            checked = hevcSoftwareDecoderEnabled,
-            theme = settingsOverlayTheme,
-        ) { checked ->
-            if (hevcSoftwareDecoderEnabled == checked) return@createSoftwareHevcRow
-            hevcSoftwareDecoderEnabled = checked
-            appendLog(
-                "HEVC software decoder ${if (hevcSoftwareDecoderEnabled) "enabled" else "disabled"}; " +
-                    "applies when settings close",
-            )
-            updateResolutionMenu()
-        }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            content.addView(
-                softwareHevcRow.rowView,
-                LinearLayout.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT,
-                ).apply { topMargin = dp(16) },
-            )
-        }
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
-            content.addView(
-                menuText(
-                    getString(R.string.settings_android9_compat),
-                    16f,
-                    MENU_SECONDARY,
-                ),
-                LinearLayout.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT,
-                ).apply { topMargin = dp(12) },
-            )
-        }
-
-        content.addView(
-            settingsCategoryHeader(getString(R.string.diagnostics)),
-            LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-            ).apply { topMargin = dp(40) },
-        )
-        content.addView(
-            buildDebugLogsSection(),
-            LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-            ).apply { topMargin = dp(12) },
-        )
-
-        val save = menuButton(getString(R.string.save_and_reconnect), MENU_ACCENT, MENU_BUTTON_TEXT) {
-            saveSettingsAndReconnect()
-        }.apply { tag = "settings-chrome" }
-        content.addView(
-            save,
-            LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-            ).apply { topMargin = dp(28) },
-        )
-
-        val exitApplicationButton = menuButton(getString(R.string.exit_application), MENU_DANGER, Color.WHITE) {
-            exitApplication()
-        }.apply { tag = "settings-chrome" }
-        content.addView(
-            exitApplicationButton,
-            LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-            ).apply { topMargin = dp(12) },
-        )
-
-        content.addView(
-            settingsCategoryHeader(getString(R.string.carplay_controls)),
-            LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-            ).apply { topMargin = dp(28) },
-        )
-        content.addView(menuButton(getString(R.string.language_app_language), MENU_TRACK_OFF, Color.WHITE) {
-            AppLocale.showPicker(this@CarPlayHostActivity)
-        }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(12) })
-
-        val gestureButton = menuButton("", MENU_TRACK_OFF, Color.WHITE) {
-            gestureFingerCount = if (gestureFingerCount >= 4) 2 else gestureFingerCount + 1
-            it.text = getString(R.string.settings_gesture_fingers, gestureFingerCount)
-        }
-        gestureButton.text = getString(R.string.settings_gesture_fingers, gestureFingerCount)
-        content.addView(gestureButton, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(12) })
-
-        content.addView(
-            settingsChoiceRow(
-                label = getString(R.string.settings_swipe_target_label),
-                options = listOf(
-                    false to getString(R.string.settings_swipe_target_overlay),
-                    true to getString(R.string.settings_swipe_target_full),
-                ),
-                selected = swipeOpensFullSettings,
-            ) { value ->
-                swipeOpensFullSettings = value
-                AirPlayPersistence.saveSwipeOpensFullSettings(this, value)
-            },
-            LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-            ).apply { topMargin = dp(12) },
-        )
-        content.addView(
-            menuText(getString(R.string.settings_swipe_target_hint), 16f, MENU_SECONDARY),
-            LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-            ).apply { topMargin = dp(6) },
-        )
-
-        panel.addView(
-            layoutOverlayMenu(content),
-            FrameLayout.LayoutParams(
-                FrameLayout.LayoutParams.MATCH_PARENT,
-                FrameLayout.LayoutParams.MATCH_PARENT,
-            ),
-        )
-        panel.addView(
-            Button(this).apply {
-                text = "✕"
-                isAllCaps = false
-                textSize = 19f
-                setTextColor(MENU_PRIMARY)
-                setBackgroundDrawable(android.graphics.drawable.GradientDrawable().apply {
-                    setColor(0x24000000); shape = android.graphics.drawable.GradientDrawable.OVAL
-                    setStroke(dp(1), 0x2EFFFFFF)
-                })
-                contentDescription = getString(R.string.discard_changes_and_exit_settings)
-                minWidth = 0
-                minHeight = 0
-                setPadding(0, 0, 0, 0)
-                setOnClickListener { cancelSettingsEdits() }
-            },
-            FrameLayout.LayoutParams(dp(44), dp(44), Gravity.TOP or Gravity.END).apply {
-                rightMargin = dp(22)
-                topMargin = dp(22)
+            LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f).apply {
+                marginStart = dp(16)
+                marginEnd = dp(16)
             },
         )
+        footer.addView(
+            overlayPrimaryButton("⟳  " + getString(R.string.save_and_reconnect)) { saveSettingsAndReconnect() },
+            LinearLayout.LayoutParams(dp(200), ViewGroup.LayoutParams.WRAP_CONTENT),
+        )
+
+        val shell = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        shell.addView(topbar, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
+        shell.addView(bodyRow, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f))
+        shell.addView(footer, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
+        panel.addView(shell, FrameLayout.LayoutParams(
+            FrameLayout.LayoutParams.MATCH_PARENT,
+            FrameLayout.LayoutParams.MATCH_PARENT,
+        ))
         overlay.addView(
             panel,
             FrameLayout.LayoutParams(
@@ -2546,13 +1955,749 @@ class CarPlayHostActivity : ComponentActivity() {
             }
         }
 
-        resolutionValueView = resolutionValue
-        resolutionPreviewView = preview
-        this.hotspotStatusView = hotspotStatusView
         updateHotspotStatusBlock()
         updateResolutionMenu()
         return overlay
     }
+
+    private fun buildOverlayStatusPill(): View {
+        val smallWindow = AirPlayPersistence.loadClusterMapEnabled(this) &&
+            AirPlayPersistence.loadClusterSmallWindowMode(this) != 0
+        val text = when {
+            smallWindow -> {
+                val mode = AirPlayPersistence.loadClusterSmallWindowMode(this)
+                when {
+                    mode == CLUSTER_SMALL_WINDOW_ON -> getString(R.string.settings_cluster_menu_small_state_small)
+                    smallWindowActive() -> getString(R.string.settings_cluster_menu_small_state_small)
+                    adbNaviMode == com.shilapi.xcertplay.hud.BydClusterNaviMode.FULL ||
+                        detectedCluster.mapVisible -> getString(R.string.settings_cluster_menu_small_state_full)
+                    else -> getString(R.string.settings_cluster_menu_small_state_unknown)
+                }
+            }
+            CarPlayBackgroundSession.active -> getString(R.string.carplay_connected)
+            else -> null
+        }
+        val pill = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            setPadding(dp(15), dp(10), dp(15), dp(10))
+            background = GradientDrawable().apply {
+                setColor(overlayPalette.overlayField)
+                setStroke(1, overlayPalette.overlayFieldStroke)
+                cornerRadius = dp(26).toFloat()
+            }
+        }
+        if (text == null) {
+            pill.visibility = View.GONE
+            return pill
+        }
+        pill.addView(View(this).apply {
+            background = GradientDrawable().apply {
+                setColor(if (CarPlayBackgroundSession.active) Color.rgb(37, 213, 171) else overlayPalette.overlayTrackOff)
+                shape = GradientDrawable.OVAL
+            }
+        }, LinearLayout.LayoutParams(dp(8), dp(8)))
+        pill.addView(
+            menuText(text, 13f, MENU_SECONDARY),
+            LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { marginStart = dp(8) },
+        )
+        return pill
+    }
+
+    private fun overlayChromeButton(label: String, onClick: () -> Unit): Button =
+        Button(this).apply {
+            text = label
+            isAllCaps = false
+            textSize = 15f
+            setTextColor(MENU_PRIMARY)
+            setPadding(dp(18), dp(11), dp(18), dp(11))
+            minWidth = 0
+            minHeight = 0
+            stateListAnimator = null
+            background = GradientDrawable().apply {
+                setColor(overlayPalette.overlayField)
+                setStroke(1, overlayPalette.overlayFieldStroke)
+                cornerRadius = dp(13).toFloat()
+            }
+            setOnClickListener { onClick() }
+        }
+
+    private fun overlayPrimaryButton(label: String, onClick: () -> Unit): Button =
+        Button(this).apply {
+            text = label
+            isAllCaps = false
+            textSize = 16f
+            setTextColor(Color.WHITE)
+            typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
+            setPadding(dp(23), dp(12), dp(23), dp(12))
+            minWidth = 0
+            minHeight = 0
+            stateListAnimator = null
+            background = GradientDrawable().apply {
+                orientation = GradientDrawable.Orientation.TOP_BOTTOM
+                colors = intArrayOf(Color.rgb(51, 142, 255), overlayPalette.overlayAccent)
+                setStroke(1, Color.rgb(74, 159, 255))
+                cornerRadius = dp(13).toFloat()
+            }
+            setOnClickListener { onClick() }
+        }
+
+    private fun buildOverlayRail(
+        categories: List<OverlayCategory>,
+        selected: String,
+        horizontal: Boolean = false,
+        onSelect: (String) -> Unit,
+    ): LinearLayout {
+        class RailRow(val key: String, val row: LinearLayout, val icon: ImageView, val label: TextView)
+
+        val rail = LinearLayout(this).apply {
+            orientation = if (horizontal) LinearLayout.HORIZONTAL else LinearLayout.VERTICAL
+            setPadding(dp(12), dp(12), dp(12), dp(12))
+        }
+        val rows = mutableListOf<RailRow>()
+        fun paintRow(entry: RailRow, active: Boolean) {
+            entry.row.background = if (active) GradientDrawable().apply {
+                orientation = GradientDrawable.Orientation.TL_BR
+                colors = intArrayOf(overlayPalette.overlayAccent, overlayPalette.overlayAccentTrack)
+                setStroke(1, overlayPalette.overlayAccent)
+                cornerRadius = dp(13).toFloat()
+            } else GradientDrawable().apply {
+                setColor(Color.TRANSPARENT)
+                cornerRadius = dp(13).toFloat()
+            }
+            entry.icon.imageTintList = ColorStateList.valueOf(
+                if (active) Color.WHITE else overlayPalette.overlaySecondaryText,
+            )
+            entry.label.setTextColor(if (active) MENU_PRIMARY else overlayPalette.overlaySecondaryText)
+        }
+        categories.forEach { category ->
+            val row = LinearLayout(this).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = Gravity.CENTER_VERTICAL
+                isClickable = true
+                isFocusable = true
+                contentDescription = category.title
+                setPadding(dp(15), dp(13), dp(15), dp(13))
+                minimumHeight = if (horizontal) dp(46) else dp(52)
+            }
+            val icon = ImageView(this).apply { setImageResource(category.icon) }
+            val label = menuText(category.title, 16f, MENU_PRIMARY, bold = true)
+            row.addView(icon, LinearLayout.LayoutParams(dp(24), dp(24)).apply { marginEnd = dp(14) })
+            row.addView(label, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
+            val entry = RailRow(category.key, row, icon, label)
+            rows += entry
+            paintRow(entry, category.key == selected)
+            row.setOnClickListener {
+                onSelect(category.key)
+                rows.forEach { other -> paintRow(other, other.key == category.key) }
+            }
+            rail.addView(
+                row,
+                if (horizontal) {
+                    LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { marginEnd = dp(8) }
+                } else {
+                    LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { bottomMargin = dp(6) }
+                },
+            )
+        }
+        return rail
+    }
+
+    private fun overlayPageHero(category: OverlayCategory): View {
+        val hero = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            setPadding(0, 0, 0, dp(20))
+        }
+        hero.addView(FrameLayout(this).apply {
+            background = GradientDrawable().apply {
+                orientation = GradientDrawable.Orientation.TL_BR
+                colors = intArrayOf(overlayPalette.overlayAccent, overlayPalette.overlayAccentTrack)
+                setStroke(1, overlayPalette.overlayFieldStroke)
+                cornerRadius = dp(16).toFloat()
+            }
+            addView(ImageView(this@CarPlayHostActivity).apply {
+                setImageResource(category.icon)
+                imageTintList = ColorStateList.valueOf(Color.WHITE)
+            }, FrameLayout.LayoutParams(dp(28), dp(28), Gravity.CENTER))
+        }, LinearLayout.LayoutParams(dp(58), dp(58)))
+        val textColumn = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        textColumn.addView(menuText(category.title, 26f, MENU_PRIMARY, bold = true))
+        textColumn.addView(menuText(category.subtitle, 13f, MENU_SECONDARY).apply { setPadding(0, dp(4), 0, 0) })
+        hero.addView(textColumn, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f).apply { marginStart = dp(16) })
+        return hero
+    }
+
+    private fun overlayCard(title: String?, subtitle: String?, rows: List<View>): View {
+        val card = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(20), dp(16), dp(20), dp(14))
+            background = GradientDrawable().apply {
+                orientation = GradientDrawable.Orientation.TOP_BOTTOM
+                colors = intArrayOf(overlayPalette.overlaySurfaceTop, overlayPalette.overlaySurfaceBottom)
+                setStroke(1, overlayPalette.overlayStroke)
+                cornerRadius = dp(18).toFloat()
+            }
+        }
+        if (title != null) {
+            val head = LinearLayout(this).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = Gravity.CENTER_VERTICAL
+            }
+            head.addView(View(this).apply {
+                background = GradientDrawable().apply { setColor(MENU_ACCENT); cornerRadius = dp(2).toFloat() }
+            }, LinearLayout.LayoutParams(dp(4), dp(16)).apply { marginEnd = dp(10) })
+            head.addView(menuText(title, 17f, MENU_PRIMARY, bold = true))
+            card.addView(head, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
+            if (subtitle != null) {
+                card.addView(
+                    menuText(subtitle, 12f, MENU_SECONDARY).apply { setPadding(dp(14), dp(4), 0, dp(8)) },
+                    LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT),
+                )
+            }
+        }
+        rows.forEachIndexed { index, row ->
+            if (index > 0) {
+                card.addView(
+                    View(this).apply { setBackgroundColor(overlayPalette.overlayHairline) },
+                    LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 1),
+                )
+            }
+            card.addView(row, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
+        }
+        return card
+    }
+
+    private fun overlayRowContainer(name: String, hint: String? = null, control: View? = null): View =
+        LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            setPadding(0, dp(12), 0, dp(12))
+            minimumHeight = dp(52)
+            val detail = LinearLayout(this@CarPlayHostActivity).apply { orientation = LinearLayout.VERTICAL }
+            detail.addView(menuText(name, 15f, MENU_PRIMARY, bold = true))
+            hint?.let {
+                detail.addView(menuText(it, 12f, MENU_SECONDARY).apply { setPadding(0, dp(4), 0, 0) })
+            }
+            addView(detail, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f).apply { marginEnd = dp(14) })
+            control?.let {
+                addView(it, LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT))
+            }
+        }
+
+    private fun overlayDeck(cards: List<View>, wide: Boolean): View {
+        if (!wide) {
+            return LinearLayout(this).apply {
+                orientation = LinearLayout.VERTICAL
+                cards.forEach { card ->
+                    addView(card, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { bottomMargin = dp(18) })
+                }
+            }
+        }
+        val left = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        val right = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        cards.forEachIndexed { index, card ->
+            val column = if (index % 2 == 0) left else right
+            column.addView(card, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { bottomMargin = dp(18) })
+        }
+        return LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            addView(left, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
+            addView(View(this@CarPlayHostActivity), LinearLayout.LayoutParams(dp(18), 1))
+            addView(right, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
+        }
+    }
+
+    private fun <T> overlaySegmentPills(
+        options: List<Pair<T, String>>,
+        selected: T,
+        vertical: Boolean = false,
+        onPick: (T) -> Unit,
+    ): RadioGroup {
+        val group = RadioGroup(this).apply {
+            orientation = if (vertical) RadioGroup.VERTICAL else RadioGroup.HORIZONTAL
+            setPadding(dp(3), dp(3), dp(3), dp(3))
+            background = GradientDrawable().apply {
+                setColor(overlayPalette.overlayField)
+                setStroke(1, overlayPalette.overlayFieldStroke)
+                cornerRadius = dp(11).toFloat()
+            }
+        }
+        var selectedId = View.NO_ID
+        options.forEach { (value, label) ->
+            val pill = RadioButton(this).apply {
+                id = View.generateViewId()
+                text = label
+                textSize = 13f
+                setButtonDrawable(null)
+                gravity = Gravity.CENTER
+                setPadding(dp(12), dp(9), dp(12), dp(9))
+                minWidth = dp(64)
+                setTextColor(ColorStateList(
+                    arrayOf(intArrayOf(android.R.attr.state_checked), intArrayOf()),
+                    intArrayOf(Color.WHITE, overlayPalette.overlaySecondaryText),
+                ))
+                background = android.graphics.drawable.StateListDrawable().apply {
+                    addState(intArrayOf(android.R.attr.state_checked), GradientDrawable().apply {
+                        setColor(overlayPalette.overlaySegmentOn)
+                        cornerRadius = dp(8).toFloat()
+                    })
+                    addState(intArrayOf(), GradientDrawable().apply {
+                        setColor(Color.TRANSPARENT)
+                        cornerRadius = dp(8).toFloat()
+                    })
+                }
+                tag = value
+            }
+            if (value == selected) selectedId = pill.id
+            group.addView(pill, RadioGroup.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+            ).apply {
+                marginEnd = dp(3)
+                bottomMargin = if (vertical) dp(3) else 0
+            })
+        }
+        if (selectedId != View.NO_ID) group.check(selectedId)
+        group.setOnCheckedChangeListener { checkedGroup, checkedId ->
+            val index = checkedGroup.indexOfChild(checkedGroup.findViewById<View>(checkedId))
+            if (index in options.indices) onPick(options[index].first)
+        }
+        return group
+    }
+
+    private fun overlaySliderRowContainer(
+        name: String,
+        values: List<Int>,
+        selectedValue: Int,
+        label: (Int) -> String,
+        onValue: (Int) -> Unit,
+    ): View = LinearLayout(this).apply {
+        orientation = LinearLayout.VERTICAL
+        setPadding(0, dp(12), 0, dp(12))
+        val head = LinearLayout(this@CarPlayHostActivity).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+        }
+        head.addView(menuText(name, 15f, MENU_PRIMARY, bold = true),
+            LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
+        val valueView = menuText(label(selectedValue), 15f, MENU_ACCENT, bold = true)
+        head.addView(valueView, LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT))
+        addView(head, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
+        addView(SeekBar(this@CarPlayHostActivity).apply {
+            max = (values.size - 1).coerceAtLeast(0)
+            progress = values.indexOf(selectedValue).coerceAtLeast(0)
+            progressTintList = ColorStateList.valueOf(MENU_ACCENT)
+            thumbTintList = ColorStateList.valueOf(MENU_ACCENT)
+            setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+                override fun onProgressChanged(bar: SeekBar?, progress: Int, fromUser: Boolean) {
+                    val next = values.getOrNull(progress) ?: return
+                    valueView.text = label(next)
+                    if (fromUser) onValue(next)
+                }
+                override fun onStartTrackingTouch(bar: SeekBar?) = Unit
+                override fun onStopTrackingTouch(bar: SeekBar?) = Unit
+            })
+        }, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { topMargin = dp(6) })
+    }
+
+    private fun buildOverlayPages(categories: List<OverlayCategory>, wide: Boolean): LinkedHashMap<String, LinearLayout> {
+        val pages = LinkedHashMap<String, LinearLayout>()
+        for (category in categories) {
+            val page = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+            page.addView(overlayPageHero(category))
+            val cards = when (category.key) {
+                "connection" -> buildConnectionCards()
+                "navigation" -> buildNavigationCards()
+                "display" -> buildDisplayCards(wide)
+                "sound" -> buildSoundCards()
+                "vehicle" -> buildVehicleCards()
+                else -> buildMoreCards()
+            }
+            page.addView(overlayDeck(cards, wide))
+            pages[category.key] = page
+        }
+        return pages
+    }
+
+    private fun buildConnectionCards(): List<View> {
+        val wirelessRow = settingsSwitchRow(
+            label = getString(R.string.wireless_carplay_2),
+            checked = wirelessEnabled,
+            description = getString(R.string.wireless_carplay_transport),
+            contentDescription = getString(R.string.wireless_carplay_transport),
+        ) { checked ->
+            if (wirelessEnabled == checked) return@settingsSwitchRow
+            wirelessEnabled = checked
+            hotspotStatus = HotspotStatus(state = if (wirelessEnabled) getString(R.string.hotspot_state_stopped) else getString(R.string.hotspot_state_off))
+            updateHotspotStatusBlock()
+            appendLog("Wireless CarPlay ${if (checked) "enabled" else "disabled"}; applies when settings close")
+            requestStartupPrerequisites()
+        }
+        val statusBox = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            setPadding(dp(12), dp(10), dp(12), dp(10))
+            background = GradientDrawable().apply {
+                setColor(overlayPalette.overlayField)
+                setStroke(1, overlayPalette.overlayStroke)
+                cornerRadius = dp(10).toFloat()
+            }
+        }
+        statusBox.addView(View(this).apply {
+            background = GradientDrawable().apply {
+                setColor(if (wirelessEnabled) Color.rgb(37, 213, 171) else overlayPalette.overlayTrackOff)
+                shape = GradientDrawable.OVAL
+            }
+        }, LinearLayout.LayoutParams(dp(8), dp(8)))
+        statusBox.addView(
+            menuText("", 13f, MENU_SECONDARY).also { hotspotStatusView = it },
+            LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { marginStart = dp(10) },
+        )
+        val autoRows = listOf(
+            settingsSwitchRow(
+                label = getString(R.string.auto_start_on_boot),
+                checked = autoStartOnBoot,
+                description = getString(R.string.start_carplay_automatically_after_device_boot),
+            ) { checked ->
+                autoStartOnBoot = checked
+                appendLog("Boot auto-start ${if (checked) "enabled" else "disabled"}")
+            },
+            settingsSwitchRow(
+                label = getString(R.string.connect_when_diplay_opens),
+                checked = overlayConnectOnOpen,
+                description = getString(R.string.default_connection_description),
+            ) { checked -> overlayConnectOnOpen = checked },
+            settingsSwitchRow(
+                label = getString(R.string.connect_when_iphone_bluetooth_connects),
+                checked = overlayConnectOnBluetooth,
+                description = getString(R.string.connect_when_iphone_bluetooth_connects_description),
+            ) { checked -> overlayConnectOnBluetooth = checked },
+        )
+        return listOf(
+            overlayCard(getString(R.string.wireless_carplay_2), null, listOf(wirelessRow, buildHotspotModeSection(), statusBox)),
+            overlayCard(getString(R.string.automatic_connection), null, autoRows),
+            overlayCard(null, null, listOf(buildMfiTargetSection())),
+        )
+    }
+
+    private fun buildNavigationCards(): List<View> {
+        val clusterRow = overlayRowContainer(
+            getString(R.string.settings_cluster_menu_small_title),
+            null,
+            overlaySegmentPills(
+                listOf(
+                    0 to getString(R.string.cluster_small_window_off),
+                    1 to getString(R.string.cluster_small_window_on),
+                    2 to getString(R.string.cluster_small_window_auto),
+                ),
+                AirPlayPersistence.loadClusterSmallWindowMode(this),
+            ) { value ->
+                AirPlayPersistence.saveClusterSmallWindowMode(this, value)
+                if (CarPlayBackgroundSession.active) recoveryPendingAfterMenu = true
+            },
+        )
+        val accessWarning = if (AirPlayPersistence.loadClusterMapEnabled(this) &&
+            AirPlayPersistence.loadClusterSmallWindowMode(this) == CLUSTER_SMALL_WINDOW_AUTO &&
+            adbNaviMode == null && !DiLink51ClusterMonitor.hasAccess(this)) {
+            menuText(getString(R.string.cluster_small_window_access_missing), 12f, MENU_DANGER).apply { setPadding(0, dp(6), 0, dp(6)) }
+        } else null
+        val locationRow = SettingsWidgets.createSwitchRow(
+            context = this,
+            label = getString(R.string.report_location_to_iphone),
+            description = getString(R.string.sends_precise_android_location_as_carplay_gps_data_when_th),
+            checked = locationReportingEnabled,
+            theme = settingsOverlayTheme,
+            contentDescription = getString(R.string.report_android_location_to_the_iphone),
+            labelSizeSp = 15f,
+            onChanged = { checked -> onLocationReportingChanged(checked) },
+        ).also { locationReportingSwitch = it.switch }.rowView
+        val infoRows = listOf(
+            locationRow,
+            settingsSwitchRow(
+                label = getString(R.string.turn_card_show_lanes),
+                checked = overlayShowLanes,
+                description = getString(R.string.turn_card_show_lanes_description),
+            ) { checked ->
+                overlayShowLanes = checked
+                applyClusterTurnOverlay()
+            },
+            settingsSwitchRow(
+                label = getString(R.string.turn_card_show_arrival),
+                checked = overlayShowArrival,
+                description = getString(R.string.turn_card_show_arrival_description),
+            ) { checked ->
+                overlayShowArrival = checked
+                applyClusterTurnOverlay()
+            },
+        )
+        val mapRow = settingsSwitchRow(
+            label = getString(R.string.dashboard_map_only_in_small_and_full_navi),
+            checked = overlayClusterMapOnlyNavi,
+            description = getString(R.string.dashboard_map_only_in_small_and_full_navi_description),
+        ) { checked -> overlayClusterMapOnlyNavi = checked }
+        return listOf(
+            overlayCard(getString(R.string.settings_navigation), null, listOfNotNull(clusterRow, accessWarning, mapRow)),
+            overlayCard(null, null, infoRows),
+        )
+    }
+
+    private fun buildDisplayCards(wide: Boolean): List<View> {
+        val nightModes = CarPlayNightMode.entries
+        val nightRow = overlayRowContainer(
+            getString(R.string.carplay_night_mode),
+            null,
+            overlaySegmentPills(
+                nightModes.map { mode ->
+                    mode to getString(
+                        when (mode) {
+                            CarPlayNightMode.SYSTEM -> R.string.carplay_night_system
+                            CarPlayNightMode.AMBIENT -> R.string.carplay_night_ambient
+                            CarPlayNightMode.DAY -> R.string.carplay_night_day
+                            CarPlayNightMode.NIGHT -> R.string.carplay_night_night
+                            CarPlayNightMode.SCHEDULE -> R.string.carplay_night_schedule
+                        },
+                    )
+                },
+                carPlayNightMode,
+                vertical = !wide,
+            ) { mode ->
+                carPlayNightMode = mode
+                nightModeController.configure(
+                    carPlayNightMode,
+                    nightModeOrNull(resources.configuration.uiMode) ?: false,
+                    ambientLightThreshold,
+                    ambientDelaySeconds,
+                    nightSchedule,
+                )
+                refreshAppAppearance()
+                paintWaitingScreen()
+            },
+        )
+        val resolutionControl = DisplaySettingsSection.createResolutionSlider(
+            context = this,
+            initialPercent = displayScalePercent,
+            theme = settingsOverlayTheme,
+        ) { percent ->
+            displayScalePercent = percent
+            displayScaleTenths = CarPlayDisplayScale.sanitize((percent + 5) / 10)
+            updateResolutionMenu()
+        }
+        resolutionValueView = resolutionControl.valueTextView
+        val fpsRow = overlaySliderRowContainer(
+            getString(R.string.frame_rate),
+            (AirPlayDisplaySettings.MIN_FPS..AirPlayDisplaySettings.MAX_FPS step AirPlayDisplaySettings.FPS_STEP).toList(),
+            fps,
+            label = { "$it fps" },
+        ) { value ->
+                fps = value
+                updateResolutionMenu()
+            }
+        val dockSection = buildDockSection()
+        val pictureRow = overlayRowContainer(
+            getString(R.string.picture_adjustments),
+            null,
+            overlayChromeButton(getString(R.string.picture_adjustments) + " ›") {
+                cancelSettingsEdits()
+                openPicturePanel()
+            },
+        )
+        val preview = menuText("", 12f, MENU_SECONDARY)
+        resolutionPreviewView = preview
+        val sidePanelRow = settingsSwitchRow(
+            label = getString(R.string.side_panel_show),
+            checked = sidePanelShown,
+            description = getString(R.string.side_panel_settings_hint),
+            enabled = sessionDisplay?.viewAreas?.sidePanel() != null,
+        ) { checked -> showSidePanel(checked) }
+        return listOf(
+            overlayCard(getString(R.string.settings_display), null, listOf(
+                nightRow,
+                resolutionControl.container,
+                fpsRow,
+                dockSection,
+            )),
+            overlayCard(null, null, listOf(
+                buildFullscreenSection(),
+                sidePanelRow,
+                buildSafeAreaSection(),
+                pictureRow,
+                preview,
+            )),
+        )
+    }
+
+    private fun buildSoundCards(): List<View> {
+        val mediaRow = overlaySliderRowContainer(
+            getString(R.string.contrib_audio_home_media_channel_label),
+            AirPlayPersistence.AUDIO_CHANNELS.toList(),
+            overlayMediaChannel,
+            label = { "$it" },
+        ) { value -> overlayMediaChannel = value }
+        val navRow = overlaySliderRowContainer(
+            getString(R.string.contrib_audio_home_nav_channel_label),
+            AirPlayPersistence.AUDIO_CHANNELS.toList(),
+            overlayNavigationChannel,
+            label = { "$it" },
+        ) { value -> overlayNavigationChannel = value }
+        val bufferRow = overlayRowContainer(
+            getString(R.string.music_buffer),
+            null,
+            overlaySegmentPills(
+                com.shilapi.xcertplay.media.MediaAudioBuffer.presets.map { millis ->
+                    millis to getString(
+                        when (millis) {
+                            500 -> R.string.s_500_ms
+                            1000 -> R.string.s_1000_ms_most_stable
+                            else -> R.string.s_300_ms_default
+                        },
+                    )
+                },
+                overlayMediaBufferMillis,
+            ) { value -> overlayMediaBufferMillis = value },
+        )
+        val playRows = listOf(
+            settingsSwitchRow(
+                label = getString(R.string.bt_suspend_during_carplay),
+                checked = overlayBtSuspend,
+                description = getString(R.string.bt_suspend_during_carplay_description),
+            ) { checked -> overlayBtSuspend = checked },
+            settingsSwitchRow(
+                label = getString(R.string.smooth_video),
+                checked = overlaySmoothVideo,
+                description = getString(R.string.smooth_video_description),
+            ) { checked ->
+                overlaySmoothVideo = checked
+                appendLog("Smooth video ${if (checked) "enabled" else "disabled"}; applies when settings close")
+            },
+        )
+        val advanced = if (advancedAudioChannelMappingSupported) {
+            settingsSwitchRow(
+                label = getString(R.string.advanced_audio_channel_mapping),
+                checked = advancedAudioChannelMapping,
+                description = getString(R.string.use_usage_content_type_routing_instead_of_stream_type),
+            ) { checked ->
+                advancedAudioChannelMapping = checked
+                appendLog("Advanced audio channel mapping ${if (checked) "enabled" else "disabled"}; applies when settings close")
+                updateResolutionMenu()
+            }
+        } else null
+        return listOf(
+            overlayCard(getString(R.string.audio), null, listOf(mediaRow, navRow, bufferRow)),
+            overlayCard(null, null, playRows + listOfNotNull(advanced)),
+        )
+    }
+
+    private fun buildVehicleCards(): List<View> {
+        val drivingRow = buildDrivingSideSection()
+        val tapRow = settingsSwitchRow(
+            label = getString(R.string.settings_launcher_returns_to_carplay),
+            checked = overlayLauncherReturnsToCarPlay,
+            description = getString(R.string.settings_launcher_returns_to_carplay_description),
+        ) { checked -> overlayLauncherReturnsToCarPlay = checked }
+        return listOf(
+            overlayCard(getString(R.string.settings_vehicle), null, listOf(drivingRow, tapRow)),
+            overlayCard(null, null, listOf(
+                buildIdentitySettingsSection(),
+                buildAirPlayIconSection(),
+            )),
+        )
+    }
+
+    private fun buildMoreCards(): List<View> {
+        val languageRow = overlayRowContainer(
+            getString(R.string.language_app_language),
+            getString(R.string.language_hint),
+            overlayChromeButton(getString(R.string.language_app_language) + " ›") {
+                AppLocale.showPicker(this@CarPlayHostActivity)
+            },
+        )
+        val gestureButton = overlayChromeButton(getString(R.string.settings_gesture_fingers, gestureFingerCount)) {}
+        gestureButton.setOnClickListener {
+            gestureFingerCount = if (gestureFingerCount >= 4) 2 else gestureFingerCount + 1
+            gestureButton.text = getString(R.string.settings_gesture_fingers, gestureFingerCount)
+        }
+        val fingersRow = overlayRowContainer(getString(R.string.carplay_controls), null, gestureButton)
+        val swipeRow = overlayRowContainer(
+            getString(R.string.settings_swipe_target_label),
+            null,
+            overlaySegmentPills(
+                listOf(
+                    false to getString(R.string.settings_swipe_target_overlay),
+                    true to getString(R.string.settings_swipe_target_full),
+                ),
+                swipeOpensFullSettings,
+            ) { value ->
+                swipeOpensFullSettings = value
+                AirPlayPersistence.saveSwipeOpensFullSettings(this, value)
+            },
+        )
+        val hevcRow = DisplaySettingsSection.createHevcRow(
+            context = this,
+            checked = hevcEnabled,
+            theme = settingsOverlayTheme,
+        ) { checked ->
+            if (hevcEnabled == checked) return@createHevcRow
+            hevcEnabled = checked
+            appendLog("HEVC (H.265) ${if (hevcEnabled) "enabled" else "disabled"}; applies when settings close")
+            updateResolutionMenu()
+        }
+        val softwareHevcRow = DisplaySettingsSection.createSoftwareHevcRow(
+            context = this,
+            checked = hevcSoftwareDecoderEnabled,
+            theme = settingsOverlayTheme,
+        ) { checked ->
+            if (hevcSoftwareDecoderEnabled == checked) return@createSoftwareHevcRow
+            hevcSoftwareDecoderEnabled = checked
+            appendLog("HEVC software decoder ${if (hevcSoftwareDecoderEnabled) "enabled" else "disabled"}; applies when settings close")
+            updateResolutionMenu()
+        }
+        val videoRows = mutableListOf(hevcRow.rowView)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) videoRows += softwareHevcRow.rowView
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+            videoRows += menuText(getString(R.string.settings_android9_compat), 12f, MENU_SECONDARY)
+        }
+        val basisRow = overlayRowContainer(
+            getString(R.string.physical_size_basis),
+            null,
+            overlaySegmentPills(
+                listOf(
+                    AirPlayPhysicalSizeBasis.WIDTH to getString(R.string.widest_width),
+                    AirPlayPhysicalSizeBasis.HEIGHT to getString(R.string.longest_height),
+                ),
+                physicalSizeBasis,
+            ) { value ->
+                physicalSizeBasis = value
+                updateResolutionMenu()
+            },
+        )
+        val lengthRow = overlaySliderRowContainer(
+            getString(R.string.physical_length),
+            (AirPlayDisplaySettings.MIN_WIDTH_PHYSICAL_MM..AirPlayDisplaySettings.MAX_WIDTH_PHYSICAL_MM
+                step AirPlayDisplaySettings.WIDTH_PHYSICAL_MM_STEP).toList(),
+            widthPhysicalMm,
+            label = { "$it mm" },
+        ) { value ->
+                widthPhysicalMm = value
+                updateResolutionMenu()
+            }
+        val debugRow = settingsSwitchRow(
+            label = getString(R.string.debug_logs),
+            checked = debugLogsEnabled,
+            description = getString(R.string.show_on_screen_debug_logs),
+        ) { checked ->
+            debugLogsEnabled = checked
+            appendLog("Debug logs ${if (checked) "enabled" else "disabled"}")
+            updateDebugOverlays()
+        }
+        return listOf(
+            overlayCard(getString(R.string.settings_more), null, listOf(languageRow, fingersRow, swipeRow)),
+            overlayCard(getString(R.string.settings_advanced_media), null, videoRows),
+            overlayCard(getString(R.string.physical_size_basis), null, listOf(basisRow, lengthRow)),
+            overlayCard(getString(R.string.diagnostics), null, listOf(debugRow)),
+        )
+    }
+
 
     private fun persistMenuSettings() {
         AirPlayPersistence.saveSettingsGestureFingers(this, gestureFingerCount)
@@ -2668,19 +2813,20 @@ class CarPlayHostActivity : ComponentActivity() {
         val section = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
         }
-        val targetChoice = ConnectionSettingsSection.createMfiTargetChoice(
-            context = this,
-            selected = mfiTarget,
-            theme = settingsOverlayTheme,
+        mfiTargetGroup = overlaySegmentPills(
+            listOf(
+                MfiTarget.LOCAL to getString(R.string.local_offline),
+                MfiTarget.USB_CH341 to getString(R.string.usb_ch341),
+            ),
+            mfiTarget,
         ) { target ->
-            if (mfiTarget == target) return@createMfiTargetChoice
+            if (mfiTarget == target) return@overlaySegmentPills
             mfiTarget = target
             updateMfiTargetFields()
             appendLog("MFI target: ${mfiTargetLabel(target)}; applies when settings close")
         }
-        mfiTargetGroup = targetChoice.radioGroup
         section.addView(
-            targetChoice.container,
+            mfiTargetGroup,
             LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT,
@@ -2856,233 +3002,6 @@ class CarPlayHostActivity : ComponentActivity() {
 
     private fun overlayMenuWide(): Boolean = resources.displayMetrics.widthPixels >= dp(1000)
 
-    private fun layoutOverlayMenu(content: LinearLayout): View {
-        val hero = mutableListOf<View>()
-        val groups = mutableListOf<Pair<String, MutableList<View>>>()
-        val chrome = mutableListOf<View>()
-        var current: MutableList<View>? = null
-        for (i in 0 until content.childCount) {
-            val child = content.getChildAt(i)
-            when {
-                child.tag == "settings-category" -> {
-                    val title = overlayMenuCategoryTitle(child)
-                    val group = mutableListOf(child)
-                    groups.add(title to group)
-                    current = group
-                }
-                child.tag == "settings-chrome" -> chrome.add(child)
-                current != null -> current.add(child)
-                else -> hero.add(child)
-            }
-        }
-        for (i in content.childCount - 1 downTo 0) content.removeViewAt(i)
-        val pages = groups.map { it.second }
-        val selectedTitle = overlayMenuCategoryTitle
-            ?.takeIf { title -> groups.any { it.first == title } }
-            ?: groups.firstOrNull()?.first
-        overlayMenuCategoryTitle = selectedTitle
-        val wide = overlayMenuWide() && groups.size > 1
-        fun show(title: String?) {
-            overlayMenuCategoryTitle = title
-            pages.forEachIndexed { index, page ->
-                val visible = groups[index].first == title
-                page.forEach { child ->
-                    child.visibility = when {
-                        !visible -> View.GONE
-                        wide && child.tag == "settings-category" -> View.GONE
-                        else -> View.VISIBLE
-                    }
-                }
-            }
-        }
-        show(selectedTitle)
-        fun paintRail(rail: ViewGroup) {
-            for (i in 0 until rail.childCount) {
-                val row = rail.getChildAt(i)
-                val selected = row.contentDescription == overlayMenuCategoryTitle
-                row.isSelected = selected
-                (row as? ViewGroup)?.getChildAt(0)?.setBackgroundColor(
-                    if (selected) MENU_ACCENT else Color.TRANSPARENT,
-                )
-                ((row as? ViewGroup)?.getChildAt(1) as? TextView)?.setTextColor(
-                    if (selected) MENU_ACCENT else MENU_PRIMARY,
-                )
-            }
-        }
-        fun rail(): LinearLayout {
-            val rail = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
-            groups.forEach { (title, _) ->
-                rail.addView(
-                    overlayMenuRailItem(title, title == selectedTitle) { selected ->
-                        show(selected)
-                        paintRail(rail)
-                    },
-                    LinearLayout.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                        ViewGroup.LayoutParams.WRAP_CONTENT,
-                    ).apply { bottomMargin = dp(8) },
-                )
-            }
-            return rail
-        }
-        val body = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
-        hero.forEach(body::addView)
-        if (wide) {
-            val split = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
-            split.addView(
-                ScrollView(this).apply { isFillViewport = true; addView(rail()) },
-                LinearLayout.LayoutParams(dp(220), ViewGroup.LayoutParams.MATCH_PARENT),
-            )
-            split.addView(View(this).apply { setBackgroundColor(0x26FFFFFF) },
-                LinearLayout.LayoutParams(dp(1), ViewGroup.LayoutParams.MATCH_PARENT).apply {
-                    leftMargin = dp(16); rightMargin = dp(16)
-                })
-            val pageColumn = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
-            pages.forEach { page -> page.forEach(pageColumn::addView) }
-            split.addView(
-                ScrollView(this).apply {
-                    isFillViewport = true
-                    addView(pageColumn, ViewGroup.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                        ViewGroup.LayoutParams.WRAP_CONTENT,
-                    ))
-                },
-                LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f),
-            )
-            val chromeColumn = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
-            chrome.forEach(chromeColumn::addView)
-            return LinearLayout(this).apply {
-                orientation = LinearLayout.VERTICAL
-                setPadding(dp(36), dp(28), dp(36), dp(28))
-                addView(body, LinearLayout.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
-                addView(split, LinearLayout.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f))
-                addView(chromeColumn, LinearLayout.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
-            }
-        }
-        if (groups.size > 1) {
-            body.addView(rail())
-            pages.forEach { page ->
-                page.forEach { child ->
-                    if (child.tag == "settings-category") child.visibility = View.GONE
-                }
-            }
-        }
-        pages.forEach { page -> page.forEach(body::addView) }
-        chrome.forEach(body::addView)
-        return ScrollView(this).apply {
-            isFillViewport = true
-            addView(body, ViewGroup.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-            ))
-        }
-    }
-
-    private fun overlayMenuCategoryTitle(header: View): String {
-        val head = (header as? ViewGroup)?.getChildAt(0) as? ViewGroup
-        return (head?.getChildAt(1) as? TextView)?.text?.toString().orEmpty()
-    }
-
-    private fun overlayMenuRailItem(title: String, selected: Boolean, onSelect: (String) -> Unit): View =
-        LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.CENTER_VERTICAL
-            isClickable = true
-            isFocusable = true
-            isSelected = selected
-            contentDescription = title
-            setPadding(dp(8), dp(10), dp(12), dp(10))
-            background = android.graphics.drawable.RippleDrawable(
-                ColorStateList.valueOf(0x33FFFFFF),
-                GradientDrawable().apply {
-                    setColor(Color.TRANSPARENT)
-                    cornerRadius = dp(12).toFloat()
-                },
-                null,
-            )
-            addView(View(this@CarPlayHostActivity).apply {
-                setBackgroundColor(if (selected) MENU_ACCENT else Color.TRANSPARENT)
-            }, LinearLayout.LayoutParams(dp(4), dp(28)).apply { rightMargin = dp(10) })
-            addView(
-                menuText(title, 16f, if (selected) MENU_ACCENT else MENU_PRIMARY, bold = true),
-                LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f),
-            )
-            setOnClickListener { onSelect(title) }
-        }
-
-    private fun settingsCategoryHeader(title: String): View = LinearLayout(this).apply {
-        tag = "settings-category"
-        orientation = LinearLayout.VERTICAL
-        val head = LinearLayout(this@CarPlayHostActivity).apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.CENTER_VERTICAL
-            setPadding(0, 0, 0, 0)
-        }
-        head.addView(View(this@CarPlayHostActivity).apply {
-            setBackgroundDrawable(android.graphics.drawable.GradientDrawable().apply {
-                setColor(MENU_ACCENT); cornerRadius = dp(2).toFloat()
-            })
-        }, LinearLayout.LayoutParams(dp(4), dp(18)).apply { rightMargin = dp(10) })
-        head.addView(
-            menuText(title, 17f, MENU_PRIMARY, bold = true).apply { letterSpacing = 0.04f },
-            LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT),
-        )
-        addView(head, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
-        addView(View(this@CarPlayHostActivity).apply {
-            setBackgroundColor(0x26FFFFFF)
-        }, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(1)).apply { topMargin = dp(10) })
-    }
-
-    private fun buildLocationReportingSection(): View =
-        LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            val row = LinearLayout(this@CarPlayHostActivity).apply {
-                orientation = LinearLayout.HORIZONTAL
-                gravity = Gravity.CENTER_VERTICAL
-            }
-            row.addView(
-                menuText(getString(R.string.report_location_to_iphone), 20f, MENU_SECONDARY),
-                LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f),
-            )
-            val switch = Switch(this@CarPlayHostActivity).apply {
-                isChecked = locationReportingEnabled
-                contentDescription = getString(R.string.report_android_location_to_the_iphone)
-                SettingsWidgets.applyLargeSwitchStyle(this, MENU_ACCENT, MENU_SECONDARY, MENU_ACCENT_TRACK, MENU_TRACK_OFF)
-                setOnCheckedChangeListener { _, checked ->
-                    onLocationReportingChanged(checked)
-                }
-            }
-            locationReportingSwitch = switch
-            row.addView(
-                switch,
-                LinearLayout.LayoutParams(
-                    ViewGroup.LayoutParams.WRAP_CONTENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT,
-                ),
-            )
-            addView(
-                row,
-                LinearLayout.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT,
-                ),
-            )
-            addView(
-                menuText(
-                    getString(R.string.sends_precise_android_location_as_carplay_gps_data_when_th),
-                    14f,
-                    MENU_SECONDARY,
-                ),
-                LinearLayout.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT,
-                ).apply { topMargin = dp(6) },
-            )
-        }
-
     private fun onLocationReportingChanged(checked: Boolean) {
         if (locationReportingEnabled == checked) return
         locationReportingEnabled = checked
@@ -3106,71 +3025,6 @@ class CarPlayHostActivity : ComponentActivity() {
             appendLog("Debug logs ${if (debugLogsEnabled) "enabled" else "disabled"}")
             updateDebugOverlays()
         }
-
-    private fun buildStepSliderSection(
-        title: String,
-        values: List<Int>,
-        selectedValue: Int,
-        label: (Int) -> String,
-        onValueChanged: (Int) -> Unit,
-    ): View {
-        val section = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-        }
-        val header = LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.CENTER_VERTICAL
-        }
-        header.addView(
-            menuText(title, 20f, MENU_SECONDARY),
-            LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f),
-        )
-        val selectedIndex = values.indexOf(selectedValue)
-            .takeIf { it >= 0 }
-            ?: 0
-        val valueView = menuText(label(values[selectedIndex]), 22f, MENU_ACCENT, bold = true)
-        header.addView(
-            valueView,
-            LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-            ),
-        )
-        section.addView(
-            header,
-            LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-            ),
-        )
-        val seekBar = SeekBar(this).apply {
-            max = (values.size - 1).coerceAtLeast(0)
-            progress = selectedIndex
-            splitTrack = false
-            progressTintList = ColorStateList.valueOf(MENU_ACCENT)
-            thumbTintList = ColorStateList.valueOf(MENU_ACCENT)
-            setOnSeekBarChangeListener(
-                object : SeekBar.OnSeekBarChangeListener {
-                    override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {
-                        val value = values.getOrNull(progress) ?: return
-                        valueView.text = label(value)
-                        if (fromUser) onValueChanged(value)
-                    }
-
-                    override fun onStartTrackingTouch(seekBar: SeekBar) = Unit
-                    override fun onStopTrackingTouch(seekBar: SeekBar) = Unit
-                },
-            )
-        }
-        section.addView(
-            seekBar,
-            LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-            ).apply { topMargin = dp(8) },
-        )
-        return section
-    }
 
     private fun buildAirPlayIconSection(): View {
         val section = LinearLayout(this).apply {
@@ -3271,98 +3125,42 @@ class CarPlayHostActivity : ComponentActivity() {
 
     // Between the driver's side and the bottom the dock moves at once (and is saved at once) when the
     // running session declared both; to or from automatic waits for Save, which reconnects.
-    private fun buildDockSection(): View {
-        val section = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-        }
-        section.addView(
-            menuText(getString(R.string.carplay_dock), 20f, MENU_SECONDARY),
-            LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-            ),
-        )
-        val group = RadioGroup(this).apply {
-            orientation = RadioGroup.HORIZONTAL
-        }
-        val labels = mapOf(
-            CarPlayDock.AUTOMATIC to R.string.carplay_dock_automatic,
-            CarPlayDock.DRIVER_SIDE to R.string.carplay_dock_driver_side,
-            CarPlayDock.BOTTOM to R.string.carplay_dock_bottom,
-        )
-        val buttons = CarPlayDock.entries.associateWith { dock ->
-            RadioButton(this).apply {
-                id = View.generateViewId()
-                text = getString(labels.getValue(dock))
-                setTextColor(MENU_PRIMARY)
-                isChecked = carPlayDock == dock
-            }.also { group.addView(it) }
-        }
-        group.setOnCheckedChangeListener { _, checkedId ->
-            val next = buttons.entries.firstOrNull { it.value.id == checkedId }?.key ?: return@setOnCheckedChangeListener
-            carPlayDock = next
+    private fun buildDockSection(): View =
+        overlayRowContainer(getString(R.string.carplay_dock), null, overlaySegmentPills(
+            CarPlayDock.entries.map { dock ->
+                dock to getString(
+                    when (dock) {
+                        CarPlayDock.AUTOMATIC -> R.string.carplay_dock_automatic
+                        CarPlayDock.DRIVER_SIDE -> R.string.carplay_dock_driver_side
+                        CarPlayDock.BOTTOM -> R.string.carplay_dock_bottom
+                    },
+                )
+            },
+            carPlayDock,
+        ) { dock ->
+            carPlayDock = dock
             val from = sessionDock
             val areas = sessionDisplay?.viewAreas
-            val target = next.edge?.let { areas?.withDock(it) }
-            if (from != null && areas != null && target != null && CarPlayDock.movesLive(from, next) &&
+            val target = dock.edge?.let { areas?.withDock(it) }
+            if (from != null && areas != null && target != null && CarPlayDock.movesLive(from, dock) &&
                 controller?.showViewArea(target) == true
             ) {
                 areas.use(target)
-                CarPlayDock.save(this, next)
+                CarPlayDock.save(this, dock)
             }
-        }
-        section.addView(
-            group,
-            LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-            ).apply { topMargin = dp(8) },
-        )
-        section.addView(menuText(getString(R.string.carplay_dock_hint), 16f, MENU_SECONDARY))
-        return section
-    }
+        })
 
-    private fun buildDrivingSideSection(): View {
-        val section = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-        }
-        section.addView(
-            menuText(getString(R.string.driving_side), 20f, MENU_SECONDARY),
-            LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT,
+    private fun buildDrivingSideSection(): View =
+        overlayRowContainer(getString(R.string.driving_side), null, overlaySegmentPills(
+            listOf(
+                false to getString(R.string.left_hand_drive),
+                true to getString(R.string.right_hand_drive),
             ),
-        )
-        val group = RadioGroup(this).apply {
-            orientation = RadioGroup.HORIZONTAL
-        }
-        val left = RadioButton(this).apply {
-            id = View.generateViewId()
-            text = getString(R.string.left_hand_drive)
-            setTextColor(MENU_PRIMARY)
-            isChecked = !rightHandDrive
-        }
-        val right = RadioButton(this).apply {
-            id = View.generateViewId()
-            text = getString(R.string.right_hand_drive)
-            setTextColor(MENU_PRIMARY)
-            isChecked = rightHandDrive
-        }
-        group.addView(left)
-        group.addView(right)
-        group.setOnCheckedChangeListener { _, checkedId ->
-            rightHandDrive = checkedId == right.id
+            rightHandDrive,
+        ) { right ->
+            rightHandDrive = right
             updateResolutionMenu()
-        }
-        section.addView(
-            group,
-            LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-            ).apply { topMargin = dp(8) },
-        )
-        return section
-    }
+        })
 
     private fun buildFullscreenSection(): View {
         val section = LinearLayout(this).apply {
@@ -3575,6 +3373,8 @@ class CarPlayHostActivity : ComponentActivity() {
         checked: Boolean,
         description: String,
         enabled: Boolean = true,
+        contentDescription: String = description,
+        labelSize: Float = 15f,
         onChanged: (Boolean) -> Unit,
     ): View = SettingsWidgets.createSwitchRow(
         context = this,
@@ -3582,8 +3382,9 @@ class CarPlayHostActivity : ComponentActivity() {
         description = description,
         checked = checked,
         theme = settingsOverlayTheme,
-        contentDescription = description,
+        contentDescription = contentDescription,
         enabled = enabled,
+        labelSizeSp = labelSize,
         onChanged = onChanged,
     ).rowView
 
@@ -3613,17 +3414,13 @@ class CarPlayHostActivity : ComponentActivity() {
             orientation = LinearLayout.VERTICAL
         }
         section.addView(
-            menuText(getString(R.string.wi_fi_session), 20f, MENU_SECONDARY),
+            menuText(getString(R.string.wi_fi_session), 15f, MENU_PRIMARY, bold = true),
             LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT,
             ),
         )
 
-        val group = RadioGroup(this).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(0, dp(8), 0, 0)
-        }
         val modes = buildList {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 add(WirelessHotspotMode.WIFI_P2P to getString(R.string.wi_fi_p2p_5_ghz))
@@ -3631,35 +3428,8 @@ class CarPlayHostActivity : ComponentActivity() {
             add(WirelessHotspotMode.MANUAL to getString(R.string.built_in_car_hotspot))
             add(WirelessHotspotMode.EXISTING_WIFI to getString(R.string.existing_wifi_title))
         }
-        var selectedId = View.NO_ID
-        for ((mode, label) in modes) {
-            val button = RadioButton(this).apply {
-                id = View.generateViewId()
-                text = label
-                textSize = 18f
-                setTextColor(MENU_SECONDARY)
-                buttonTintList = ColorStateList(
-                    arrayOf(intArrayOf(android.R.attr.state_checked), intArrayOf()),
-                    intArrayOf(MENU_ACCENT, MENU_SECONDARY),
-                )
-                tag = mode
-                isChecked = wirelessHotspotMode == mode
-            }
-            if (wirelessHotspotMode == mode) selectedId = button.id
-            group.addView(
-                button,
-                RadioGroup.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT,
-                ),
-            )
-        }
-        if (selectedId != View.NO_ID) group.check(selectedId)
-        group.setOnCheckedChangeListener { radioGroup, checkedId ->
-            val selected = radioGroup.findViewById<RadioButton>(checkedId)
-                ?.tag as? WirelessHotspotMode
-                ?: return@setOnCheckedChangeListener
-            if (wirelessHotspotMode == selected) return@setOnCheckedChangeListener
+        val group = overlaySegmentPills(modes, wirelessHotspotMode) { selected ->
+            if (wirelessHotspotMode == selected) return@overlaySegmentPills
             wirelessHotspotMode = selected
             hotspotStatus = HotspotStatus(state = if (wirelessEnabled) getString(R.string.hotspot_state_stopped) else getString(R.string.hotspot_state_off))
             updateHotspotStatusBlock()

@@ -337,6 +337,7 @@
     <string name="safe_area_waiting_for_activity_size">安全區域：正在等待活動視窗尺寸</string>
     <string name="save">儲存</string>
     <string name="save_1_1">儲存 1:1 圖片</string>
+    <string name="settings_save_notice">設定修改後，點擊「儲存並重新連線」生效</string>
     <string name="save_and_reconnect">儲存並重新連線</string>
     <string name="save_details">儲存詳細資訊</string>
     <string name="save_diagnostic_report">儲存診斷報告</string>

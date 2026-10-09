@@ -337,6 +337,7 @@
     <string name="safe_area_waiting_for_activity_size">Безпечна область: очікування розміру вікна</string>
     <string name="save">Зберегти</string>
     <string name="save_1_1">Зберегти 1:1</string>
+    <string name="settings_save_notice">Зміни застосуються після натискання «Зберегти та перепідключити»</string>
     <string name="save_and_reconnect">Зберегти й перепідключитися</string>
     <string name="save_details">Зберегти дані</string>
     <string name="save_diagnostic_report">Зберегти діагностичний звіт</string>
