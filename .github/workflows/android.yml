@@ -5,7 +5,7 @@ on:
   pull_request:
   workflow_dispatch:
 permissions:
-  contents: read
+  contents: write
 jobs:
   check:
     runs-on: ubuntu-latest
@@ -24,6 +24,27 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
       - name: Unit tests, lint and source-only debug build
         run: ./gradlew :shared:testDebugUnitTest :common:testDebugUnitTest :home:testDebugUnitTest :mobile:lintDebug :home:lintDebug :maphost:lintDebug :mobile:assembleDebug :home:assembleDebug :maphost:assembleDebug --stacktrace
+      - name: Publish failure diagnostics
+        if: failure()
+        run: |
+          set -uo pipefail
+          ./gradlew :shared:testDebugUnitTest :common:testDebugUnitTest :home:testDebugUnitTest :mobile:lintDebug :home:lintDebug :maphost:lintDebug :mobile:assembleDebug :home:assembleDebug :maphost:assembleDebug --stacktrace > gradle.log 2>&1 || true
+          {
+            date
+            echo '--- compile/lint errors ---'
+            grep -nE "^e: |error: |Error:|FAILURE: |What went wrong" -A 4 gradle.log | head -200
+            echo '--- log tail ---'
+            tail -80 gradle.log
+            echo '--- failed tests ---'
+            grep -rn --include='TEST-*.xml' -B8 '<failure' . | grep -E 'testcase name|<failure' | head -60 || true
+            grep -rn --include='TEST-*.xml' -o '<error message="[^"]*"' . | head -20 || true
+          } > failure.txt
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git checkout -b "ci/diagnostics-${{ github.run_id }}"
+          git add failure.txt
+          git commit -m "diagnostics ${{ github.run_id }}"
+          git push origin "HEAD:ci/diagnostics-${{ github.run_id }}"
       - name: Test reports
         if: always()
         uses: actions/upload-artifact@v4

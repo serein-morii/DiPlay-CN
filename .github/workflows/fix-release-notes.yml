@@ -1,0 +1,20 @@
+name: Fix stale version numbers in published releases
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Rewrite cn.19 through cn.22 notes with their real versions
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          for tag in v0.2.10-cn.19 v0.2.10-cn.20 v0.2.10-cn.21 v0.2.10-cn.22; do
+            sed "s/{{VERSION}}/${tag#v}/g" docs/GITHUB_RELEASE.md > final.md
+            gh release edit "$tag" --repo "$GITHUB_REPOSITORY" --title "DiPlay CN ${tag#v}" --notes-file final.md || echo "skip $tag"
+          done

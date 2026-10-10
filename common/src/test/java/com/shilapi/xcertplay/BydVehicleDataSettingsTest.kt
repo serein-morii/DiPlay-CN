@@ -693,7 +693,7 @@ class BydVehicleDataSettingsTest {
         val second = layoutRoot()
         assertEquals(savedY, second.scrollY)
 
-        ReflectionHelpers.setField(activity, "page", "about")
+        ReflectionHelpers.setField(activity, "settingsCategory", SettingsCategory.ABOUT)
         ReflectionHelpers.callInstanceMethod<Unit>(activity, "render")
         val third = layoutRoot()
         assertEquals(0, third.scrollY)

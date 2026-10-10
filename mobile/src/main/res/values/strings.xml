@@ -1,3 +1,12 @@
 <resources>
-    <string name="app_name">DiPlay</string>
+    <string name="app_name">DiPlay CN</string>
+
+    <!-- Launcher-alias labels: the name shown in the car's app list. Fixed texts; Android
+         cannot change an installed app's label to free text. -->
+    <string name="alias_label_diplaycn" translatable="false">DiPlayCN</string>
+    <string name="alias_label_carpaly" translatable="false">CarPlay</string>
+    <string name="alias_label_navi" translatable="false">导航</string>
+    <string name="alias_label_map" translatable="false">地图</string>
+    <string name="alias_label_link" translatable="false">车载互联</string>
+    <string name="alias_label_media" translatable="false">多媒体</string>
 </resources>

@@ -179,6 +179,22 @@ class CarPlayHostDisplaySizeTest {
         assertEquals(1, getField("restartGeneration"))
     }
 
+    @Test fun dismissingAnUnchangedSettingsMenuDoesNotScheduleADisplayRestart() {
+        val display = startSession(rotation = Surface.ROTATION_180)
+        val video = object : TextureView(activity) {
+            override fun post(action: Runnable): Boolean = Handler(Looper.getMainLooper()).post(action)
+        }.apply { layout(0, 0, 1920, 990) }
+        setField("videoView", video)
+
+        invoke("openSettingsMenu")
+        invoke("cancelSettingsEdits")
+        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(600))
+
+        assertSame(display, getField("sessionDisplay"))
+        assertEquals(0, getField("restartGeneration"))
+        assertNull(getField("pendingDisplaySize"))
+    }
+
     @Test fun anExplicitBarLayoutChangeStillRebuildsTheSession() {
         startSession()
         setField("hideTopBar", false)

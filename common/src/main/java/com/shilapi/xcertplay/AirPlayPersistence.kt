@@ -85,6 +85,7 @@ object AirPlayPersistence {
     private const val KEY_CLUSTER_MARKER_X = "cluster_marker_horizontal_step"
     private const val KEY_CLUSTER_MARKER_Y = "cluster_marker_vertical_step"
     private const val KEY_CLUSTER_SMALL_WINDOW_MODE = "cluster_small_window_mode"
+    private const val KEY_CLUSTER_SMALL_WINDOW_MARKER = "cluster_small_window_marker"
     private const val KEY_CLUSTER_SMALL_WINDOW_MARKER_X = "cluster_small_window_marker_x"
     private const val KEY_CLUSTER_SMALL_WINDOW_MARKER_Y = "cluster_small_window_marker_y"
     private const val KEY_CLUSTER_TURN_CARD_OVERLAY_POSITION = "cluster_turn_card_overlay_position"
@@ -157,6 +158,11 @@ object AirPlayPersistence {
     private const val KEY_CLUSTER_SMALL_WINDOW_CARD_X = "cluster_small_window_card_x"
     private const val KEY_CLUSTER_SMALL_WINDOW_CARD_Y = "cluster_small_window_card_y"
     private const val KEY_CLUSTER_SMALL_WINDOW_CARD_OPACITY = "cluster_small_window_card_opacity_percent"
+    private const val KEY_CLUSTER_TURN_CARD_SHOW_ARRIVAL = "cluster_turn_card_show_arrival"
+    private const val KEY_CLUSTER_TURN_CARD_SHOW_LANES = "cluster_turn_card_show_lanes"
+    private const val KEY_LAUNCHER_RETURNS_TO_CARPLAY = "launcher_returns_to_carplay"
+    private const val KEY_SWIPE_OPENS_FULL_SETTINGS = "swipe_opens_full_settings"
+    private const val KEY_UPDATE_CHANNEL = "update_channel"
 
     fun loadDisplayScaleTenths(context: Context): Int {
         val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
@@ -1091,9 +1097,14 @@ object AirPlayPersistence {
     }
 
     /** 0 off, 1 always small-window positions, 2 auto from the cluster. Default off. */
-    fun loadClusterSmallWindowMode(context: Context): Int =
-        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-            .getInt(KEY_CLUSTER_SMALL_WINDOW_MODE, 0).coerceIn(0, 2)
+    fun loadClusterSmallWindowMode(context: Context): Int {
+        val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        if (prefs.contains(KEY_CLUSTER_SMALL_WINDOW_MODE)) {
+            return prefs.getInt(KEY_CLUSTER_SMALL_WINDOW_MODE, 0).coerceIn(0, 2)
+        }
+        // CN field installs kept a boolean before the three-way mode existed.
+        return if (prefs.getBoolean(KEY_CLUSTER_SMALL_WINDOW_MARKER, false)) 1 else 0
+    }
 
     fun saveClusterSmallWindowMode(context: Context, mode: Int) {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
@@ -1319,6 +1330,58 @@ object AirPlayPersistence {
             .remove(KEY_LOCKDOWN_ROOT_PRIVATE)
             .remove(KEY_LOCKDOWN_ROOT_CERT)
             .apply()
+    }
+
+    /** Compatibility view: the legacy boolean is simply "the mode is not Off". */
+    fun loadClusterSmallWindowMarker(context: Context): Boolean =
+        loadClusterSmallWindowMode(context) != 0
+
+    fun loadClusterTurnCardShowArrival(context: Context): Boolean =
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+            .getBoolean(KEY_CLUSTER_TURN_CARD_SHOW_ARRIVAL, true)
+
+    fun saveClusterTurnCardShowArrival(context: Context, enabled: Boolean) {
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
+            .putBoolean(KEY_CLUSTER_TURN_CARD_SHOW_ARRIVAL, enabled).apply()
+        overlaySettingsListener?.invoke()
+    }
+
+    fun loadClusterTurnCardShowLanes(context: Context): Boolean =
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+            .getBoolean(KEY_CLUSTER_TURN_CARD_SHOW_LANES, true)
+
+    fun saveClusterTurnCardShowLanes(context: Context, enabled: Boolean) {
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
+            .putBoolean(KEY_CLUSTER_TURN_CARD_SHOW_LANES, enabled).apply()
+        overlaySettingsListener?.invoke()
+    }
+
+    /** When true, tapping the DiPlay launcher icon while CarPlay runs returns to CarPlay. */
+    fun loadLauncherReturnsToCarPlay(context: Context): Boolean =
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+            .getBoolean(KEY_LAUNCHER_RETURNS_TO_CARPLAY, true)
+
+    fun saveLauncherReturnsToCarPlay(context: Context, enabled: Boolean) {
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
+            .putBoolean(KEY_LAUNCHER_RETURNS_TO_CARPLAY, enabled).apply()
+    }
+
+    /** When true, the CarPlay swipe-down opens the home settings page instead of the in-session overlay. */
+    fun loadSwipeOpensFullSettings(context: Context): Boolean =
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+            .getBoolean(KEY_SWIPE_OPENS_FULL_SETTINGS, false)
+
+    fun saveSwipeOpensFullSettings(context: Context, enabled: Boolean) {
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
+            .putBoolean(KEY_SWIPE_OPENS_FULL_SETTINGS, enabled).apply()
+    }
+
+    fun loadUpdateChannel(context: Context): Int =
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getInt(KEY_UPDATE_CHANNEL, 1).coerceIn(0, 3)
+
+    fun saveUpdateChannel(context: Context, channel: Int) {
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
+            .putInt(KEY_UPDATE_CHANNEL, channel.coerceIn(0, 3)).apply()
     }
 
     private fun ByteArray.toHex(): String = joinToString("") { "%02x".format(it.toInt() and 0xff) }
