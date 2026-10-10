@@ -66,6 +66,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
+import androidx.core.graphics.ColorUtils
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
@@ -298,6 +299,7 @@ class CarPlayHostActivity : ComponentActivity() {
     private var picturePanelGeneration = 0
     private var gestureOverlay: View? = null
     private var settingsMenu: View? = null
+    private var overlaySettingsContentScroll: ScrollView? = null
     private var mfiTargetGroup: RadioGroup? = null
     private var mfiI2cFields: View? = null
     private var mfiRemoteFields: View? = null
@@ -2370,20 +2372,24 @@ class CarPlayHostActivity : ComponentActivity() {
             val parent = previous.parent as? ViewGroup ?: return@let
             val index = parent.indexOfChild(previous)
             val visible = previous.visibility
-            val scrollY = findDescendant<ScrollView>(previous)?.scrollY ?: 0
+            val scrollY = overlaySettingsContentScroll?.scrollY ?: 0
             val focusDescription = previous.findFocus()?.contentDescription?.toString()
             parent.removeView(previous)
             val replacement = buildSettingsMenu().apply { visibility = visible }
             settingsMenu = replacement
             parent.addView(replacement, index, FrameLayout.LayoutParams(-1, -1))
-            replacement.post {
-                findDescendant<ScrollView>(replacement)?.scrollTo(0, scrollY)
-                if (focusDescription != null) {
-                    findDescendants(replacement).firstOrNull {
-                        it.contentDescription?.toString() == focusDescription
-                    }?.requestFocus()
+            replacement.addOnLayoutChangeListener(object : View.OnLayoutChangeListener {
+                override fun onLayoutChange(view: View, left: Int, top: Int, right: Int, bottom: Int,
+                    oldLeft: Int, oldTop: Int, oldRight: Int, oldBottom: Int) {
+                    view.removeOnLayoutChangeListener(this)
+                    overlaySettingsContentScroll?.scrollTo(0, scrollY)
+                    if (focusDescription != null) {
+                        findDescendants(replacement).firstOrNull {
+                            it.contentDescription?.toString() == focusDescription
+                        }?.requestFocus()
+                    }
                 }
-            }
+            })
         }
 
         safeAreaEditor?.let { overlay ->
@@ -2421,61 +2427,55 @@ class CarPlayHostActivity : ComponentActivity() {
     private fun settingsGestureButtonText(): String =
         if (gestureFingerCount == 0) getString(R.string.settings_gesture_disabled_action)
         else getString(R.string.settings_gesture_fingers, gestureFingerCount)
-    private fun settingsMenuWidth(availableWidth: Int): Int =
-        minOf(dp(MAX_SETTINGS_MENU_WIDTH_DP), (availableWidth - dp(32)).coerceAtLeast(1))
-
     private data class OverlayCategory(val key: String, val title: String, val icon: Int, val subtitle: String)
 
     private fun buildSettingsMenu(): View {
         val overlay = object : FrameLayout(this) {
+            var fitContents: ((Int) -> Unit)? = null
+
             override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
                 getChildAt(0)?.let { panel ->
-                    val available = MeasureSpec.getSize(widthMeasureSpec) - dp(48)
-                    panel.layoutParams.width = minOf(available, dp(MAX_SETTINGS_MENU_WIDTH_DP))
-                    panel.layoutParams.height = (MeasureSpec.getSize(heightMeasureSpec) * 94) / 100
+                    val available = (MeasureSpec.getSize(widthMeasureSpec) - dp(OVERLAY_SIDE_MARGIN_DP * 2))
+                        .coerceAtLeast(1)
+                    val panelWidth = minOf(available, dp(MAX_SETTINGS_MENU_WIDTH_DP))
+                    panel.layoutParams.width = panelWidth
+                    val availableHeight = MeasureSpec.getSize(heightMeasureSpec)
+                    panel.layoutParams.height = minOf((availableHeight * 94) / 100,
+                        (availableHeight - dp(OVERLAY_SIDE_MARGIN_DP * 2)).coerceAtLeast(1))
+                    fitContents?.invoke(panelWidth)
                 }
                 super.onMeasure(widthMeasureSpec, heightMeasureSpec)
             }
         }.apply {
             setBackgroundColor(0xB3000000.toInt())
             isClickable = true
+            layoutDirection = this@CarPlayHostActivity.resources.configuration.layoutDirection
         }
         val panel = FrameLayout(this).apply {
             setBackgroundDrawable(GradientDrawable().apply {
                 setColor(MENU_BACKGROUND)
-                cornerRadii = floatArrayOf(
-                    dp(28).toFloat(), dp(28).toFloat(), dp(28).toFloat(), dp(28).toFloat(),
-                    0f, 0f, 0f, 0f,
-                )
+                cornerRadius = dp(OVERLAY_PANEL_RADIUS_DP).toFloat()
+                setStroke(dp(1), overlayPalette.overlayFieldStroke)
             })
+            clipToOutline = true
+            elevation = dp(16).toFloat()
         }
-        val wide = overlayMenuWide()
-
         val topbar = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
             minimumHeight = dp(68)
             setPadding(dp(24), dp(10), dp(24), dp(10))
-            setBackgroundColor(overlayPalette.overlayTopbar)
+            background = overlayGlassChrome(overlayPalette.overlayTopbar,
+                OVERLAY_PANEL_RADIUS_DP, topCornersOnly = true)
         }
-        topbar.addView(
-            menuText(getString(R.string.carplay_settings), 20f, MENU_PRIMARY, bold = true),
-            LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT),
-        )
-        topbar.addView(
-            overlayChromeButton(getString(R.string.open_full_settings)) {
-                leaveSettingsMenu { showDiPlayHome("settings") }
-            },
-            LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { marginStart = dp(14) },
-        )
-        topbar.addView(View(this), LinearLayout.LayoutParams(0, 1, 1f))
-        topbar.addView(
-            buildOverlayStatusPill(),
-            LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { marginEnd = dp(12) },
-        )
-        topbar.addView(overlayChromeButton("×") { cancelSettingsEdits() }.apply {
+        val title = menuText(getString(R.string.carplay_settings), 20f, MENU_PRIMARY, bold = true)
+        val fullSettings = overlayChromeButton(getString(R.string.open_full_settings)) {
+            leaveSettingsMenu { showDiPlayHome("settings") }
+        }
+        val statusPill = buildOverlayStatusPill()
+        val closeButton = overlayChromeButton("×") { cancelSettingsEdits() }.apply {
             contentDescription = getString(R.string.discard_changes_and_exit_settings)
-        })
+        }
 
         val categories = listOf(
             OverlayCategory("connection", getString(R.string.connection), R.drawable.ic_dp_connection, getString(R.string.settings_connection_summary)),
@@ -2485,17 +2485,10 @@ class CarPlayHostActivity : ComponentActivity() {
             OverlayCategory("vehicle", getString(R.string.settings_vehicle), R.drawable.ic_dp_vehicle, getString(R.string.settings_vehicle_summary)),
             OverlayCategory("more", getString(R.string.settings_more), R.drawable.ic_dp_advanced, getString(R.string.settings_advanced_subtitle)),
         )
-        val pages = buildOverlayPages(categories, wide)
+        val pages = buildOverlayPages(categories)
         val selectedKey = overlayMenuCategoryKey?.takeIf { key -> pages.containsKey(key) } ?: categories.first().key
         overlayMenuCategoryKey = selectedKey
         pages.forEach { (key, page) -> page.visibility = if (key == selectedKey) View.VISIBLE else View.GONE }
-        fun select(key: String) {
-            overlayMenuCategoryKey = key
-            pages.forEach { (candidate, page) ->
-                page.visibility = if (candidate == key) View.VISIBLE else View.GONE
-            }
-        }
-
         val mainColumn = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(dp(28), dp(20), dp(28), dp(28))
@@ -2508,57 +2501,31 @@ class CarPlayHostActivity : ComponentActivity() {
                 ViewGroup.LayoutParams.WRAP_CONTENT,
             ))
         }
+        overlaySettingsContentScroll = mainScroll
+        fun select(key: String) {
+            if (overlayMenuCategoryKey == key) return
+            overlayMenuCategoryKey = key
+            pages.forEach { (candidate, page) ->
+                page.visibility = if (candidate == key) View.VISIBLE else View.GONE
+            }
+            mainScroll.scrollTo(0, 0)
+        }
 
         val bodyRow = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
-        if (wide) {
-            val railScroll = ScrollView(this).apply {
-                isFillViewport = true
-                setBackgroundColor(overlayPalette.overlaySidebar)
-                addView(buildOverlayRail(categories, selectedKey) { key -> select(key) })
-            }
-            bodyRow.addView(railScroll, LinearLayout.LayoutParams(dp(220), ViewGroup.LayoutParams.MATCH_PARENT))
-            bodyRow.addView(
-                View(this).apply { setBackgroundColor(overlayPalette.overlayStroke) },
-                LinearLayout.LayoutParams(1, ViewGroup.LayoutParams.MATCH_PARENT),
-            )
-            bodyRow.addView(mainScroll, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f))
-        } else {
-            val chips = HorizontalScrollView(this).apply {
-                isHorizontalScrollBarEnabled = false
-                setBackgroundColor(overlayPalette.overlaySidebar)
-                addView(buildOverlayRail(categories, selectedKey, horizontal = true) { key -> select(key) })
-            }
-            val column = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
-            column.addView(chips, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
-            column.addView(mainScroll, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f))
-            bodyRow.addView(column, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
-        }
 
         val footer = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
             minimumHeight = dp(64)
             setPadding(dp(24), dp(10), dp(24), dp(10))
-            setBackgroundColor(overlayPalette.overlayFooter)
+            background = overlayGlassChrome(overlayPalette.overlayFooter,
+                OVERLAY_PANEL_RADIUS_DP, bottomCornersOnly = true)
         }
-        footer.addView(
-            overlayChromeButton("⇥  " + getString(R.string.exit_application)) { exitApplication() },
-            LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT),
-        )
-        footer.addView(
-            menuText(getString(R.string.settings_save_notice), 12f, MENU_SECONDARY).apply {
-                gravity = Gravity.CENTER
-                visibility = if (wide) View.VISIBLE else View.GONE
-            },
-            LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f).apply {
-                marginStart = dp(16)
-                marginEnd = dp(16)
-            },
-        )
-        footer.addView(
-            overlayPrimaryButton("⟳  " + getString(R.string.save_and_reconnect)) { saveSettingsAndReconnect() },
-            LinearLayout.LayoutParams(dp(200), ViewGroup.LayoutParams.WRAP_CONTENT),
-        )
+        val exitButton = overlayChromeButton("⇥  " + getString(R.string.exit_application)) { exitApplication() }
+        val saveButton = overlayPrimaryButton("⟳  " + getString(R.string.save_and_reconnect)) { saveSettingsAndReconnect() }
+        val saveNotice = menuText(getString(R.string.settings_save_notice), 12f, MENU_SECONDARY).apply {
+            gravity = Gravity.CENTER
+        }
 
         val shell = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         shell.addView(topbar, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
@@ -2573,13 +2540,145 @@ class CarPlayHostActivity : ComponentActivity() {
             FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 (resources.displayMetrics.heightPixels * 94) / 100,
-                Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL,
-            ).apply { leftMargin = dp(24); rightMargin = dp(24) },
+                Gravity.CENTER,
+            ).apply {
+                leftMargin = dp(OVERLAY_SIDE_MARGIN_DP)
+                rightMargin = dp(OVERLAY_SIDE_MARGIN_DP)
+            },
         )
+        var shownWide: Boolean? = null
+        var shownStackedHeader: Boolean? = null
+        var shownFooterMode: Pair<Boolean, Boolean>? = null
+        fun detach(view: View) { (view.parent as? ViewGroup)?.removeView(view) }
+        overlay.fitContents = { panelWidth ->
+            val fontScale = resources.configuration.fontScale.coerceAtLeast(1f)
+            // Measuring an attached button with UNSPECIFIED here can overwrite its measured
+            // width before LinearLayout reuses its measure cache on the same pass.
+            fun desiredWidth(view: TextView): Int =
+                (view.paint.measureText(view.text.toString()) + 0.5f).toInt() +
+                    view.paddingLeft + view.paddingRight
+            val railNeeded = maxOf(OVERLAY_RAIL_MIN_WIDTH_DP,
+                (OVERLAY_RAIL_FONT_MIN_WIDTH_DP * fontScale).roundToInt())
+            val wide = panelWidth >= dp(railNeeded)
+            if (shownWide != wide) {
+                shownWide = wide
+                bodyRow.removeAllViews()
+                detach(mainScroll)
+                if (wide) {
+                    val railScroll = ScrollView(this).apply {
+                        isFillViewport = true
+                        background = overlayGlassChrome(overlayPalette.overlaySidebar)
+                        addView(buildOverlayRail(categories, overlayMenuCategoryKey ?: selectedKey, onSelect = ::select))
+                    }
+                    bodyRow.addView(railScroll, LinearLayout.LayoutParams(dp(220), ViewGroup.LayoutParams.MATCH_PARENT))
+                    bodyRow.addView(View(this).apply { setBackgroundColor(overlayPalette.overlayStroke) },
+                        LinearLayout.LayoutParams(1, ViewGroup.LayoutParams.MATCH_PARENT))
+                    bodyRow.addView(mainScroll, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f))
+                } else {
+                    val chips = HorizontalScrollView(this).apply {
+                        isHorizontalScrollBarEnabled = false
+                        background = overlayGlassChrome(overlayPalette.overlaySidebar)
+                        addView(buildOverlayRail(categories, overlayMenuCategoryKey ?: selectedKey,
+                            horizontal = true, onSelect = ::select))
+                    }
+                    val column = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+                    column.addView(chips, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.WRAP_CONTENT))
+                    column.addView(mainScroll, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f))
+                    bodyRow.addView(column, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.MATCH_PARENT))
+                }
+            }
+            val headerNeeded = desiredWidth(title) + desiredWidth(fullSettings) + desiredWidth(closeButton) +
+                (if (statusPill.visibility == View.GONE) 0 else dp(160 + 12)) + dp(24 * 2 + 14)
+            val stackHeader = headerNeeded > panelWidth
+            if (shownStackedHeader != stackHeader) {
+                shownStackedHeader = stackHeader
+                topbar.removeAllViews()
+                listOf(title, fullSettings, statusPill, closeButton).forEach(::detach)
+                topbar.orientation = if (stackHeader) LinearLayout.VERTICAL else LinearLayout.HORIZONTAL
+                if (stackHeader) {
+                    topbar.setPadding(dp(16), dp(10), dp(16), dp(10))
+                    val titleLine = LinearLayout(this).apply {
+                        orientation = LinearLayout.HORIZONTAL
+                        gravity = Gravity.CENTER_VERTICAL
+                    }
+                    titleLine.addView(title, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
+                    titleLine.addView(closeButton, LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
+                        ViewGroup.LayoutParams.WRAP_CONTENT))
+                    topbar.addView(titleLine, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.WRAP_CONTENT))
+                    topbar.addView(fullSettings, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.WRAP_CONTENT).apply { topMargin = dp(OVERLAY_ACTION_GAP_DP) })
+                    if (statusPill.visibility != View.GONE) topbar.addView(statusPill,
+                        LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
+                            ViewGroup.LayoutParams.WRAP_CONTENT).apply { topMargin = dp(OVERLAY_ACTION_GAP_DP) })
+                } else {
+                    topbar.setPadding(dp(24), dp(10), dp(24), dp(10))
+                    topbar.addView(title, LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
+                        ViewGroup.LayoutParams.WRAP_CONTENT))
+                    topbar.addView(fullSettings, LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
+                        ViewGroup.LayoutParams.WRAP_CONTENT).apply { marginStart = dp(14) })
+                    topbar.addView(View(this), LinearLayout.LayoutParams(0, 1, 1f))
+                    topbar.addView(statusPill, LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
+                        ViewGroup.LayoutParams.WRAP_CONTENT).apply { marginEnd = dp(12) })
+                    topbar.addView(closeButton, LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
+                        ViewGroup.LayoutParams.WRAP_CONTENT))
+                }
+            }
+            val primaryWidth = maxOf(dp(200), desiredWidth(saveButton) + dp(OVERLAY_ACTION_GAP_DP))
+            val footerNeeded = desiredWidth(exitButton) + primaryWidth + dp(24 * 2) +
+                (if (wide) dp(160 + OVERLAY_BLOCK_GAP_DP * 2) else 0)
+            val stackFooter = footerNeeded > panelWidth
+            if (shownFooterMode != (stackFooter to wide)) {
+                shownFooterMode = stackFooter to wide
+                footer.removeAllViews()
+                listOf(exitButton, saveButton, saveNotice).forEach(::detach)
+                footer.orientation = if (stackFooter) LinearLayout.VERTICAL else LinearLayout.HORIZONTAL
+                if (stackFooter) {
+                    footer.setPadding(dp(16), dp(10), dp(16), dp(10))
+                    footer.addView(saveButton, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.WRAP_CONTENT))
+                    footer.addView(exitButton, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.WRAP_CONTENT).apply { topMargin = dp(OVERLAY_ACTION_GAP_DP) })
+                } else {
+                    footer.setPadding(dp(24), dp(10), dp(24), dp(10))
+                    footer.addView(exitButton, LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
+                        ViewGroup.LayoutParams.WRAP_CONTENT))
+                    if (wide) footer.addView(saveNotice, LinearLayout.LayoutParams(0,
+                        ViewGroup.LayoutParams.WRAP_CONTENT, 1f).apply {
+                        marginStart = dp(OVERLAY_BLOCK_GAP_DP)
+                        marginEnd = dp(OVERLAY_BLOCK_GAP_DP)
+                    }) else footer.addView(View(this), LinearLayout.LayoutParams(0, 1, 1f))
+                    footer.addView(saveButton, LinearLayout.LayoutParams(primaryWidth,
+                        ViewGroup.LayoutParams.WRAP_CONTENT))
+                }
+            }
+        }
+        val initialPanelWidth = minOf(
+            (resources.displayMetrics.widthPixels - dp(OVERLAY_SIDE_MARGIN_DP * 2)).coerceAtLeast(1),
+            dp(MAX_SETTINGS_MENU_WIDTH_DP),
+        )
+        overlay.fitContents?.invoke(initialPanelWidth)
         updateHotspotStatusBlock()
         updateResolutionMenu()
         return overlay
     }
+
+    /** A restrained glass-like chrome layer; content cards below remain opaque for legibility. */
+    private fun overlayGlassChrome(base: Int, radiusDp: Int = 0,
+        topCornersOnly: Boolean = false, bottomCornersOnly: Boolean = false): GradientDrawable =
+        GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, intArrayOf(
+            ColorUtils.blendARGB(base, Color.WHITE, if (appNight) 0.11f else 0.58f),
+            base,
+        )).apply {
+            val radius = dp(radiusDp).toFloat()
+            val top = if (bottomCornersOnly) 0f else radius
+            val bottom = if (topCornersOnly) 0f else radius
+            cornerRadii = floatArrayOf(top, top, top, top, bottom, bottom, bottom, bottom)
+            setStroke(dp(1), ColorUtils.blendARGB(overlayPalette.overlayFieldStroke,
+                Color.WHITE, if (appNight) 0.22f else 0.38f))
+        }
 
     private fun buildOverlayStatusPill(): View {
         val smallWindow = AirPlayPersistence.loadClusterMapEnabled(this) &&
@@ -2602,11 +2701,7 @@ class CarPlayHostActivity : ComponentActivity() {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
             setPadding(dp(15), dp(10), dp(15), dp(10))
-            background = GradientDrawable().apply {
-                setColor(overlayPalette.overlayField)
-                setStroke(1, overlayPalette.overlayFieldStroke)
-                cornerRadius = dp(26).toFloat()
-            }
+            background = overlayGlassChrome(overlayPalette.overlayField, OVERLAY_GLASS_PILL_RADIUS_DP)
         }
         if (text == null) {
             pill.visibility = View.GONE
@@ -2633,15 +2728,11 @@ class CarPlayHostActivity : ComponentActivity() {
             setTextColor(MENU_PRIMARY)
             setPadding(dp(18), dp(11), dp(18), dp(11))
             minWidth = 0
-            minHeight = 0
+            minHeight = dp(OVERLAY_ACTION_HEIGHT_DP)
             stateListAnimator = null
             background = android.graphics.drawable.RippleDrawable(
                 ColorStateList.valueOf(overlayPalette.overlayAccentTrack),
-                GradientDrawable().apply {
-                    setColor(overlayPalette.overlayField)
-                    setStroke(1, overlayPalette.overlayFieldStroke)
-                    cornerRadius = dp(13).toFloat()
-                },
+                overlayGlassChrome(overlayPalette.overlayField, OVERLAY_GLASS_PILL_RADIUS_DP),
                 null,
             )
             setOnClickListener { onClick() }
@@ -2652,17 +2743,16 @@ class CarPlayHostActivity : ComponentActivity() {
             text = label
             isAllCaps = false
             textSize = 16f
-            setTextColor(Color.WHITE)
+            setTextColor(MENU_BUTTON_TEXT)
             typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
             setPadding(dp(23), dp(12), dp(23), dp(12))
             minWidth = 0
-            minHeight = 0
+            minHeight = dp(OVERLAY_ACTION_HEIGHT_DP)
             stateListAnimator = null
             background = GradientDrawable().apply {
-                orientation = GradientDrawable.Orientation.TOP_BOTTOM
-                colors = intArrayOf(Color.rgb(51, 142, 255), overlayPalette.overlayAccent)
-                setStroke(1, Color.rgb(74, 159, 255))
-                cornerRadius = dp(13).toFloat()
+                setColor(MENU_ACCENT)
+                setStroke(dp(1), ColorUtils.blendARGB(MENU_ACCENT, Color.WHITE, 0.32f))
+                cornerRadius = dp(OVERLAY_GLASS_PILL_RADIUS_DP).toFloat()
             }
             setOnClickListener { onClick() }
         }
@@ -2683,17 +2773,22 @@ class CarPlayHostActivity : ComponentActivity() {
         fun paintRow(entry: RailRow, active: Boolean) {
             entry.row.background = if (active) GradientDrawable().apply {
                 orientation = GradientDrawable.Orientation.TL_BR
-                colors = intArrayOf(overlayPalette.overlayAccent, overlayPalette.overlayAccentTrack)
-                setStroke(1, overlayPalette.overlayAccent)
-                cornerRadius = dp(13).toFloat()
+                colors = intArrayOf(
+                    ColorUtils.blendARGB(overlayPalette.overlayAccent, Color.WHITE, 0.12f),
+                    ColorUtils.blendARGB(overlayPalette.overlayAccentTrack,
+                        overlayPalette.overlayAccent, 0.58f),
+                )
+                setStroke(dp(1), ColorUtils.blendARGB(overlayPalette.overlayAccent,
+                    Color.WHITE, 0.28f))
+                cornerRadius = dp(OVERLAY_RAIL_PILL_RADIUS_DP).toFloat()
             } else GradientDrawable().apply {
                 setColor(Color.TRANSPARENT)
-                cornerRadius = dp(13).toFloat()
+                cornerRadius = dp(OVERLAY_RAIL_PILL_RADIUS_DP).toFloat()
             }
             entry.icon.imageTintList = ColorStateList.valueOf(
                 if (active) Color.WHITE else overlayPalette.overlaySecondaryText,
             )
-            entry.label.setTextColor(if (active) MENU_PRIMARY else overlayPalette.overlaySecondaryText)
+            entry.label.setTextColor(if (active) Color.WHITE else overlayPalette.overlaySecondaryText)
         }
         categories.forEach { category ->
             val row = LinearLayout(this).apply {
@@ -2761,7 +2856,7 @@ class CarPlayHostActivity : ComponentActivity() {
                 orientation = GradientDrawable.Orientation.TOP_BOTTOM
                 colors = intArrayOf(overlayPalette.overlaySurfaceTop, overlayPalette.overlaySurfaceBottom)
                 setStroke(1, overlayPalette.overlayStroke)
-                cornerRadius = dp(18).toFloat()
+                cornerRadius = dp(OVERLAY_CARD_RADIUS_DP).toFloat()
             }
         }
         if (title != null) {
@@ -2802,7 +2897,7 @@ class CarPlayHostActivity : ComponentActivity() {
         name: String,
         hint: String? = null,
         control: View? = null,
-        stacked: Boolean = false,
+        stacked: Boolean = true,
     ): View = LinearLayout(this).apply {
         orientation = LinearLayout.VERTICAL
         setPadding(0, dp(12), 0, dp(12))
@@ -2830,11 +2925,12 @@ class CarPlayHostActivity : ComponentActivity() {
         }
     }
 
-    private fun overlayDeck(cards: List<View>, wide: Boolean): View =
+    private fun overlayDeck(cards: List<View>): View =
         LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             cards.forEach { card ->
-                addView(card, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { bottomMargin = dp(16) })
+                addView(card, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+                    .apply { bottomMargin = dp(OVERLAY_BLOCK_GAP_DP) })
             }
         }
     private fun <T> overlaySegmentPills(
@@ -2843,13 +2939,28 @@ class CarPlayHostActivity : ComponentActivity() {
         vertical: Boolean = false,
         onPick: (T) -> Unit,
     ): RadioGroup {
-        val group = RadioGroup(this).apply {
+        val group = object : RadioGroup(this) {
+            override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
+                if (!vertical && MeasureSpec.getMode(widthMeasureSpec) != MeasureSpec.UNSPECIFIED) {
+                    val unspecified = MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED)
+                    var needed = paddingLeft + paddingRight
+                    for (index in 0 until childCount) {
+                        val pill = getChildAt(index)
+                        pill.measure(unspecified, unspecified)
+                        val margins = pill.layoutParams as? ViewGroup.MarginLayoutParams
+                        needed += pill.measuredWidth + (margins?.leftMargin ?: 0) + (margins?.rightMargin ?: 0)
+                    }
+                    orientation = if (needed > MeasureSpec.getSize(widthMeasureSpec)) VERTICAL else HORIZONTAL
+                }
+                super.onMeasure(widthMeasureSpec, heightMeasureSpec)
+            }
+        }.apply {
             orientation = if (vertical) RadioGroup.VERTICAL else RadioGroup.HORIZONTAL
             setPadding(dp(3), dp(3), dp(3), dp(3))
             background = GradientDrawable().apply {
                 setColor(overlayPalette.overlayField)
                 setStroke(1, overlayPalette.overlayFieldStroke)
-                cornerRadius = dp(11).toFloat()
+                cornerRadius = dp(OVERLAY_SEGMENT_RADIUS_DP).toFloat()
             }
         }
         var selectedId = View.NO_ID
@@ -2866,16 +2977,22 @@ class CarPlayHostActivity : ComponentActivity() {
                 minHeight = dp(38)
                 setTextColor(ColorStateList(
                     arrayOf(intArrayOf(android.R.attr.state_checked), intArrayOf()),
-                    intArrayOf(Color.WHITE, overlayPalette.overlaySecondaryText),
+                    intArrayOf(MENU_BUTTON_TEXT, overlayPalette.overlaySecondaryText),
                 ))
                 background = android.graphics.drawable.StateListDrawable().apply {
                     addState(intArrayOf(android.R.attr.state_checked), GradientDrawable().apply {
-                        setColor(overlayPalette.overlaySegmentOn)
-                        cornerRadius = dp(9).toFloat()
+                        orientation = GradientDrawable.Orientation.TOP_BOTTOM
+                        colors = intArrayOf(
+                            ColorUtils.blendARGB(MENU_ACCENT, Color.WHITE, 0.13f), MENU_ACCENT)
+                        setStroke(dp(1), ColorUtils.blendARGB(MENU_ACCENT, Color.WHITE, 0.28f))
+                        cornerRadius = dp(OVERLAY_SEGMENT_ITEM_RADIUS_DP).toFloat()
                     })
                     addState(intArrayOf(), android.graphics.drawable.RippleDrawable(
                         ColorStateList.valueOf(overlayPalette.overlayAccentTrack),
-                        GradientDrawable().apply { setColor(Color.TRANSPARENT); cornerRadius = dp(9).toFloat() },
+                        GradientDrawable().apply {
+                            setColor(Color.TRANSPARENT)
+                            cornerRadius = dp(OVERLAY_SEGMENT_ITEM_RADIUS_DP).toFloat()
+                        },
                         null,
                     ))
                 }
@@ -2933,7 +3050,7 @@ class CarPlayHostActivity : ComponentActivity() {
         }, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { topMargin = dp(6) })
     }
 
-    private fun buildOverlayPages(categories: List<OverlayCategory>, wide: Boolean): LinkedHashMap<String, LinearLayout> {
+    private fun buildOverlayPages(categories: List<OverlayCategory>): LinkedHashMap<String, LinearLayout> {
         val pages = LinkedHashMap<String, LinearLayout>()
         for (category in categories) {
             val page = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
@@ -2941,12 +3058,12 @@ class CarPlayHostActivity : ComponentActivity() {
             val cards = when (category.key) {
                 "connection" -> buildConnectionCards()
                 "navigation" -> buildNavigationCards()
-                "display" -> buildDisplayCards(wide)
+                "display" -> buildDisplayCards()
                 "sound" -> buildSoundCards()
                 "vehicle" -> buildVehicleCards()
                 else -> buildMoreCards()
             }
-            page.addView(overlayDeck(cards, wide))
+            page.addView(overlayDeck(cards))
             pages[category.key] = page
         }
         return pages
@@ -3067,7 +3184,7 @@ class CarPlayHostActivity : ComponentActivity() {
         )
     }
 
-    private fun buildDisplayCards(wide: Boolean): List<View> {
+    private fun buildDisplayCards(): List<View> {
         val nightModes = CarPlayNightMode.entries
         val nightRow = overlayRowContainer(
             getString(R.string.carplay_night_mode),
@@ -3260,8 +3377,8 @@ class CarPlayHostActivity : ComponentActivity() {
                 swipeOpensFullSettings,
             ) { value ->
                 swipeOpensFullSettings = value
-                AirPlayPersistence.saveSwipeOpensFullSettings(this, value)
             },
+            stacked = true,
         )
         val hevcRow = DisplaySettingsSection.createHevcRow(
             context = this,
@@ -3301,6 +3418,7 @@ class CarPlayHostActivity : ComponentActivity() {
                 physicalSizeBasis = value
                 updateResolutionMenu()
             },
+            stacked = true,
         )
         val lengthRow = overlaySliderRowContainer(
             getString(R.string.physical_length),
@@ -3380,7 +3498,7 @@ class CarPlayHostActivity : ComponentActivity() {
 
     /** Mirrors [persistMenuSettings]: a field staged there belongs here too. */
     private fun menuSettingsSignature(): Int = listOf(
-        gestureFingerCount, wirelessEnabled, mfiTarget, mfiI2cPath, remoteMfiServer, remoteMfiToken,
+        gestureFingerCount, swipeOpensFullSettings, wirelessEnabled, mfiTarget, mfiI2cPath, remoteMfiServer, remoteMfiToken,
         wirelessHotspotMode, existingWifiSsid, existingWifiPassphrase, manualHotspotSsid,
         manualHotspotPassphrase, manualHotspotBand, manualHotspotChannel, manualHotspotSecurity,
         locationReportingEnabled, autoStartOnBoot, advancedAudioChannelMapping, displayScaleTenths,
@@ -3642,8 +3760,6 @@ class CarPlayHostActivity : ComponentActivity() {
         return section
     }
 
-    private fun overlayMenuWide(): Boolean = resources.displayMetrics.widthPixels >= dp(1000)
-
     private fun onLocationReportingChanged(checked: Boolean) {
         if (locationReportingEnabled == checked) return
         locationReportingEnabled = checked
@@ -3804,7 +3920,7 @@ class CarPlayHostActivity : ComponentActivity() {
         ) { right ->
             rightHandDrive = right
             updateResolutionMenu()
-        })
+        }, stacked = true)
 
     private fun buildFullscreenSection(): View {
         val section = LinearLayout(this).apply {
@@ -5685,7 +5801,10 @@ class CarPlayHostActivity : ComponentActivity() {
             AlertDialog.Builder(this, if (appNight) R.style.Theme_Xcertplay_Dialog_Dark else R.style.Theme_Xcertplay_Dialog_Light)
                 .setTitle(getString(R.string.settings_discard_pending_title))
                 .setMessage(getString(R.string.settings_discard_pending_message))
-                .setPositiveButton(getString(R.string.save_and_reconnect)) { _, _ -> saveSettingsAndReconnect() }
+                .setPositiveButton(getString(R.string.save_and_reconnect)) { _, _ ->
+                    saveSettingsAndReconnect()
+                    if (!menuOpen) onLeft()
+                }
                 .setNegativeButton(getString(R.string.settings_discard_pending_confirm)) { _, _ ->
                     cancelSettingsEdits()
                     onLeft()
@@ -6150,6 +6269,18 @@ class CarPlayHostActivity : ComponentActivity() {
         const val SETTINGS_SWIPE_DISTANCE_DP = 72
         const val SETTINGS_SWIPE_DIRECTION_RATIO = 1.15f
         const val MAX_SETTINGS_MENU_WIDTH_DP = 880
+        private const val OVERLAY_SIDE_MARGIN_DP = 24
+        private const val OVERLAY_BLOCK_GAP_DP = 16
+        private const val OVERLAY_ACTION_GAP_DP = 8
+        private const val OVERLAY_ACTION_HEIGHT_DP = 48
+        private const val OVERLAY_PANEL_RADIUS_DP = 30
+        private const val OVERLAY_GLASS_PILL_RADIUS_DP = OVERLAY_ACTION_HEIGHT_DP / 2
+        private const val OVERLAY_RAIL_PILL_RADIUS_DP = 26
+        private const val OVERLAY_CARD_RADIUS_DP = 22
+        private const val OVERLAY_SEGMENT_RADIUS_DP = 19
+        private const val OVERLAY_SEGMENT_ITEM_RADIUS_DP = 16
+        private const val OVERLAY_RAIL_MIN_WIDTH_DP = 800
+        private const val OVERLAY_RAIL_FONT_MIN_WIDTH_DP = 560
         val NO_VIDEO_BACKGROUND = Color.rgb(0x16, 0x16, 0x18)
     }
 

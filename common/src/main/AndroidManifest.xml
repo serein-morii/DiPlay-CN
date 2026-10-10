@@ -30,7 +30,7 @@
             <data android:mimeType="*/*" />
         </intent>
     </queries>
-    <application>
+    <application android:supportsRtl="true">
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.update"
