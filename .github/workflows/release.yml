@@ -103,7 +103,9 @@ jobs:
             exit 1
           fi
           api="https://gitee.com/api/v5/repos/oneeyear/DiPlay-CN"
-          id="$(curl -fsS "$api/releases/tags/$GITHUB_REF_NAME?access_token=$GITEE_TOKEN" | python3 -c 'import json,sys; print(json.load(sys.stdin).get("id") or "")' || true)"
+          id="$(curl -fsS --connect-timeout 10 --max-time 30 --get \
+            --data-urlencode "access_token=$GITEE_TOKEN" "$api/releases/tags/$GITHUB_REF_NAME" |
+            python3 -c 'import json,sys; data=json.load(sys.stdin); print((data.get("id") or "") if isinstance(data,dict) else "")' || true)"
           if [ -z "$id" ]; then
             code="$(curl -sS -o /tmp/gitee-create.json -w '%{http_code}' -X POST "$api/releases" \
               --data-urlencode "access_token=$GITEE_TOKEN" \
@@ -122,11 +124,12 @@ jobs:
           fi
           verify_asset() {
             local file="$1" url downloaded
-            url="$(curl -fsS --retry 3 --max-time 30 "$api/releases/tags/$GITHUB_REF_NAME" |
-              python3 -c 'import json,sys; name=sys.argv[1]; assets=json.load(sys.stdin).get("assets", []); print(next((a.get("browser_download_url", "") for a in assets if a.get("name") == name), ""))' "$file")"
+            url="$(curl -fsS --connect-timeout 10 --max-time 30 --get \
+              --data-urlencode "access_token=$GITEE_TOKEN" "$api/releases/tags/$GITHUB_REF_NAME" |
+              python3 -c 'import json,sys; name=sys.argv[1]; data=json.load(sys.stdin); assets=data.get("assets", []) if isinstance(data,dict) else []; print(next((a.get("browser_download_url", "") for a in assets if a.get("name") == name), ""))' "$file")" || return 1
             [ -n "$url" ] || return 1
             downloaded="$(mktemp)"
-            if ! curl -fsSL --retry 3 --max-time 600 "$url" -o "$downloaded"; then
+            if ! curl -fsSL --connect-timeout 10 --max-time 180 "$url" -o "$downloaded"; then
               rm -f "$downloaded"
               return 1
             fi
@@ -143,22 +146,23 @@ jobs:
               continue
             fi
             ok=""
-            for attempt in 1 2 3; do
-              if curl -fsS --max-time 600 -X POST "$api/releases/$id/attach_files" \
-                  -F "access_token=$GITEE_TOKEN" -F "file=@$f" >/dev/null; then
+            for attempt in 1 2; do
+              if curl -fsS --connect-timeout 10 --max-time 120 \
+                  --speed-limit 1024 --speed-time 45 -X POST "$api/releases/$id/attach_files" \
+                  -F "access_token=$GITEE_TOKEN" -F "file=@$f" >/dev/null || verify_asset "$f"; then
                 ok=1; break
               fi
-              echo "attach $f attempt $attempt failed; retrying in 15s"
-              sleep 15
+              echo "attach $f attempt $attempt failed"
+              [ "$attempt" = 2 ] || sleep 15
             done
             if [ -z "$ok" ]; then
               echo "::error::attaching $f failed after retries"
               exit 1
             fi
             verified=""
-            for attempt in 1 2 3; do
+            for attempt in 1 2; do
               if verify_asset "$f"; then verified=1; break; fi
-              sleep 10
+              [ "$attempt" = 2 ] || sleep 10
             done
             if [ -z "$verified" ]; then
               echo "::error::Gitee asset $f could not be downloaded and verified"
