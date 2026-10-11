@@ -28,7 +28,8 @@ class CarPlayMediaFocusForwardingTest {
     private val controllers = mutableListOf<CarPlayController>()
     private val sinks = mutableListOf<AndroidMediaSink>()
 
-    @Before fun resetFocusResponse() {
+    @Before fun enableFocusAndGrantRequests() {
+        AirPlayPersistence.saveDisableMediaKeyAudioFocus(app, false)
         shadowOf(app.getSystemService(AudioManager::class.java))
             .setNextFocusRequestResponse(AudioManager.AUDIOFOCUS_REQUEST_GRANTED)
     }
@@ -37,6 +38,7 @@ class CarPlayMediaFocusForwardingTest {
         controllers.forEach(CarPlayMediaKeys::detach)
         sinks.forEach(AndroidMediaSink::close)
         CarPlayBackgroundSession.clear()
+        AirPlayPersistence.saveDisableMediaKeyAudioFocus(app, false)
         shadowOf(Looper.getMainLooper()).idle()
     }
 

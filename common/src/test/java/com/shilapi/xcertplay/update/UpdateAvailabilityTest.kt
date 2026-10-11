@@ -53,16 +53,18 @@ class UpdateAvailabilityTest {
 
     @Test fun reportShowsStateWithRelativeAges() {
         assertEquals(
-            "Update check: background=on; lastSuccess=never; cachedRelease=none; lastResult=none (never)",
+            "Update check: background=on; lastSuccess=never; cachedRelease=none; lastResult=none (never); lastInstall=none (never)",
             UpdateAvailability.report(context, 10_000_000L),
         )
         UpdateAvailability.save(context, release("v0.2.16-cn.1"))
         UpdateAvailability.recordAttempt(context, 10_000_000L - 5 * 60_000)
         UpdateAvailability.recordResult(context, 10_000_000L - 60_000, "no validated network (attempt 2)")
+        UpdateAvailability.recordInstall(context, 10_000_000L - 2 * 60_000, "chooser uri=public installers=2")
         UpdateAvailability.saveBackgroundChecksEnabled(context, false)
         assertEquals(
             "Update check: background=off; lastSuccess=5 min ago; cachedRelease=v0.2.16-cn.1; " +
-                "lastResult=no validated network (attempt 2) (1 min ago)",
+                "lastResult=no validated network (attempt 2) (1 min ago); " +
+                "lastInstall=chooser uri=public installers=2 (2 min ago)",
             UpdateAvailability.report(context, 10_000_000L),
         )
     }

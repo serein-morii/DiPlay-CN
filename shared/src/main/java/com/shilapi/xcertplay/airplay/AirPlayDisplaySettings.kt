@@ -19,7 +19,8 @@ object AirPlayDisplaySettings {
 
     const val MIN_WIDTH_PHYSICAL_MM = 100
     const val MAX_WIDTH_PHYSICAL_MM = 400
-    const val WIDTH_PHYSICAL_MM_STEP = 50
+    // 25 mm steps: iOS changes its layout at a few physical sizes, and 50 mm could jump past them (#489).
+    const val WIDTH_PHYSICAL_MM_STEP = 25
     const val DEFAULT_WIDTH_PHYSICAL_MM = 200
     val DEFAULT_PHYSICAL_SIZE_BASIS = AirPlayPhysicalSizeBasis.WIDTH
     const val MIN_REPORTED_PHYSICAL_MM = 1

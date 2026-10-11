@@ -56,4 +56,30 @@ object CarPlayMediaButton {
         KEYCODE_BYD_AUTO_MEDIA_PLAY_PAUSE_DILINK3 -> if (experimentalDiLink3Keys) PLAY_PAUSE else null
         else -> null
     }
+
+    /**
+     * The CarPlay press the CarPlay screen itself should claim for [keyCode], or null to let the key
+     * go on to the car.
+     *
+     * BYD hands the steering wheel's next/previous keys to whichever window is in front, and DiPlay's
+     * CarPlay screen is that window whenever the driver is looking at it. Claiming them here is what
+     * makes the wheel change tracks without the accessibility service, which a head unit with no ADB
+     * cannot turn on.
+     *
+     * Only next and previous are claimed. Play/pause is left alone: BYD acts on it itself, and the
+     * wheel key service owns it for DiLink 3. Nothing is claimed outside a CarPlay session, or during
+     * a call, where the car's own call handling is what the driver expects from these keys.
+     */
+    fun forCarPlayWindow(
+        keyCode: Int,
+        sessionActive: Boolean,
+        inCall: Boolean,
+    ): Int? {
+        if (!sessionActive || inCall) return null
+        return when (keyCode) {
+            KeyEvent.KEYCODE_MEDIA_NEXT -> NEXT
+            KeyEvent.KEYCODE_MEDIA_PREVIOUS -> PREVIOUS
+            else -> null
+        }
+    }
 }

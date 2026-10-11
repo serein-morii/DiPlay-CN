@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DiPlay settings</title>
+<style>
+:root { color-scheme: dark; }
+body { margin:0; padding:24px 20px 40px; background:#101418; color:#e8eaed;
+  font:16px/1.5 -apple-system,"Segoe UI",Roboto,"Noto Sans",sans-serif; }
+main { max-width:520px; margin:0 auto; }
+h1 { font-size:22px; margin:0 0 4px; }
+p.sub { color:#9aa0a6; margin:0 0 24px; }
+.card { background:#1b2129; border:1px solid #2a323d; border-radius:16px; padding:18px; margin-bottom:16px; }
+.card h2 { font-size:16px; margin:0 0 6px; }
+.card p { color:#9aa0a6; font-size:14px; margin:0 0 14px; }
+a.btn,button { display:block; width:100%; box-sizing:border-box; text-align:center; padding:13px 16px;
+  border-radius:999px; border:0; font-size:16px; font-weight:600; cursor:pointer; text-decoration:none;
+  background:#a8c7fa; color:#0b2540; }
+button:disabled { opacity:.5; }
+#result { margin-top:12px; font-size:14px; color:#9aa0a6; min-height:20px; white-space:pre-line; }
+#result.err { color:#f28b82; }
+input[type=file] { display:none; }
+</style>
+</head>
+<body>
+<main>
+  <h1 id="title"></h1>
+  <p class="sub" id="sub"></p>
+  <div class="card">
+    <h2 id="exportTitle"></h2>
+    <p id="exportText"></p>
+    <a class="btn" id="exportBtn" href="export" download></a>
+  </div>
+  <div class="card">
+    <h2 id="importTitle"></h2>
+    <p id="importText"></p>
+    <button id="importBtn"></button>
+    <input type="file" id="file" accept="application/json,.json">
+    <div id="result"></div>
+  </div>
+</main>
+<script>
+var L = {
+  en: {title:"DiPlay settings",sub:"Back up or restore DiPlay settings on this phone.",
+    exportTitle:"Export",exportText:"Save the current settings of this head unit as a file.",export:"Export settings",
+    importTitle:"Import",importText:"Load a settings file exported from a DiPlay head unit. Settings missing from the file keep their current value.",
+    picking:"Reading file…",invalid:"This file is not a DiPlay settings backup.",
+    open:"Choose file and import",
+    done:"Imported %1 settings, skipped %2.",fail:"Import failed. Check the connection and try again."},
+  zh: {title:"DiPlay 设置",sub:"在手机上备份或恢复 DiPlay 设置。",
+    exportTitle:"导出",exportText:"将这台车机的当前设置保存为文件。",export:"导出设置",
+    importTitle:"导入",importText:"载入从 DiPlay 车机导出的设置文件。文件中缺失的配置项保持当前值。",
+    picking:"正在读取文件…",invalid:"这不是 DiPlay 设置备份文件。",
+    open:"选择文件并导入",
+    done:"已导入 %1 项设置，跳过 %2 项。",fail:"导入失败，请检查连接后重试。"},
+  "zh-TW": {title:"DiPlay 設定",sub:"在手機上備份或還原 DiPlay 設定。",
+    exportTitle:"匯出",exportText:"將這台車機的目前設定儲存為檔案。",export:"匯出設定",
+    importTitle:"匯入",importText:"載入從 DiPlay 車機匯出的設定檔。檔案中缺少的設定項目保持目前值。",
+    picking:"正在讀取檔案…",invalid:"這不是 DiPlay 設定備份檔。",
+    open:"選擇檔案並匯入",
+    done:"已匯入 %1 項設定，略過 %2 項。",fail:"匯入失敗，請檢查連線後重試。"},
+  es: {title:"Ajustes de DiPlay",sub:"Copia o restaura los ajustes de DiPlay en este teléfono.",
+    exportTitle:"Exportar",exportText:"Guarda los ajustes actuales de esta unidad en un archivo.",export:"Exportar ajustes",
+    importTitle:"Importar",importText:"Carga un archivo de ajustes exportado de una unidad DiPlay. Los ajustes ausentes conservan su valor.",
+    picking:"Leyendo archivo…",invalid:"Este archivo no es una copia de seguridad de DiPlay.",
+    open:"Elegir archivo e importar",
+    done:"Importados %1 ajustes, omitidos %2.",fail:"No se pudo importar. Comprueba la conexión."},
+  ru: {title:"Настройки DiPlay",sub:"Резервная копия или восстановление настроек DiPlay на этом телефоне.",
+    exportTitle:"Экспорт",exportText:"Сохранить текущие настройки этого устройства в файл.",export:"Экспорт настроек",
+    importTitle:"Импорт",importText:"Загрузите файл настроек, экспортированный с устройства DiPlay. Отсутствующие настройки сохранят текущие значения.",
+    picking:"Чтение файла…",invalid:"Этот файл не является резервной копией настроек DiPlay.",
+    open:"Выбрать файл и импортировать",
+    done:"Импортировано настроек: %1, пропущено: %2.",fail:"Не удалось импортировать. Проверьте подключение."},
+  uk: {title:"Налаштування DiPlay",sub:"Резервна копія або відновлення налаштувань DiPlay на цьому телефоні.",
+    exportTitle:"Експорт",exportText:"Зберегти поточні налаштування цього пристрою у файл.",export:"Експорт налаштувань",
+    importTitle:"Імпорт",importText:"Завантажте файл налаштувань, експортований з пристрою DiPlay. Відсутні налаштування збережуть поточні значення.",
+    picking:"Читання файлу…",invalid:"Цей файл не є резервною копією налаштувань DiPlay.",
+    open:"Вибрати файл та імпортувати",
+    done:"Імпортовано налаштувань: %1, пропущено: %2.",fail:"Не вдалося імпортувати. Перевірте з'єднання."},
+  ar: {title:"إعدادات DiPlay",sub:"نسخ احتياطي أو استعادة إعدادات DiPlay على هذا الهاتف.",
+    exportTitle:"تصدير",exportText:"حفظ الإعدادات الحالية لهذه الوحدة في ملف.",export:"تصدير الإعدادات",
+    importTitle:"استيراد",importText:"حمّل ملف إعدادات تم تصديره من وحدة DiPlay. الإعدادات غير الموجودة تحتفظ بقيمتها.",
+    picking:"جارٍ قراءة الملف…",invalid:"هذا الملف ليس نسخة احتياطية لإعدادات DiPlay.",
+    open:"اختيار ملف واستيراده",
+    done:"تم استيراد %1 من الإعدادات، وتجاهل %2.",fail:"فشل الاستيراد. تحقق من الاتصال وأعد المحاولة."}
+};
+var lang = (navigator.language || "en").toLowerCase();
+var key = lang in L ? lang
+  : lang.indexOf("zh") === 0 ? (lang.indexOf("tw") > 0 || lang.indexOf("hk") > 0 || lang.indexOf("hant") > 0 ? "zh-TW" : "zh")
+  : lang.indexOf("es") === 0 ? "es"
+  : lang.indexOf("ru") === 0 ? "ru"
+  : lang.indexOf("uk") === 0 ? "uk"
+  : lang.indexOf("ar") === 0 ? "ar" : "en";
+var t = L[key];
+var $ = function(id) { return document.getElementById(id); };
+document.title = t.title;
+document.documentElement.lang = key;
+$("title").textContent = t.title;
+$("sub").textContent = t.sub;
+$("exportTitle").textContent = t.exportTitle;
+$("exportText").textContent = t.exportText;
+$("exportBtn").textContent = t.export;
+$("importTitle").textContent = t.importTitle;
+$("importText").textContent = t.importText;
+$("importBtn").textContent = t.open;
+document.documentElement.dir = key === "ar" ? "rtl" : "ltr";
+$("importBtn").addEventListener("click", function() { $("file").click(); });
+$("file").addEventListener("change", function() {
+  var file = this.files[0];
+  if (!file) return;
+  $("result").className = "";
+  $("result").textContent = t.picking;
+  $("importBtn").disabled = true;
+  var reader = new FileReader();
+  reader.onload = function() {
+    fetch("import", {method: "POST", headers: {"Content-Type": "application/json"}, body: reader.result})
+      .then(function(r) { if (!r.ok) throw 0; return r.json(); })
+      .then(function(j) {
+        if (j.invalid) { $("result").className = "err"; $("result").textContent = t.invalid; }
+        else $("result").textContent = t.done.replace("%1", j.applied).replace("%2", j.skipped);
+      })
+      .catch(function() { $("result").className = "err"; $("result").textContent = t.fail; })
+      .finally(function() { $("importBtn").disabled = false; $("file").value = ""; });
+  };
+  reader.readAsText(file);
+});
+</script>
+</body>
+</html>

@@ -88,8 +88,8 @@ internal class VideoDecodeQueue(
     @Synchronized fun drain(): List<VideoJob> = ArrayList<VideoJob>().also { jobs.drainTo(it) }
 }
 
-/** Drain output while waiting for input: full output buffers can otherwise starve input forever. */
-internal object VideoInputPump {
+/** Drain output while waiting for input: full output buffers can otherwise starve input forever. Video and audio decoders share it. */
+internal object DecoderInputPump {
     fun acquire(
         running: () -> Boolean,
         drain: () -> Unit,

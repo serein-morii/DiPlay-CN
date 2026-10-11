@@ -11,7 +11,7 @@ android {
         targetSdk = 37
 
         ndk {
-            abiFilters 'arm64-v8a', 'armeabi-v7a', 'x86_64'
+            abiFilters 'arm64-v8a', 'armeabi-v7a', 'x86', 'x86_64'
         }
 
         externalNativeBuild {
@@ -27,6 +27,10 @@ android {
         ndkBuild {
             path = file('src/main/jni/Android.mk')
         }
+    }
+    buildFeatures {
+        // Geely/Lynk head-unit input API (com.geely.inputservice); declarations in src/main/aidl.
+        aidl true
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11

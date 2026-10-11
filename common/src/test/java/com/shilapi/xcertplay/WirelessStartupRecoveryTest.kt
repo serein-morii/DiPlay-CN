@@ -76,6 +76,16 @@ class WirelessStartupRecoveryTest {
         assertEquals(View.VISIBLE, retry.visibility)
     }
 
+    // No further attempt can make a head unit's Bluetooth reach the phone.
+    @Test fun bluetoothThatReachesNoPhoneDoesNotAutomaticallyRetry() {
+        report(status = CarPlayStatus.Failed("Android Bluetooth on this head unit reports connections that are not real",
+            startupFailure = WirelessStartupFailure.BLUETOOTH_UNUSABLE))
+        assertEquals(0, budget().retries)
+        assertFalse(ReflectionHelpers.getField(activity, "reconnectScheduled"))
+        assertTrue(ReflectionHelpers.getField(activity, "startupRetryStopped"))
+        assertEquals(View.VISIBLE, retry.visibility)
+    }
+
     @Test fun staleGenerationUserDisconnectMenuAndDifferentOwnerCannotSchedule() {
         report(1)
         assertEquals(0, budget().retries)

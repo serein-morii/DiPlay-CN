@@ -105,6 +105,15 @@ class CarPlayCallKeyPolicyTest {
     }
 
     @Test
+    fun trackKeysAnswerAndDeclineOnlyWhileACallRings() {
+        // #272: the Song Pro DM-i's wheel has only previous/next for calls.
+        assertEquals(Action.CONSUME to Action.ANSWER, press(KeyEvent.KEYCODE_MEDIA_NEXT, ringing))
+        assertEquals(Action.CONSUME to Action.END, press(KeyEvent.KEYCODE_MEDIA_PREVIOUS, ringing))
+        assertEquals(Action.PASS to Action.PASS, press(KeyEvent.KEYCODE_MEDIA_NEXT, active))
+        assertEquals(Action.PASS to Action.PASS, press(KeyEvent.KEYCODE_MEDIA_PREVIOUS, null))
+    }
+
+    @Test
     fun withoutACarPlayCallTheCarKeepsItsKeys() {
         assertEquals(Action.PASS to Action.PASS, press(313, null))
         assertEquals(Action.PASS to Action.PASS, press(313, ringing, session = false))

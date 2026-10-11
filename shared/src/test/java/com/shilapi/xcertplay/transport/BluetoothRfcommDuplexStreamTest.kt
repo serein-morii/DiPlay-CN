@@ -14,6 +14,18 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class BluetoothRfcommDuplexStreamTest {
+    @Test fun bytesReceivedStaysZeroUntilThePeerDeliversSomething() {
+        val silent = BluetoothRfcommDuplexStream(FakeSocket(BlockingInput()))
+        assertNull(silent.recv(16, 50))
+        assertEquals(0L, silent.bytesReceived)
+        silent.close()
+
+        val answering = BluetoothRfcommDuplexStream(FakeSocket(ByteArrayInputStream(byteArrayOf(1, 2, 3))))
+        assertArrayEquals(byteArrayOf(1, 2, 3), answering.recv(16, 2_000))
+        assertEquals(3L, answering.bytesReceived)
+        answering.close()
+    }
+
     @Test fun missingInputFailsSynchronouslyWithoutReadingOrOpeningOutput() {
         val lines = CopyOnWriteArrayList<String>()
         val socket = FakeSocket(null)
@@ -133,6 +145,49 @@ class BluetoothRfcommDuplexStreamTest {
         assertEquals(1, socket.closes.get())
         assertEquals(1, lines.count { it.contains("result=FAILED") })
         assertFalse(lines.joinToString().contains("private"))
+    }
+
+    @Test fun refusedFlushIoctlKeepsTheLinkAndStopsFlushing() {
+        val input = BlockingInput()
+        val written = ByteArrayOutputStream()
+        var flushes = 0
+        // Ford SYNC+ (#582): LocalSocket's flush polls TIOCOUTQ and SELinux refuses the ioctl.
+        val socket = FakeSocket(input, object : OutputStream() {
+            override fun write(value: Int) = written.write(value)
+            override fun flush() {
+                flushes++
+                throw IOException("ioctl failed: EACCES (Permission denied)", IOException("ioctl failed: EACCES (Permission denied)"))
+            }
+        })
+        val lines = CopyOnWriteArrayList<String>()
+        val stream = BluetoothRfcommDuplexStream(socket, lines::add)
+        assertTrue(input.entered.await(2, TimeUnit.SECONDS))
+
+        stream.send(byteArrayOf(1, 2))
+        stream.send(byteArrayOf(3))
+        stream.close()
+
+        assertArrayEquals(byteArrayOf(1, 2, 3), written.toByteArray())
+        assertEquals(1, flushes)
+        assertEquals(1, lines.count { it.contains("flush refused") })
+        assertFalse(lines.any { it.contains("result=FAILED") })
+    }
+
+    @Test fun otherFlushFailuresStillEndTheLink() {
+        val input = BlockingInput()
+        val socket = FakeSocket(input, object : OutputStream() {
+            override fun write(value: Int) = Unit
+            override fun flush() = throw IOException("write failed: EPIPE (Broken pipe)")
+        })
+        val stream = BluetoothRfcommDuplexStream(socket)
+        assertTrue(input.entered.await(2, TimeUnit.SECONDS))
+
+        val failure = expectFailure { stream.send(byteArrayOf(1)) }
+        stream.close()
+
+        assertEquals(BluetoothRfcommStreamException.Reason.WRITE_FAILED, failure.reason)
+        assertFalse(refusedIoctl(IOException("write failed: EPIPE (Broken pipe)")))
+        assertTrue(refusedIoctl(IOException("x", IOException("ioctl failed: EPERM (Operation not permitted)"))))
     }
 
     @Test fun failingDiagnosticCallbackCannotPreventGetterFailureCleanup() {

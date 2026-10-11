@@ -21,8 +21,10 @@ import com.shilapi.xcertplay.transport.NcmUsbBridge
 import java.io.IOException
 import java.net.Inet6Address
 import java.net.InetAddress
+import java.net.NetworkInterface
 import java.net.ServerSocket
 import java.net.Socket
+import java.util.Collections
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
@@ -117,7 +119,7 @@ class CarPlayVpnService : VpnService() {
 
             startAirPlayServer(
                 generation,
-                AirPlayAttachment(address, config, identity, pairings, mfi, listener, media),
+                AirPlayAttachment(scopedToTunnel(address, listener), config, identity, pairings, mfi, listener, media),
             )
             AttachResult.Started
         } catch (error: Exception) {
@@ -183,6 +185,35 @@ class CarPlayVpnService : VpnService() {
         detach()
         super.onDestroy()
     }
+
+    /**
+     * Linux rejects bind() to a link-local IPv6 address without a scope id (EINVAL). Android 8+
+     * IoBridge.bind looks the scope up itself, but Android 7.x binds natively in
+     * PlainSocketImpl.socketBind and never derives one, so the unscoped wired listener failed with
+     * "Invalid argument". Scope it to the tunnel that owns the address on every version; when no
+     * interface owns it, keep the unscoped address and the platform's own behavior.
+     */
+    private fun scopedToTunnel(address: Inet6Address, listener: AirPlaySessionListener): InetAddress {
+        if (address.scopeId != 0) return address
+        var interfaces = emptyList<TunnelCandidate>()
+        repeat(TUN_LOOKUP_ATTEMPTS) { attempt ->
+            if (attempt > 0) Thread.sleep(TUN_LOOKUP_DELAY_MILLIS)
+            interfaces = tunnelCandidates()
+            selectTunnelInterface(address, interfaces)?.let { owner ->
+                runCatching { listener.onDebugLog("wired AirPlay listener scope iface=${owner.name} index=${owner.index}") }
+                return Inet6Address.getByAddress(null, address.address, owner.index)
+            }
+        }
+        val tunnels = interfaces.filter { it.name.startsWith("tun") }.joinToString(",") { it.name }.ifEmpty { "none" }
+        runCatching { listener.onDebugLog("wired AirPlay listener scope iface=not_found tun=$tunnels; binding unscoped") }
+        return address
+    }
+
+    private fun tunnelCandidates(): List<TunnelCandidate> = runCatching {
+        NetworkInterface.getNetworkInterfaces()?.let { Collections.list(it) }.orEmpty().map { networkInterface ->
+            TunnelCandidate(networkInterface.name, networkInterface.index, Collections.list(networkInterface.inetAddresses))
+        }
+    }.getOrDefault(emptyList())
 
     private fun startAirPlayServer(
         generation: Int,
@@ -358,6 +389,23 @@ class CarPlayVpnService : VpnService() {
         private const val LINK_LOCAL_ROUTE = "fe80::"
         private const val SESSION_NAME = "xcertplay CarPlay"
         private const val TUN_MTU = 1500
+        private const val TUN_LOOKUP_ATTEMPTS = 10
+        private const val TUN_LOOKUP_DELAY_MILLIS = 50L
+
+        internal data class TunnelCandidate(val name: String, val index: Int, val addresses: List<InetAddress>)
+
+        /**
+         * Picks the interface that owns [address]. A tun interface wins when another interface
+         * happens to carry the same link-local address.
+         */
+        internal fun selectTunnelInterface(address: Inet6Address, interfaces: List<TunnelCandidate>): TunnelCandidate? {
+            val owners = interfaces.filter { candidate ->
+                candidate.index > 0 && candidate.addresses.any { owned ->
+                    owned is Inet6Address && owned.address.contentEquals(address.address)
+                }
+            }
+            return owners.firstOrNull { it.name.startsWith("tun") } ?: owners.firstOrNull()
+        }
 
         /** Returns the VPN consent intent, or null when consent is already granted. */
         fun prepare(context: Context): Intent? = VpnService.prepare(context)

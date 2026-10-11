@@ -86,6 +86,27 @@ class SystemBarSettingsTest {
         assertBars(false, true)
     }
 
+    @Test fun harmanFullscreenIsOptInAndInAdvancedSettings() {
+        AirPlayPersistence.saveHarmanFullscreen(context, false)
+        openSettings()
+        activity.onBackPressedDispatcher.onBackPressed()
+        descendants(activity.window.decorView)
+            .single { it.contentDescription == activity.getString(
+                R.string.settings_open_category,
+                activity.getString(R.string.settings_advanced),
+            ) }
+            .performClick()
+        val harmanSwitch = descendants(activity.window.decorView)
+            .filterIsInstance<Switch>()
+            .single { it.contentDescription == activity.getString(R.string.settings_harman_fullscreen_experimental) }
+
+        assertFalse(harmanSwitch.isChecked)
+        harmanSwitch.performClick()
+
+        assertTrue(harmanSwitch.isChecked)
+        assertTrue(AirPlayPersistence.loadHarmanFullscreen(context))
+    }
+
     private fun openSettings() {
         controller = Robolectric.buildActivity(DiPlayActivity::class.java,
             Intent(context, DiPlayActivity::class.java).putExtra("page", "settings")).setup()

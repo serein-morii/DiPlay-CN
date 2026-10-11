@@ -13,6 +13,7 @@ junit = "4.13.2"
 bouncycastle = "1.79"
 jmdns = "3.6.3"
 media3 = "1.11.1"
+zxing = "3.5.3"
 work = "2.12.0"
 
 [libraries]
@@ -33,6 +34,7 @@ androidx-app = { group = "androidx.car.app", name = "app", version.ref = "app" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 bouncycastle = { group = "org.bouncycastle", name = "bcprov-jdk18on", version.ref = "bouncycastle" }
 jmdns = { group = "org.jmdns", name = "jmdns", version.ref = "jmdns" }
+zxing-core = { group = "com.google.zxing", name = "core", version.ref = "zxing" }
 androidx-media3-exoplayer = { group = "androidx.media3", name = "media3-exoplayer", version.ref = "media3" }
 androidx-media3-exoplayer-hls = { group = "androidx.media3", name = "media3-exoplayer-hls", version.ref = "media3" }
 androidx-media3-ui = { group = "androidx.media3", name = "media3-ui", version.ref = "media3" }

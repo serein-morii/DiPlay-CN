@@ -1,6 +1,7 @@
 package com.shilapi.xcertplay.update
 
 import java.io.File
+import java.io.InputStream
 import java.security.MessageDigest
 
 internal object UpdateChecksums {
@@ -15,15 +16,15 @@ internal object UpdateChecksums {
             }
             .toMap()
 
-    internal fun sha256Hex(file: File): String {
+    internal fun sha256Hex(file: File): String = file.inputStream().use { sha256Hex(it) }
+
+    internal fun sha256Hex(source: InputStream): String {
         val digest = MessageDigest.getInstance("SHA-256")
-        file.inputStream().use { input ->
-            val buffer = ByteArray(64 * 1024)
-            while (true) {
-                val read = input.read(buffer)
-                if (read < 0) break
-                digest.update(buffer, 0, read)
-            }
+        val buffer = ByteArray(64 * 1024)
+        while (true) {
+            val read = source.read(buffer)
+            if (read < 0) break
+            digest.update(buffer, 0, read)
         }
         return digest.digest().joinToString("") { "%02x".format(it) }
     }

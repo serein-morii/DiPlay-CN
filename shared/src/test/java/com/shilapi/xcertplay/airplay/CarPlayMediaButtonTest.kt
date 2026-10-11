@@ -55,4 +55,29 @@ class CarPlayMediaButtonTest {
         assertEquals(4, CarPlayMediaButton.NEXT)
         assertEquals(5, CarPlayMediaButton.PREVIOUS)
     }
+
+    @Test
+    fun theWindowClaimsTrackKeysOnlyWhileCarPlayIsRunning() {
+        fun claim(keyCode: Int, sessionActive: Boolean = true, inCall: Boolean = false) =
+            CarPlayMediaButton.forCarPlayWindow(keyCode, sessionActive, inCall)
+
+        assertEquals(CarPlayMediaButton.NEXT, claim(KeyEvent.KEYCODE_MEDIA_NEXT))
+        assertEquals(CarPlayMediaButton.PREVIOUS, claim(KeyEvent.KEYCODE_MEDIA_PREVIOUS))
+        // Without a session, or during a call, the wheel keeps the car's own action.
+        assertNull(claim(KeyEvent.KEYCODE_MEDIA_NEXT, sessionActive = false))
+        assertNull(claim(KeyEvent.KEYCODE_MEDIA_PREVIOUS, sessionActive = false))
+        assertNull(claim(KeyEvent.KEYCODE_MEDIA_NEXT, inCall = true))
+        assertNull(claim(KeyEvent.KEYCODE_MEDIA_PREVIOUS, inCall = true))
+    }
+
+    @Test
+    fun theWindowLeavesPlayPauseAndUnrelatedKeysAlone() {
+        // BYD acts on play/pause itself, and the wheel key service owns it for DiLink 3. Claiming it
+        // in the window too would take it away from the car for every driver.
+        for (keyCode in listOf(KeyEvent.KEYCODE_MEDIA_PLAY, KeyEvent.KEYCODE_MEDIA_PAUSE,
+            KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE, KeyEvent.KEYCODE_HEADSETHOOK, 353, 331,
+            KeyEvent.KEYCODE_MEDIA_STOP, KeyEvent.KEYCODE_VOLUME_UP)) {
+            assertNull("keyCode=$keyCode", CarPlayMediaButton.forCarPlayWindow(keyCode, true, false))
+        }
+    }
 }

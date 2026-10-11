@@ -15,7 +15,7 @@ BASE = 'https://serein-morii.github.io/DiPlay-CN/'
 REPO = 'https://github.com/serein-morii/DiPlay-CN'
 GITEE = 'https://gitee.com/oneeyear/DiPlay-CN'
 UPSTREAM = 'https://github.com/shihabal3amri/DiPlay'
-VERSION = '0.2.17-cn.2'
+VERSION = '0.2.18-cn.1'
 RELEASE = REPO + '/releases/latest'
 DOWNLOAD = RELEASE
 OPTIMIZATIONS = REPO + '/blob/main/docs/CN_OPTIMIZATIONS.md'
@@ -34,7 +34,7 @@ CN = {
             'Simplified Chinese fallback on unsupported head-unit languages; stable signing key so updates overlay-install and keep settings.',
         ],
         'signing': 'DiPlay CN APKs are signed with one stable key since 0.2.10-cn.4: install over the previous CN build to keep settings. About → Check for updates downloads and installs the next CN build in place (first use asks once for the install-unknown-apps permission).',
-        'basedOn': 'Based on official DiPlay v0.2.15 · independent community build',
+        'basedOn': 'Based on official DiPlay v0.2.18 · independent community build',
     },
     'zh-Hans': {
         'testScope': '实车验证车辆为 2025 款比亚迪汉 DM-i，车机 DiLink 5.0。其他车型、其他车机系统不保证所有功能可用；请自行测试，或拉取源代码按本车修改。',
@@ -48,7 +48,7 @@ CN = {
             '车机语言不支持时默认简体中文；固定签名密钥，覆盖升级保留设置。',
         ],
         'signing': 'DiPlay CN 自 0.2.10-cn.4 起使用同一把固定签名：直接覆盖安装上一版 CN 即可保留设置。关于 → 检查更新 可直接下载安装下一版（首次使用会请求一次「允许安装未知应用」）。',
-        'basedOn': '基于官方 DiPlay v0.2.15 · 独立社区构建',
+        'basedOn': '基于官方 DiPlay v0.2.18 · 独立社区构建',
     },
     'zh-Hant': {
         'testScope': '實車驗證車輛為 2025 款比亞迪漢 DM-i，車機 DiLink 5.0。其他車型、其他車機系統不保證所有功能可用；請自行測試，或拉取原始碼依本車修改。',
@@ -62,7 +62,7 @@ CN = {
             '車機語言不支援時預設簡體中文；固定簽章金鑰，覆蓋升級保留設定。',
         ],
         'signing': 'DiPlay CN 自 0.2.10-cn.4 起使用同一把固定簽章：直接覆蓋安裝上一版 CN 即可保留設定。關於 → 檢查更新 可直接下載安裝下一版（首次使用會請求一次「允許安裝未知應用程式」）。',
-        'basedOn': '基於官方 DiPlay v0.2.15 · 獨立社群構建',
+        'basedOn': '基於官方 DiPlay v0.2.18 · 獨立社群構建',
     },
 }
 for lang, d in data.items():

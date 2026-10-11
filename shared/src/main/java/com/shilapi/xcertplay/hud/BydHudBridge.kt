@@ -4,6 +4,7 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.ServiceConnection
+import android.content.pm.PackageManager
 import android.os.Binder
 import android.os.IBinder
 import android.os.Parcel
@@ -72,6 +73,9 @@ internal object BydHudBridge {
 
     fun initialize(appContext: Context) = synchronized(lock) {
         if (context == null) context = appContext.applicationContext
+        // This is optional BYD-only integration. Do not start a 300ms retry
+        // loop on generic Android tablets that lack the SOME/IP gateway.
+        if (!someIpServiceAvailable(appContext)) return@synchronized
         bindLocked()
         if (!senderStarted) {
             senderStarted = true
@@ -157,6 +161,16 @@ internal object BydHudBridge {
                 code to assets.open("$ICON_ASSET_DIR/$name").use { it.readBytes() }
             }.toMap()
         }.onFailure { Log.w(TAG, "HUD icons unavailable", it) }.getOrDefault(emptyMap())
+    }
+
+    private fun someIpServiceAvailable(appContext: Context): Boolean = try {
+        appContext.packageManager.getServiceInfo(
+            ComponentName(SOMEIP_PACKAGE, SOMEIP_CLASS),
+            0,
+        )
+        true
+    } catch (_: PackageManager.NameNotFoundException) {
+        false
     }
 
     private fun bindLocked() {

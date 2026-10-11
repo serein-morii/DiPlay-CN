@@ -24,14 +24,14 @@
     ],
     "adb": "Installation & connection help",
     "bssid": "ADB is not required for everyday use. APK installation options depend on the car. No manual MAC address entry.",
-    "whats": "New in 0.2.17",
+    "whats": "New in 0.2.18",
     "features": [
-      "Wired sessions keep running when the head unit delivers a damaged USB network block, instead of reconnecting seconds after the picture appears. Older iPhones get a second identification attempt, and USB auto-confirm recognizes the Android 10+ and Chinese permission prompts.",
-      "A new iPhone charging choice under Settings → Connection → USB connection helps when the car's USB port cannot supply the iPhone's charging current.",
-      "Voice notes in apps such as WhatsApp record the head unit's microphone and no longer sound slurred.",
-      "Settings recommends the built-in car hotspot. With approved network ADB, the car's Wi-Fi network search pauses during Wi-Fi Direct on Android 7.1 and later.",
-      "DiPlay checks for updates once a day and shows Update available on Home. The check can be turned off in About.",
-      "Ambient lighting can follow the album cover. Experimental BYD call popup hiding and external controller keys are off by default; test optional features while parked."
+      "Wired CarPlay no longer drops every few minutes when a USB read finishes just as DiPlay stops waiting for it. It also starts on Android 7.1 head units and on head units whose USB audio driver held the iPhone.",
+      "Fewer short music dropouts, and the connection screen shows the real stage and failure in every app language.",
+      "The wheel's next and previous keys change CarPlay tracks on the CarPlay screen without the wheel-key service, and wheel keys stuck on “Allowed, starting…” recover by themselves.",
+      "Back up and restore settings from a phone with a QR code in Settings → About, and pick another installer, such as MT Manager, for updates.",
+      "On head units whose Android Bluetooth cannot reach the iPhone, wireless CarPlay stops with a clear message and suggests USB.",
+      "New experimental options are off by default: Harman full screen, square corners, clearer navigation voice over USB, MediaTek low-latency decoding and a cluster speedometer. Test optional features while parked."
     ],
     "compat": "Before you try it",
     "compatText": "A public preview, not an Apple-certified product. Authentication uses an experimental accessory identity recovered from public firmware; future acceptance is not guaranteed. Some head units still show stuttering or ignore icon-size changes. Start with 30 fps and HEVC off; try a lower resolution if needed.",
@@ -46,8 +46,8 @@
     "privacy": "Privacy",
     "footer": "Independent project based on xcertplay, with interface design from DiAuto. Not affiliated with Apple or BYD. CarPlay and its icon belong to Apple Inc.",
     "supportScope": "These projects focus on BYD cars. They may work on other brands, but other brands are unsupported and there are no plans to add support or fix brand-specific incompatibilities.",
-    "diagnosticsTitle": "Please send fresh reports from 0.2.17",
-    "diagnosticsText": "1. Update to 0.2.17, reproduce the issue and note the failure time. 2. Open Settings → Diagnostics → Save diagnostic report. Android 10+ normally saves to Downloads/DiPlay; Android 7.1–9 asks for storage access and saves there too. If storage or the picker is unavailable, follow the fallback confirmation and use View/Share. 3. Review the TXT and remove passwords and private details. Reports are not uploaded automatically. 4. Attach it to your existing issue: https://github.com/shihabal3amri/DiPlay/issues Or create a new one: https://github.com/shihabal3amri/DiPlay/issues/new/choose Include vehicle/head-unit model, DiLink/Android/firmware, iPhone/iOS, connection type, authentication backend (Local or USB/CH341), relevant settings, reproduction steps, expected/actual result and failure time.",
+    "diagnosticsTitle": "Please send fresh reports from 0.2.18",
+    "diagnosticsText": "1. Update to 0.2.18, reproduce the issue and note the failure time. 2. Open Settings → Diagnostics → Save diagnostic report. Android 10+ normally saves to Downloads/DiPlay; Android 7.1–9 asks for storage access and saves there too. If storage or the picker is unavailable, follow the fallback confirmation and use View/Share. 3. Review the TXT and remove passwords and private details. Reports are not uploaded automatically. 4. Attach it to your existing issue: https://github.com/shihabal3amri/DiPlay/issues Or create a new one: https://github.com/shihabal3amri/DiPlay/issues/new/choose Include vehicle/head-unit model, DiLink/Android/firmware, iPhone/iOS, connection type, authentication backend (Local or USB/CH341), relevant settings, reproduction steps, expected/actual result and failure time.",
     "newIssue": "Create a new issue"
   },
   "ar": {
@@ -75,14 +75,14 @@
     ],
     "adb": "دليل التثبيت والمساعدة في الاتصال",
     "bssid": "لا تحتاج إلى ADB للاستخدام اليومي. تختلف طريقة تثبيت APK حسب السيارة. لا حاجة لإدخال عنوان MAC يدوياً.",
-    "whats": "الجديد في 0.2.17",
+    "whats": "الجديد في 0.2.18",
     "features": [
-      "تبقى جلسة USB السلكية متصلة عندما ترسل الشاشة كتلة بيانات شبكة USB تالفة، بدل إعادة الاتصال بعد ثوانٍ من ظهور الصورة. تحصل أجهزة iPhone الأقدم على محاولة تعريف ثانية، ويتعرّف التأكيد التلقائي لـ USB على نافذة الإذن في أندرويد 10 فأحدث وبالصينية.",
-      "خيار جديد «شحن iPhone» في الإعدادات → الاتصال → اتصال USB يساعد عندما لا يوفّر منفذ USB في السيارة تيار الشحن الذي يحتاجه iPhone.",
-      "تُسجَّل الرسائل الصوتية في تطبيقات مثل WhatsApp بميكروفون الشاشة، ولم يعد صوتها مشوّهًا.",
-      "توصي الإعدادات بنقطة اتصال السيارة المدمجة. مع ADB الشبكي المعتمد، يتوقف بحث Wi-Fi في السيارة عن الشبكات أثناء Wi-Fi Direct على أندرويد 7.1 فأحدث.",
-      "يتحقق DiPlay من التحديثات مرة يوميًا ويعرض «يتوفر تحديث» في الشاشة الرئيسية. يمكن إيقاف التحقق من «حول».",
-      "يمكن للإضاءة المحيطية أن تتبع غلاف الألبوم. إخفاء نافذة مكالمات BYD ومفاتيح وحدة التحكم الخارجية تجريبيان ومعطلان افتراضيًا؛ اختبر الخيارات أثناء التوقف."
+      "لم يعد CarPlay السلكي ينقطع كل بضع دقائق عندما تكتمل قراءة USB في اللحظة التي يتوقف فيها DiPlay عن انتظارها. ويعمل الآن أيضًا على شاشات أندرويد 7.1 وعلى الشاشات التي كان فيها مشغّل صوت USB يحتجز iPhone.",
+      "انقطاعات أقل في الموسيقى، وتعرض شاشة الاتصال المرحلة الفعلية وسبب الفشل بكل لغات التطبيق.",
+      "يغيّر زرّا التالي والسابق في المقود مقاطع CarPlay على شاشة CarPlay دون خدمة أزرار المقود، وتتعافى أزرار المقود العالقة عند «مسموح بها، جارٍ التشغيل…» تلقائيًا.",
+      "انسخ الإعدادات احتياطيًا واستعدها من الهاتف عبر رمز QR في الإعدادات ← حول، واختر مثبّتًا آخر للتحديثات مثل MT Manager.",
+      "على الشاشات التي لا يصل فيها بلوتوث أندرويد إلى iPhone، يتوقف CarPlay اللاسلكي برسالة واضحة ويقترح USB.",
+      "خيارات تجريبية جديدة معطلة افتراضيًا: ملء شاشة Harman، والزوايا القائمة، وصوت ملاحة أوضح عبر USB، وفك ترميز منخفض التأخير لـ MediaTek، وعدّاد سرعة على لوحة العدادات. اختبر الخيارات أثناء التوقف."
     ],
     "compat": "قبل التجربة",
     "compatText": "نسخة تجريبية عامة غير معتمدة من Apple. تستخدم المصادقة هوية ملحق تجريبية مستخرجة من برنامج ثابت منشور، ولا يُضمن استمرار قبولها مستقبلاً. قد يستمر التقطّع أو عدم تطبيق حجم الأيقونات على بعض الشاشات. ابدأ بمعدل 30 إطاراً مع تعطيل HEVC، وجرّب دقة أقل عند الحاجة.",
@@ -97,8 +97,8 @@
     "privacy": "الخصوصية",
     "footer": "مشروع مستقل مبني على xcertplay وبتصميم واجهة من DiAuto. غير تابع لـ Apple أو BYD. كار بلاي وأيقونته ملك لشركة Apple.",
     "supportScope": "يركز هذان المشروعان على سيارات BYD. قد يعملان على علامات أخرى، لكنها غير مدعومة، ولا توجد خطط لإضافة دعم لها أو إصلاح مشكلات التوافق الخاصة بها.",
-    "diagnosticsTitle": "نحتاج تقارير جديدة من 0.2.17",
-    "diagnosticsText": "1. حدّث إلى 0.2.17، أعد إظهار المشكلة وسجّل وقتها. 2. افتح الإعدادات → التشخيص → حفظ تقرير التشخيص. يحفظ أندرويد 10 فأحدث عادةً في Downloads/DiPlay؛ ويطلب أندرويد 7.1–9 إذن التخزين ويحفظ في المكان نفسه. إذا تعذر الحفظ أو غاب المنتقي، اتبع رسالة تأكيد الحفظ البديل واستخدم عرض/مشاركة. 3. راجع ملف TXT واحذف كلمات المرور والتفاصيل الخاصة. لا تُرفع التقارير تلقائياً. 4. أرفقه بالمشكلة الحالية: https://github.com/shihabal3amri/DiPlay/issues أو افتح مشكلة جديدة: https://github.com/shihabal3amri/DiPlay/issues/new/choose اذكر طراز السيارة والشاشة، وDiLink/أندرويد/البرنامج الثابت، والآيفون/iOS، ونوع الاتصال، وطريقة المصادقة (Local أو USB/CH341)، والإعدادات ذات الصلة، وخطوات الإعادة، والنتيجة المتوقعة والفعلية، ووقت العطل.",
+    "diagnosticsTitle": "نحتاج تقارير جديدة من 0.2.18",
+    "diagnosticsText": "1. حدّث إلى 0.2.18، أعد إظهار المشكلة وسجّل وقتها. 2. افتح الإعدادات → التشخيص → حفظ تقرير التشخيص. يحفظ أندرويد 10 فأحدث عادةً في Downloads/DiPlay؛ ويطلب أندرويد 7.1–9 إذن التخزين ويحفظ في المكان نفسه. إذا تعذر الحفظ أو غاب المنتقي، اتبع رسالة تأكيد الحفظ البديل واستخدم عرض/مشاركة. 3. راجع ملف TXT واحذف كلمات المرور والتفاصيل الخاصة. لا تُرفع التقارير تلقائياً. 4. أرفقه بالمشكلة الحالية: https://github.com/shihabal3amri/DiPlay/issues أو افتح مشكلة جديدة: https://github.com/shihabal3amri/DiPlay/issues/new/choose اذكر طراز السيارة والشاشة، وDiLink/أندرويد/البرنامج الثابت، والآيفون/iOS، ونوع الاتصال، وطريقة المصادقة (Local أو USB/CH341)، والإعدادات ذات الصلة، وخطوات الإعادة، والنتيجة المتوقعة والفعلية، ووقت العطل.",
     "newIssue": "فتح مشكلة جديدة"
   },
   "ru": {
@@ -126,14 +126,14 @@
     ],
     "adb": "Инструкция и помощь с подключением",
     "bssid": "Для повседневной работы ADB не нужен. Способ установки APK зависит от автомобиля. Вводить MAC-адрес вручную не требуется.",
-    "whats": "Новое в 0.2.17",
+    "whats": "Новое в 0.2.18",
     "features": [
-      "Проводной сеанс продолжается, когда устройство получает повреждённый блок сетевых данных USB, вместо переподключения через несколько секунд после появления изображения. Старые iPhone получают вторую попытку идентификации, а автоподтверждение USB распознаёт запрос разрешения на Android 10+ и на китайском.",
-      "Новый выбор «Зарядка iPhone» в Настройки → Подключение → USB-подключение помогает, если USB-порт автомобиля не выдаёт ток зарядки, нужный iPhone.",
-      "Голосовые сообщения в приложениях вроде WhatsApp записываются микрофоном головного устройства и больше не звучат смазанно.",
-      "Настройки рекомендуют встроенную точку доступа автомобиля. С одобренным сетевым ADB поиск сетей Wi-Fi в автомобиле приостанавливается во время Wi-Fi Direct на Android 7.1 и новее.",
-      "DiPlay раз в день проверяет обновления и показывает «Доступно обновление» на главном экране. Проверку можно выключить в разделе «О программе».",
-      "Атмосферная подсветка может следовать обложке альбома. Экспериментальные скрытие всплывающего окна вызовов BYD и клавиши внешнего контроллера выключены по умолчанию; проверяйте дополнительные функции на стоянке."
+      "Проводной CarPlay больше не обрывается каждые несколько минут, когда чтение USB завершается в тот момент, когда DiPlay перестаёт его ждать. Он также запускается на головных устройствах с Android 7.1 и там, где USB-аудиодрайвер устройства удерживал iPhone.",
+      "Меньше коротких пропусков музыки, а экран подключения показывает настоящий этап и причину сбоя на любом языке приложения.",
+      "Кнопки «следующий» и «предыдущий» на руле переключают треки CarPlay на экране CarPlay без службы кнопок руля, а кнопки руля, застрявшие на «разрешена, запускается…», восстанавливаются сами.",
+      "Резервная копия и восстановление настроек с телефона по QR-коду в Настройки → О программе, а для обновлений можно выбрать другой установщик, например MT Manager.",
+      "На головных устройствах, где Bluetooth Android не достаёт до iPhone, беспроводной CarPlay останавливается с понятным сообщением и предлагает USB.",
+      "Новые экспериментальные параметры выключены по умолчанию: полный экран Harman, прямые углы, более чёткий голос навигации по USB, низкая задержка декодирования MediaTek и спидометр на приборной панели. Проверяйте дополнительные функции на стоянке."
     ],
     "compat": "Перед установкой",
     "compatText": "Предварительная версия для открытого тестирования, без сертификации Apple. Используется экспериментальная идентификация аксессуара из общедоступной прошивки; её принятие в будущем не гарантируется. На некоторых устройствах остаются рывки изображения или не применяется размер значков. Начните с 30 кадров/с и выключенного HEVC; при необходимости снизьте разрешение.",
@@ -148,8 +148,8 @@
     "privacy": "Конфиденциальность",
     "footer": "Независимый проект на базе xcertplay с дизайном интерфейса DiAuto. Не связан с Apple или BYD. CarPlay и его значок принадлежат Apple Inc.",
     "supportScope": "Эти проекты ориентированы на автомобили BYD. На других марках они могут работать, но другие марки не поддерживаются; добавление поддержки и исправление несовместимости с ними не планируются.",
-    "diagnosticsTitle": "Нужны свежие отчёты из 0.2.17",
-    "diagnosticsText": "1. Обновитесь до 0.2.17, воспроизведите проблему и запишите время сбоя. 2. Настройки → Диагностика → Сохранить диагностический отчёт. Android 10+ обычно сохраняет в Downloads/DiPlay; Android 7.1–9 запрашивает доступ к хранилищу и сохраняет туда же. Если хранилище или выбор файла недоступны, следуйте подтверждению резервного сохранения и используйте Просмотр/Поделиться. 3. Проверьте TXT, удалите пароли и личные данные. Автоматической отправки нет. 4. Добавьте файл к своей проблеме: https://github.com/shihabal3amri/DiPlay/issues Или создайте новую: https://github.com/shihabal3amri/DiPlay/issues/new/choose Укажите модель автомобиля/устройства, DiLink/Android/прошивку, iPhone/iOS, тип подключения, способ аутентификации (Local или USB/CH341), настройки, шаги, ожидаемый/фактический результат и время сбоя.",
+    "diagnosticsTitle": "Нужны свежие отчёты из 0.2.18",
+    "diagnosticsText": "1. Обновитесь до 0.2.18, воспроизведите проблему и запишите время сбоя. 2. Настройки → Диагностика → Сохранить диагностический отчёт. Android 10+ обычно сохраняет в Downloads/DiPlay; Android 7.1–9 запрашивает доступ к хранилищу и сохраняет туда же. Если хранилище или выбор файла недоступны, следуйте подтверждению резервного сохранения и используйте Просмотр/Поделиться. 3. Проверьте TXT, удалите пароли и личные данные. Автоматической отправки нет. 4. Добавьте файл к своей проблеме: https://github.com/shihabal3amri/DiPlay/issues Или создайте новую: https://github.com/shihabal3amri/DiPlay/issues/new/choose Укажите модель автомобиля/устройства, DiLink/Android/прошивку, iPhone/iOS, тип подключения, способ аутентификации (Local или USB/CH341), настройки, шаги, ожидаемый/фактический результат и время сбоя.",
     "newIssue": "Создать новую задачу"
   },
   "uk": {
@@ -177,14 +177,14 @@
     ],
     "adb": "Довідка зі встановлення й підключення",
     "bssid": "Для щоденного користування ADB не потрібен. Способи встановлення APK залежать від автомобіля. Вводити MAC-адресу вручну не потрібно.",
-    "whats": "Нове у 0.2.17",
+    "whats": "Нове у 0.2.18",
     "features": [
-      "Дротовий сеанс триває, коли пристрій отримує пошкоджений блок мережевих даних USB, замість перепідключення за кілька секунд після появи зображення. Старі iPhone отримують другу спробу ідентифікації, а автопідтвердження USB розпізнає запит дозволу на Android 10+ і китайською.",
-      "Новий вибір «Заряджання iPhone» у Налаштування → Підключення → USB-підключення допомагає, якщо USB-порт автомобіля не видає струм заряджання, потрібний iPhone.",
-      "Голосові повідомлення в застосунках на кшталт WhatsApp записуються мікрофоном головного пристрою і більше не звучать змазано.",
-      "Налаштування рекомендують вбудовану точку доступу автомобіля. Зі схваленим мережевим ADB пошук мереж Wi-Fi в автомобілі призупиняється під час Wi-Fi Direct на Android 7.1 і новіших.",
-      "DiPlay раз на день перевіряє оновлення й показує «Доступне оновлення» на головному екрані. Перевірку можна вимкнути в розділі «Про застосунок».",
-      "Атмосферне підсвічування може стежити за обкладинкою альбому. Експериментальні приховування спливного вікна дзвінків BYD і клавіші зовнішнього контролера вимкнені типово; перевіряйте додаткові функції на стоянці."
+      "Дротовий CarPlay більше не обривається кожні кілька хвилин, коли читання USB завершується саме тоді, коли DiPlay перестає його чекати. Він також запускається на головних пристроях з Android 7.1 і там, де USB-аудіодрайвер пристрою утримував iPhone.",
+      "Менше коротких пропусків музики, а екран підключення показує справжній етап і причину збою будь-якою мовою застосунку.",
+      "Кнопки «наступний» і «попередній» на кермі перемикають треки CarPlay на екрані CarPlay без служби кнопок керма, а кнопки керма, що застрягли на «дозволена, запускається…», відновлюються самі.",
+      "Резервна копія й відновлення налаштувань з телефона за QR-кодом у Налаштування → Про застосунок, а для оновлень можна вибрати інший інсталятор, наприклад MT Manager.",
+      "На головних пристроях, де Bluetooth Android не дістає до iPhone, бездротовий CarPlay зупиняється зі зрозумілим повідомленням і пропонує USB.",
+      "Нові експериментальні параметри вимкнені типово: повний екран Harman, прямі кути, чіткіший голос навігації через USB, низька затримка декодування MediaTek і спідометр на панелі приладів. Перевіряйте додаткові функції на стоянці."
     ],
     "compat": "Перш ніж спробувати",
     "compatText": "Це відкрита попередня версія, а не продукт, сертифікований Apple. Автентифікація використовує експериментальну ідентичність аксесуара, відновлену з публічної прошивки; що вона працюватиме й надалі, не гарантовано. На деяких головних пристроях досі бувають ривки або не діє зміна розміру значків. Почніть із 30 кадрів/с і вимкненим HEVC; за потреби спробуйте нижчу роздільність.",
@@ -199,8 +199,8 @@
     "privacy": "Конфіденційність",
     "footer": "Незалежний проєкт на основі xcertplay з дизайном інтерфейсу від DiAuto. Не пов’язаний з Apple чи BYD. CarPlay і його значок належать Apple Inc.",
     "supportScope": "Ці проєкти зосереджені на автомобілях BYD. Вони можуть працювати й з іншими марками, але інші марки не підтримуються, і планів додавати їхню підтримку чи виправляти несумісності з ними немає.",
-    "diagnosticsTitle": "Потрібні свіжі звіти з 0.2.17",
-    "diagnosticsText": "1. Оновіться до 0.2.17, відтворіть проблему й запишіть час збою. 2. Налаштування → Діагностика → Зберегти діагностичний звіт. Android 10+ зазвичай зберігає в Downloads/DiPlay; Android 7.1–9 запитує доступ до сховища й зберігає туди ж. Якщо сховище або вибір файлу недоступні, дотримуйтеся підтвердження резервного збереження й використовуйте Перегляд/Поділитися. 3. Перевірте TXT, вилучіть паролі й приватні дані. Автоматичного надсилання немає. 4. Додайте до своєї проблеми: https://github.com/shihabal3amri/DiPlay/issues Або створіть нову: https://github.com/shihabal3amri/DiPlay/issues/new/choose Укажіть модель авто/пристрою, DiLink/Android/прошивку, iPhone/iOS, тип підключення, спосіб автентифікації (Local або USB/CH341), налаштування, кроки, очікуваний/фактичний результат і час збою.",
+    "diagnosticsTitle": "Потрібні свіжі звіти з 0.2.18",
+    "diagnosticsText": "1. Оновіться до 0.2.18, відтворіть проблему й запишіть час збою. 2. Налаштування → Діагностика → Зберегти діагностичний звіт. Android 10+ зазвичай зберігає в Downloads/DiPlay; Android 7.1–9 запитує доступ до сховища й зберігає туди ж. Якщо сховище або вибір файлу недоступні, дотримуйтеся підтвердження резервного збереження й використовуйте Перегляд/Поділитися. 3. Перевірте TXT, вилучіть паролі й приватні дані. Автоматичного надсилання немає. 4. Додайте до своєї проблеми: https://github.com/shihabal3amri/DiPlay/issues Або створіть нову: https://github.com/shihabal3amri/DiPlay/issues/new/choose Укажіть модель авто/пристрою, DiLink/Android/прошивку, iPhone/iOS, тип підключення, спосіб автентифікації (Local або USB/CH341), налаштування, кроки, очікуваний/фактичний результат і час збою.",
     "newIssue": "Створити нову проблему"
   },
   "es": {
@@ -228,14 +228,14 @@
     ],
     "adb": "Guía de instalación y conexión",
     "bssid": "No necesitas ADB para el uso diario. El método de instalación del APK depende del coche. No hay que introducir direcciones MAC.",
-    "whats": "Novedades de 0.2.17",
+    "whats": "Novedades de 0.2.18",
     "features": [
-      "La sesión por cable sigue activa cuando el equipo recibe un bloque de red USB dañado, en lugar de reconectarse segundos después de aparecer la imagen. Los iPhone antiguos tienen un segundo intento de identificación, y la confirmación automática de USB reconoce el aviso de permiso de Android 10+ y en chino.",
-      "La nueva opción Carga del iPhone en Ajustes → Conexión → Conexión USB ayuda cuando el puerto USB del coche no da la corriente de carga que necesita el iPhone.",
-      "Las notas de voz en apps como WhatsApp graban con el micrófono del equipo y ya no suenan arrastradas.",
-      "Ajustes recomienda el punto de acceso integrado del coche. Con ADB de red aprobado, la búsqueda de redes Wi-Fi del coche se pausa durante Wi-Fi Direct en Android 7.1 o superior.",
-      "DiPlay busca actualizaciones una vez al día y muestra Actualización disponible en Inicio. La búsqueda se puede desactivar en Acerca de.",
-      "La iluminación ambiental puede seguir la portada del álbum. Ocultar la ventana de llamadas de BYD y las teclas de controlador externo son experimentales y están desactivadas de forma predeterminada; prueba las opciones con el coche estacionado."
+      "CarPlay por cable ya no se corta cada pocos minutos cuando una lectura USB termina justo cuando DiPlay deja de esperarla. También arranca en unidades con Android 7.1 y en unidades cuyo controlador de audio USB retenía el iPhone.",
+      "Menos cortes breves en la música, y la pantalla de conexión muestra la etapa y el fallo reales en todos los idiomas de la app.",
+      "Los botones siguiente y anterior del volante cambian de pista en CarPlay desde la pantalla de CarPlay sin el servicio de botones del volante, y los botones atascados en «permitido, iniciando…» se recuperan solos.",
+      "Haz copia de seguridad y restaura los ajustes desde el teléfono con un código QR en Ajustes → Acerca de, y elige otro instalador, como MT Manager, para las actualizaciones.",
+      "En unidades cuyo Bluetooth de Android no llega al iPhone, CarPlay inalámbrico se detiene con un mensaje claro y sugiere USB.",
+      "Nuevas opciones experimentales, desactivadas de forma predeterminada: pantalla completa Harman, esquinas rectas, voz de navegación más clara por USB, decodificación de baja latencia de MediaTek y un velocímetro en el cuadro. Prueba las opciones con el coche estacionado."
     ],
     "compat": "Antes de probar",
     "compatText": "Versión preliminar pública sin certificación de Apple. Usa una identidad de accesorio experimental obtenida de firmware público; no se garantiza su aceptación futura. Algunos equipos aún presentan tirones o no aplican los cambios de tamaño de iconos. Empieza con 30 fps y HEVC desactivado; reduce la resolución si hace falta.",
@@ -250,8 +250,8 @@
     "privacy": "Privacidad",
     "footer": "Proyecto independiente basado en xcertplay, con diseño de interfaz de DiAuto. Sin afiliación a Apple ni BYD. CarPlay y su icono pertenecen a Apple Inc.",
     "supportScope": "Estos proyectos se centran en coches BYD. Pueden funcionar en otras marcas, pero no se ofrece soporte para ellas ni hay planes de añadirlo o corregir incompatibilidades específicas.",
-    "diagnosticsTitle": "Necesitamos informes nuevos de 0.2.17",
-    "diagnosticsText": "1. Actualiza a 0.2.17, reproduce el problema y anota la hora del fallo. 2. Ajustes → Diagnóstico → Guardar informe de diagnóstico. Android 10+ normalmente guarda en Downloads/DiPlay; Android 7.1–9 pide acceso al almacenamiento y también guarda allí. Si el almacenamiento o selector no está disponible, sigue la confirmación del guardado alternativo y usa Ver/Compartir. 3. Revisa el TXT y elimina contraseñas y datos privados. No se envía automáticamente. 4. Añádelo a tu incidencia: https://github.com/shihabal3amri/DiPlay/issues O crea otra: https://github.com/shihabal3amri/DiPlay/issues/new/choose Incluye modelo de coche/equipo, DiLink/Android/firmware, iPhone/iOS, tipo de conexión, autenticación (Local o USB/CH341), ajustes, pasos, resultado esperado/real y hora del fallo.",
+    "diagnosticsTitle": "Necesitamos informes nuevos de 0.2.18",
+    "diagnosticsText": "1. Actualiza a 0.2.18, reproduce el problema y anota la hora del fallo. 2. Ajustes → Diagnóstico → Guardar informe de diagnóstico. Android 10+ normalmente guarda en Downloads/DiPlay; Android 7.1–9 pide acceso al almacenamiento y también guarda allí. Si el almacenamiento o selector no está disponible, sigue la confirmación del guardado alternativo y usa Ver/Compartir. 3. Revisa el TXT y elimina contraseñas y datos privados. No se envía automáticamente. 4. Añádelo a tu incidencia: https://github.com/shihabal3amri/DiPlay/issues O crea otra: https://github.com/shihabal3amri/DiPlay/issues/new/choose Incluye modelo de coche/equipo, DiLink/Android/firmware, iPhone/iOS, tipo de conexión, autenticación (Local o USB/CH341), ajustes, pasos, resultado esperado/real y hora del fallo.",
     "newIssue": "Crear una incidencia"
   },
   "zh-Hans": {
@@ -279,14 +279,14 @@
     ],
     "adb": "安装与连接指南",
     "bssid": "日常使用不需要 ADB。APK 安装方式取决于车机。无需手动输入 MAC 地址。",
-    "whats": "0.2.17 更新内容",
+    "whats": "0.2.18 更新内容",
     "features": [
-      "车机收到损坏的 USB 网络数据块时，有线会话会继续运行，不再在出现画面几秒后重连。旧版 iOS 的 iPhone 会再尝试一次识别；USB 自动确认可识别 Android 10+ 和中文的权限提示。",
-      "新增“iPhone 充电”选项（设置 → 连接 → USB 连接），适用于车机 USB 口无法提供 iPhone 所需充电电流的情况。",
-      "WhatsApp 等应用的语音消息会使用车机麦克风录音，声音不再含糊。",
-      "设置中推荐使用车载热点。已授权网络 ADB 时，Android 7.1 及以上会在 Wi-Fi Direct 期间暂停车机 Wi-Fi 搜索网络。",
-      "DiPlay 每天检查一次更新，并在主页显示“有可用更新”。可在“关于”中关闭检查。",
-      "氛围灯可跟随专辑封面。隐藏比亚迪来电弹窗和外接控制器按键为实验性功能，默认关闭；请停车后测试可选功能。"
+      "USB 读取恰好在 DiPlay 停止等待时完成，不再导致有线 CarPlay 每隔几分钟断开。Android 7.1 车机以及 USB 音频驱动占用 iPhone 的车机，现在也能启动有线 CarPlay。",
+      "短暂的音乐断音减少；连接界面在所有应用语言下都显示实际的连接阶段和失败原因。",
+      "在 CarPlay 画面中，方向盘的上一首／下一首无需方向盘按键服务即可切歌；停在“已允许，正在启动…”的方向盘按键会自动恢复。",
+      "在“设置 → 关于”中通过二维码用手机备份或恢复设置；安装更新时可选择 MT 管理器等其他安装程序。",
+      "如果车机的安卓蓝牙无法连到 iPhone，无线 CarPlay 会给出明确提示并建议改用 USB。",
+      "新增实验性选项，默认关闭：Harman 全屏、直角画面、通过 USB 更清晰的导航语音、联发科低延迟解码和仪表车速表。请停车后测试可选功能。"
     ],
     "compat": "试用前请了解",
     "compatText": "这是公开预览版，未经 Apple 认证。认证使用从公开固件中提取的实验性配件身份，无法保证未来持续可用。部分车机仍可能出现卡顿或图标大小调整不生效。建议先使用 30 fps 并关闭 HEVC，必要时降低分辨率。",
@@ -301,8 +301,8 @@
     "privacy": "隐私",
     "footer": "基于 xcertplay 的独立项目，界面设计源自 DiAuto。与 Apple 或比亚迪无隶属关系。CarPlay 及其图标归 Apple Inc. 所有。",
     "supportScope": "这些项目专注于比亚迪汽车。它们可能在其他品牌上运行，但其他品牌不在支持范围内，也没有增加支持或修复其品牌特定兼容性问题的计划。",
-    "diagnosticsTitle": "请提供 0.2.17 的新诊断报告",
-    "diagnosticsText": "1. 更新至 0.2.17，复现问题并记录故障时间。2. 打开“设置 → 诊断 → 保存诊断报告”。Android 10 及以上通常保存到 Downloads/DiPlay；Android 7.1–9 会请求存储权限并保存到同一位置。如存储或选择器不可用，请按备用保存确认提示使用“查看／分享”。3. 检查 TXT，删除密码及隐私信息。报告不会自动上传。4. 附到原有问题：https://github.com/shihabal3amri/DiPlay/issues 或新建问题：https://github.com/shihabal3amri/DiPlay/issues/new/choose 注明车型／车机、DiLink／Android／固件、iPhone／iOS、连接方式、认证方式（Local 或 USB/CH341）、相关设置、复现步骤、预期与实际结果及故障时间。",
+    "diagnosticsTitle": "请提供 0.2.18 的新诊断报告",
+    "diagnosticsText": "1. 更新至 0.2.18，复现问题并记录故障时间。2. 打开“设置 → 诊断 → 保存诊断报告”。Android 10 及以上通常保存到 Downloads/DiPlay；Android 7.1–9 会请求存储权限并保存到同一位置。如存储或选择器不可用，请按备用保存确认提示使用“查看／分享”。3. 检查 TXT，删除密码及隐私信息。报告不会自动上传。4. 附到原有问题：https://github.com/shihabal3amri/DiPlay/issues 或新建问题：https://github.com/shihabal3amri/DiPlay/issues/new/choose 注明车型／车机、DiLink／Android／固件、iPhone／iOS、连接方式、认证方式（Local 或 USB/CH341）、相关设置、复现步骤、预期与实际结果及故障时间。",
     "newIssue": "新建问题"
   },
   "zh-Hant": {
@@ -344,16 +344,16 @@
     "supportScope": "這些專案專注於比亞迪汽車。它們可能在其他品牌上運作，但其他品牌不在支援範圍內，也沒有增加支援或修正其品牌特定相容性問題的計畫。",
     "newIssue": "建立新問題",
     "requires": "請安裝在車機上，而非 iPhone。需要 Android 7.1+（API 25）；7.1–8.1 為新增支援，仍需實車驗證。支援 USB，以及透過車機熱點、Wi-Fi Direct 或現有 Wi-Fi／同一區域網路連線。相容性取決於車機、韌體和 iOS。",
-    "whats": "0.2.17 更新內容",
+    "whats": "0.2.18 更新內容",
     "features": [
-      "車機收到損壞的 USB 網路資料區塊時，有線工作階段會繼續執行，不再於出現畫面幾秒後重新連線。舊版 iOS 的 iPhone 會再嘗試一次識別；USB 自動確認可辨識 Android 10+ 和中文的權限提示。",
-      "新增「iPhone 充電」選項（設定 → 連線 → USB 連線），適用於車機 USB 埠無法提供 iPhone 所需充電電流的情況。",
-      "WhatsApp 等應用程式的語音訊息會使用車機麥克風錄音，聲音不再含糊。",
-      "設定中建議使用車載熱點。已授權網路 ADB 時，Android 7.1 及以上會在 Wi-Fi Direct 期間暫停車機 Wi-Fi 搜尋網路。",
-      "DiPlay 每天檢查一次更新，並在主畫面顯示「有可用更新」。可在「關於」中關閉檢查。",
-      "氛圍燈可跟隨專輯封面。隱藏比亞迪來電彈窗和外接控制器按鍵為實驗性功能，預設關閉；請停車後測試選用功能。"
+      "USB 讀取恰好在 DiPlay 停止等待時完成，不再導致有線 CarPlay 每隔幾分鐘中斷。Android 7.1 車機以及 USB 音訊驅動程式佔用 iPhone 的車機，現在也能啟動有線 CarPlay。",
+      "短暫的音樂斷音減少；連線畫面在所有應用程式語言下都顯示實際的連線階段和失敗原因。",
+      "在 CarPlay 畫面中，方向盤的上一首／下一首無需方向盤按鍵服務即可切歌；停在「已允許，正在啟動…」的方向盤按鍵會自動恢復。",
+      "在「設定 → 關於」中透過 QR 碼用手機備份或還原設定；安裝更新時可選擇 MT 管理器等其他安裝程式。",
+      "如果車機的 Android 藍牙無法連到 iPhone，無線 CarPlay 會給出明確提示並建議改用 USB。",
+      "新增實驗性選項，預設關閉：Harman 全螢幕、直角畫面、透過 USB 更清晰的導航語音、聯發科低延遲解碼和儀表車速表。請停車後測試選用功能。"
     ],
-    "diagnosticsTitle": "請提供 0.2.17 的新診斷報告",
-    "diagnosticsText": "1. 更新至 0.2.17，重現問題並記錄故障時間。2. 開啟「設定 → 診斷 → 儲存診斷報告」。Android 10 及以上通常儲存到 Downloads/DiPlay；Android 7.1–9 會要求儲存權限並儲存到同一位置。若儲存空間或選擇器無法使用，請依備援儲存確認提示使用「檢視／分享」。3. 檢查 TXT，移除密碼與私人資訊。報告不會自動上傳。4. 附到原有問題：https://github.com/shihabal3amri/DiPlay/issues 或建立新問題：https://github.com/shihabal3amri/DiPlay/issues/new/choose 註明車型／車機、DiLink／Android／韌體、iPhone／iOS、連線方式、驗證方式（Local 或 USB/CH341）、相關設定、重現步驟、預期與實際結果及故障時間。"
+    "diagnosticsTitle": "請提供 0.2.18 的新診斷報告",
+    "diagnosticsText": "1. 更新至 0.2.18，重現問題並記錄故障時間。2. 開啟「設定 → 診斷 → 儲存診斷報告」。Android 10 及以上通常儲存到 Downloads/DiPlay；Android 7.1–9 會要求儲存權限並儲存到同一位置。若儲存空間或選擇器無法使用，請依備援儲存確認提示使用「檢視／分享」。3. 檢查 TXT，移除密碼與私人資訊。報告不會自動上傳。4. 附到原有問題：https://github.com/shihabal3amri/DiPlay/issues 或建立新問題：https://github.com/shihabal3amri/DiPlay/issues/new/choose 註明車型／車機、DiLink／Android／韌體、iPhone／iOS、連線方式、驗證方式（Local 或 USB/CH341）、相關設定、重現步驟、預期與實際結果及故障時間。"
   }
 }

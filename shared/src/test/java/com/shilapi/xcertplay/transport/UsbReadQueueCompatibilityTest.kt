@@ -222,10 +222,17 @@ object UsbQueueReplay {
     var transferOffset = 0
     val completedBytes = mutableListOf<Int>()
     @Volatile var untimedWaits = 0
+    /** Timed waits that time out once each before a completion is returned. */
+    var timeouts = 0
+    var cancelResult = true
+    /** The next completion carries no bytes, as a cancelled read does. */
+    var emptyCompletion = false
+    var cancels = 0
     fun reset() {
         outcomes.clear(); sizes.clear(); buffers.clear(); request = null; buffer = null
         queueException = null; timeout = false; onQueue = null
         transfer = null; transferOffset = 0; completedBytes.clear(); untimedWaits = 0
+        timeouts = 0; cancelResult = true; emptyCompletion = false; cancels = 0
     }
 }
 
@@ -250,7 +257,10 @@ class CompatibilityUsbRequestShadow {
         check(buffer.position() == 0 && buffer.remaining() == length) { "Unexpected Android 7 queue range" }
         return queue(buffer)
     }
-    @Implementation fun cancel() = true
+    @Implementation fun cancel(): Boolean {
+        UsbQueueReplay.cancels += 1
+        return UsbQueueReplay.cancelResult
+    }
     @Implementation fun close() = Unit
 }
 
@@ -258,6 +268,14 @@ class CompatibilityUsbRequestShadow {
 class CompatibilityUsbConnectionShadow {
     @Implementation(minSdk = 26) fun requestWait(timeoutMillis: Long): UsbRequest {
         if (UsbQueueReplay.timeout) throw TimeoutException()
+        if (UsbQueueReplay.timeouts > 0) {
+            UsbQueueReplay.timeouts -= 1
+            throw TimeoutException()
+        }
+        if (UsbQueueReplay.emptyCompletion) {
+            UsbQueueReplay.emptyCompletion = false
+            return UsbQueueReplay.request!!
+        }
         val buffer = UsbQueueReplay.buffer!!
         val transfer = UsbQueueReplay.transfer
         if (transfer == null) {

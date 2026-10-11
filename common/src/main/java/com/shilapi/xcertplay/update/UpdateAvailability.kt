@@ -13,6 +13,8 @@ internal object UpdateAvailability {
     private const val BACKGROUND_CHECKS = "background_checks"
     private const val LAST_RESULT = "last_result"
     private const val LAST_RESULT_MILLIS = "last_result_millis"
+    private const val LAST_INSTALL = "last_install"
+    private const val LAST_INSTALL_MILLIS = "last_install_millis"
 
     internal const val CHECK_INTERVAL_MILLIS = 24L * 60 * 60 * 1000
 
@@ -75,6 +77,10 @@ internal object UpdateAvailability {
         preferences(context).edit().putString(LAST_RESULT, result).putLong(LAST_RESULT_MILLIS, nowMillis).apply()
     }
 
+    fun recordInstall(context: Context, nowMillis: Long, outcome: String) {
+        preferences(context).edit().putString(LAST_INSTALL, outcome).putLong(LAST_INSTALL_MILLIS, nowMillis).apply()
+    }
+
     /** One diagnostic line. Ages are relative so the report needs no clock or locale. */
     fun report(context: Context, nowMillis: Long): String {
         val values = preferences(context)
@@ -82,7 +88,8 @@ internal object UpdateAvailability {
             ?.let { "${(nowMillis - it).coerceAtLeast(0L) / 60_000} min ago" } ?: "never"
         return "Update check: background=${if (backgroundChecksEnabled(context)) "on" else "off"}; " +
             "lastSuccess=${age(LAST_ATTEMPT_MILLIS)}; cachedRelease=${values.getString(TAG, null) ?: "none"}; " +
-            "lastResult=${values.getString(LAST_RESULT, null) ?: "none"} (${age(LAST_RESULT_MILLIS)})"
+            "lastResult=${values.getString(LAST_RESULT, null) ?: "none"} (${age(LAST_RESULT_MILLIS)}); " +
+            "lastInstall=${values.getString(LAST_INSTALL, null) ?: "none"} (${age(LAST_INSTALL_MILLIS)})"
     }
 
     internal fun clearAllForTest(context: Context) {

@@ -79,8 +79,8 @@ internal class CarPlayPicturePanel(
         }
         addView(original, LayoutParams(-1, dp(48)))
         val actions = LinearLayout(context)
-        actions.addView(Button(context).apply {
-            text = context.getString(R.string.picture_reset); isAllCaps = false
+        actions.addView(DiPlayButton(context).apply {
+            text = context.getString(R.string.picture_reset)
             isEnabled = adjustmentsAvailable
             setOnClickListener {
                 if (!adjustmentsAvailable) return@setOnClickListener
@@ -91,8 +91,8 @@ internal class CarPlayPicturePanel(
                 }
             }
         }, LayoutParams(0, dp(48), 1f))
-        actions.addView(Button(context).apply {
-            text = context.getString(R.string.picture_done); isAllCaps = false
+        actions.addView(DiPlayButton(context).apply {
+            text = context.getString(R.string.picture_done)
             setOnClickListener { close() }
         }, LayoutParams(0, dp(48), 1f))
         addView(actions)
@@ -117,10 +117,7 @@ internal class CarPlayPicturePanel(
                     view.progressTintList = android.content.res.ColorStateList.valueOf(palette.overlayAccent)
                     view.thumbTintList = android.content.res.ColorStateList.valueOf(palette.overlayAccent)
                 }
-                is Button -> {
-                    view.setTextColor(palette.overlayOnAccent)
-                    view.backgroundTintList = android.content.res.ColorStateList.valueOf(palette.overlayAccent)
-                }
+                is DiPlayButton -> view.style(DiPlayButtonKind.PRIMARY, palette, overlay = true)
                 is TextView -> view.setTextColor(palette.overlayPrimaryText)
             }
             if (view is android.view.ViewGroup) {

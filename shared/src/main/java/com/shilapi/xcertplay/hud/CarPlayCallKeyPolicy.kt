@@ -29,16 +29,22 @@ object CarPlayCallKeyPolicy {
      * A key event while CarPlay runs ([session]) with [call] on the iPhone. The call key answers a ringing
      * call and is kept otherwise (BYD's phone app would open over CarPlay); the hang-up keys end the call
      * or decline it. Both halves of a press are kept, the action runs on release.
+     *
+     * Wheels without call keys, such as the 2022 Song Pro DM-i's, send only next and previous track. While
+     * a call rings those keys have nothing to skip, so next answers and previous declines (#272).
      */
     fun onKey(keyCode: Int, down: Boolean, call: CarPlayCallCard?, session: Boolean): Action {
         if (!session || call == null) return Action.PASS
+        val ringing = call.phase == CarPlayCallCard.Phase.RINGING
         return when {
             isAnswerKey(keyCode) -> when {
                 down -> Action.CONSUME
-                call.phase == CarPlayCallCard.Phase.RINGING -> Action.ANSWER
+                ringing -> Action.ANSWER
                 else -> Action.CONSUME
             }
             isEndKey(keyCode) -> if (down) Action.CONSUME else Action.END
+            ringing && keyCode == KeyEvent.KEYCODE_MEDIA_NEXT -> if (down) Action.CONSUME else Action.ANSWER
+            ringing && keyCode == KeyEvent.KEYCODE_MEDIA_PREVIOUS -> if (down) Action.CONSUME else Action.END
             else -> Action.PASS
         }
     }

@@ -7,6 +7,7 @@ import android.util.Log
 import com.shilapi.xcertplay.compat.Base64Compat
 import com.shilapi.xcertplay.iap2.body.Iap2BodyReader
 import com.shilapi.xcertplay.iap2.wire.Iap2Frame
+import com.shilapi.xcertplay.telecom.PhoneAudioRoute
 import java.lang.reflect.InvocationTargetException
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledFuture
@@ -131,6 +132,7 @@ object BydCarPlayCall {
 
     fun attach(appContext: Context) {
         context = appContext.applicationContext
+        PhoneAudioRoute.attach(appContext)
     }
 
     /**
@@ -152,6 +154,7 @@ object BydCarPlayCall {
             state.current()
         }
         Log.i(TAG, "CarPlay call ${card?.phase ?: "ended"}")
+        PhoneAudioRoute.carPlayCall(card != null)
         val app = context ?: return
         if (BydOutputSettings.carPlayCalls(app)) writer.execute { apply(app, card); if (card == null) arm(app) }
     }
@@ -170,6 +173,7 @@ object BydCarPlayCall {
     /** The session ended: forget the calls and end the one DiPlay showed. */
     fun end() {
         sessionActive = false
+        PhoneAudioRoute.carPlayCall(false)
         synchronized(state) { state.clear() }
         val app = context ?: return
         writer.execute { resetRetry(null); apply(app, null); disarm(app) }
