@@ -728,6 +728,7 @@
     <string name="update_checking">Проверка…</string>
     <string name="update_up_to_date">У вас последняя версия</string>
     <string name="update_download">Скачать обновление</string>
+    <string name="update_progress_button">Загрузка %1$d%%</string>
     <string name="update_verifying">Проверка…</string>
     <string name="update_install">Установить %1$s</string>
     <string name="update_failed">Не удалось обновить</string>

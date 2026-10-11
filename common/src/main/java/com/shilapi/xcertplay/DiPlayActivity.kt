@@ -2451,19 +2451,30 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
                 button(getString(R.string.update_download), true) { downloadUpdate() },
                 matchButton(10, 60))
             UpdateStage.DOWNLOADING, UpdateStage.VERIFYING -> {
-                val progress = if (updateStage == UpdateStage.VERIFYING) getString(R.string.update_verifying)
-                    else "${updateProgress ?: 0}%"
-                val progressDescription = if (updateStage == UpdateStage.VERIFYING) progress
-                    else getString(R.string.update_downloading, updateProgress ?: 0)
-                container.addView(LinearLayout(this).apply {
-                    orientation = LinearLayout.HORIZONTAL
-                    gravity = Gravity.CENTER_VERTICAL
-                    addView(button(getString(R.string.update_download), true) { }.apply {
+                val verifying = updateStage == UpdateStage.VERIFYING
+                val percent = updateProgress?.coerceIn(0, 100)
+                val title = if (verifying) getString(R.string.update_verifying)
+                    else getString(R.string.update_progress_button, percent ?: 0)
+                container.addView(FrameLayout(this).apply {
+                    addView(button(title, true) { }.apply {
                         isEnabled = false
                         alpha = 0.7f
-                    }, LinearLayout.LayoutParams(0, dp(60), 1f))
-                    addView(label(progress, 14, MUTED).apply { contentDescription = progressDescription },
-                        LinearLayout.LayoutParams(-2, -2).apply { marginStart = dp(SETTINGS_BLOCK_GAP_DP) })
+                        gravity = Gravity.CENTER
+                        contentDescription = if (verifying) title
+                            else "${getString(R.string.update_downloading)} ${percent ?: 0}%"
+                    }, FrameLayout.LayoutParams(-1, -1))
+                    addView(ProgressBar(this@DiPlayActivity, null, android.R.attr.progressBarStyleHorizontal).apply {
+                        max = 100
+                        progress = percent ?: 0
+                        isIndeterminate = verifying || percent == null
+                        progressTintList = ColorStateList.valueOf(ON_ACCENT)
+                        progressBackgroundTintList = ColorStateList.valueOf(ON_ACCENT and 0x55ffffff)
+                        importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
+                    }, FrameLayout.LayoutParams(-1, dp(UPDATE_PROGRESS_BAR_HEIGHT_DP), Gravity.BOTTOM).apply {
+                        marginStart = dp(UPDATE_PROGRESS_BAR_INSET_DP)
+                        marginEnd = dp(UPDATE_PROGRESS_BAR_INSET_DP)
+                        bottomMargin = dp(UPDATE_PROGRESS_BAR_BOTTOM_DP)
+                    })
                 }, matchButton(10, 60))
             }
             UpdateStage.READY -> {
@@ -2542,7 +2553,7 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
             val outcome = runCatching {
                 // A previously verified local copy can be installed even when the release API is offline.
                 val selectedCopy = synchronized(UpdateApkCache.lock(selectedRelease)) {
-                    UpdateApkCache.verifiedApk(cacheDir, selectedRelease)?.takeIf {
+                    UpdateApkCache.verifiedApk(filesDir, selectedRelease)?.takeIf {
                         packageManager.getPackageArchiveInfo(it.absolutePath, 0)?.packageName == packageName
                     }
                 }
@@ -2550,11 +2561,11 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
                 // The cached release can be a day old. Download the newest one.
                 val release = latestRelease() ?: throw IOException(getString(R.string.update_up_to_date))
                 synchronized(UpdateApkCache.lock(release)) {
-                    val cached = UpdateApkCache.verifiedApk(cacheDir, release)?.takeIf {
+                    val cached = UpdateApkCache.verifiedApk(filesDir, release)?.takeIf {
                         packageManager.getPackageArchiveInfo(it.absolutePath, 0)?.packageName == packageName
                     }
                     if (cached != null) return@synchronized Triple(release, cached, true)
-                    val directory = UpdateApkCache.directory(cacheDir, release)
+                    val directory = UpdateApkCache.directory(filesDir, release)
                     if (!directory.isDirectory && !directory.mkdirs()) throw IOException("Update storage is unavailable")
                     val stagedChecksums = File(directory, "${UpdateCatalog.CHECKSUMS_FILE}.partial")
                     val stagedApk = File(directory, ".${release.apkName}.partial.apk")
@@ -2578,7 +2589,7 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
                         if (archivePackage != packageName) {
                             throw IOException("Update APK belongs to a different app")
                         }
-                        Triple(release, UpdateApkCache.publish(cacheDir, release, stagedApk, stagedChecksums), false)
+                        Triple(release, UpdateApkCache.publish(filesDir, release, stagedApk, stagedChecksums), false)
                     } finally {
                         stagedApk.delete()
                         stagedChecksums.delete()
@@ -6074,5 +6085,8 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
         private const val NOTE_LINE_GAP_DP = 4
         private const val NOTE_ATTACH_GAP_DP = 6
         private const val SETTINGS_BLOCK_GAP_DP = 16
+        private const val UPDATE_PROGRESS_BAR_HEIGHT_DP = 4
+        private const val UPDATE_PROGRESS_BAR_INSET_DP = 16
+        private const val UPDATE_PROGRESS_BAR_BOTTOM_DP = 7
     }
 }

@@ -2533,7 +2533,7 @@ class CarPlayHostActivity : ComponentActivity() {
             leaveSettingsMenu { showDiPlayHome("settings") }
         }
         val statusPill = buildOverlayStatusPill()
-        val closeButton = overlayChromeButton("×") { cancelSettingsEdits() }.apply {
+        val closeButton = overlayChromeButton(getString(R.string.close)) { cancelSettingsEdits() }.apply {
             contentDescription = getString(R.string.discard_changes_and_exit_settings)
         }
 
@@ -2581,7 +2581,7 @@ class CarPlayHostActivity : ComponentActivity() {
             background = overlayGlassChrome(overlayPalette.overlayFooter,
                 OVERLAY_PANEL_RADIUS_DP, bottomCornersOnly = true)
         }
-        val exitButton = overlayChromeButton("⇥  " + getString(R.string.exit_application)) { exitApplication() }
+        val exitButton = overlayDestructiveButton(getString(R.string.exit_application)) { exitApplication() }
         val saveButton = overlayPrimaryButton("⟳  " + getString(R.string.save_and_reconnect)) { saveSettingsAndReconnect() }
         val saveNotice = menuText(getString(R.string.settings_save_notice), 12f, MENU_SECONDARY).apply {
             gravity = Gravity.CENTER
@@ -2815,6 +2815,21 @@ class CarPlayHostActivity : ComponentActivity() {
                 cornerRadius = dp(OVERLAY_GLASS_PILL_RADIUS_DP).toFloat()
             }
             setOnClickListener { onClick() }
+        }
+
+    private fun overlayDestructiveButton(label: String, onClick: () -> Unit): Button =
+        overlayChromeButton(label, onClick).apply {
+            setTextColor(MENU_DANGER)
+            typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
+            val surface = ColorUtils.blendARGB(overlayPalette.overlayField, MENU_DANGER,
+                if (appNight) 0.16f else 0.10f)
+            background = android.graphics.drawable.RippleDrawable(
+                ColorStateList.valueOf(ColorUtils.setAlphaComponent(MENU_DANGER, 0x2e)),
+                overlayGlassChrome(surface, OVERLAY_GLASS_PILL_RADIUS_DP).apply {
+                    setStroke(dp(1), ColorUtils.blendARGB(surface, MENU_DANGER, 0.44f))
+                },
+                null,
+            )
         }
 
     private fun buildOverlayRail(

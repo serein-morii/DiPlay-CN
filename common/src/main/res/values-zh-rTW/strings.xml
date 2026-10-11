@@ -790,6 +790,7 @@
     <string name="update_checking">正在檢查…</string>
     <string name="update_up_to_date">已是最新版本</string>
     <string name="update_download">下載更新</string>
+    <string name="update_progress_button">下載中 %1$d%%</string>
     <string name="update_verifying">正在驗證…</string>
     <string name="update_install">安裝 %1$s</string>
     <string name="update_failed">更新失敗</string>

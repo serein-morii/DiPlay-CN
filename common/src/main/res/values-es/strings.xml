@@ -728,6 +728,7 @@
     <string name="update_checking">Buscando…</string>
     <string name="update_up_to_date">Ya tienes la última versión</string>
     <string name="update_download">Descargar actualización</string>
+    <string name="update_progress_button">Descargando %1$d%%</string>
     <string name="update_verifying">Verificando…</string>
     <string name="update_install">Instalar %1$s</string>
     <string name="update_failed">Error de actualización</string>

@@ -740,6 +740,7 @@
     <string name="update_checking">Перевірка…</string>
     <string name="update_up_to_date">У вас вже найновіша версія</string>
     <string name="update_download">Завантажити оновлення</string>
+    <string name="update_progress_button">Завантаження %1$d%%</string>
     <string name="update_verifying">Перевірка…</string>
     <string name="update_install">Установити %1$s</string>
     <string name="update_failed">Не вдалося оновити</string>

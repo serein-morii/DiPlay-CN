@@ -823,6 +823,7 @@
     <string name="update_checking">正在检查…</string>
     <string name="update_up_to_date">已是最新版本</string>
     <string name="update_download">下载更新</string>
+    <string name="update_progress_button">下载中 %1$d%%</string>
     <string name="update_verifying">正在校验…</string>
     <string name="update_install">安装 %1$s</string>
     <string name="update_failed">更新失败</string>

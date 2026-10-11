@@ -24,7 +24,7 @@ class UpdateInstallCompatibilityTest {
     private val apkType = "application/vnd.android.package-archive"
     private val publicCopy = Uri.parse("content://media/external/downloads/42")
 
-    // Robolectric gives each test a new cache dir; FileProvider keeps the first one in a static cache.
+    // Robolectric gives each test a new files dir; FileProvider keeps the first one in a static cache.
     @Before fun resetFileProviderCache() {
         val cache = FileProvider::class.java.getDeclaredField("sCache").apply { isAccessible = true }
         (cache.get(null) as MutableMap<*, *>).clear()
@@ -33,7 +33,7 @@ class UpdateInstallCompatibilityTest {
     private fun install(publicUriReadable: Boolean, installers: Int, publicBytes: ByteArray = byteArrayOf(1)): Intent {
         val activity = Robolectric.buildActivity(DiPlayActivity::class.java).get()
         activity.updateInstallWorker = { it.run() }
-        val apk = File(activity.cacheDir, "update/test/DiPlay.apk").apply {
+        val apk = File(activity.filesDir, "update/test/DiPlay.apk").apply {
             parentFile!!.mkdirs()
             writeBytes(byteArrayOf(1))
         }

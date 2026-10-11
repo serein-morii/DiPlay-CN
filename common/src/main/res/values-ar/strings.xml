@@ -728,6 +728,7 @@
     <string name="update_checking">جارٍ البحث…</string>
     <string name="update_up_to_date">لديك آخر إصدار</string>
     <string name="update_download">تنزيل التحديث</string>
+    <string name="update_progress_button">تنزيل %1$d%%</string>
     <string name="update_verifying">جارٍ التحقق…</string>
     <string name="update_install">تثبيت %1$s</string>
     <string name="update_failed">فشل التحديث</string>

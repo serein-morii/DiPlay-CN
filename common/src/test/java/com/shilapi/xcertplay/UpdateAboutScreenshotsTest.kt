@@ -8,6 +8,7 @@ import android.graphics.Rect
 import android.os.Looper
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ProgressBar
 import android.widget.ScrollView
 import android.widget.TextView
 import com.shilapi.xcertplay.host.R
@@ -31,6 +32,8 @@ class UpdateAboutScreenshotsTest {
     @Test fun compactAndFullAboutPagesKeepTheUpdateChannelVisible() {
         capture("en-w600dp-h720dp-port-mdpi", 600, 720, full = false,
             name = "compact-large-font.png", downloading = true)
+        capture("en-w320dp-h640dp-port-mdpi", 320, 640, full = false,
+            name = "narrow-large-font.png", downloading = true)
         capture("en-w1280dp-h800dp-land-mdpi", 1280, 800, full = true,
             name = "full-large-font.png", downloading = true)
         capture("ar-w600dp-h720dp-port-mdpi", 600, 720, full = false,
@@ -73,12 +76,10 @@ class UpdateAboutScreenshotsTest {
             assertTrue(channel != null && channel.width > 0 && channel.height > 0)
             if (downloading) {
                 val download = descendants(root).filterIsInstance<TextView>().first {
-                    it.text.toString() == activity.getString(R.string.update_download)
+                    it.text.toString() == activity.getString(R.string.update_progress_button, 42)
                 }
-                val progress = descendants(root).filterIsInstance<TextView>().first {
-                    it.text.toString() == "42%"
-                }
-                assertTrue(!download.isEnabled && download.parent === progress.parent)
+                val progress = descendants(download.parent as ViewGroup).filterIsInstance<ProgressBar>().single()
+                assertTrue(!download.isEnabled && progress.parent === download.parent && progress.progress == 42)
             }
             val scroll = descendants(root).filterIsInstance<ScrollView>().first {
                 descendants(it).any { descendant -> descendant === channel }

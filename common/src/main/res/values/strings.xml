@@ -864,6 +864,7 @@
     <string name="update_checking">Checking…</string>
     <string name="update_up_to_date">You\'re up to date</string>
     <string name="update_download">Download update</string>
+    <string name="update_progress_button">Downloading %1$d%%</string>
     <string name="update_verifying">Verifying…</string>
     <string name="update_install">Install %1$s</string>
     <string name="update_failed">Update failed</string>

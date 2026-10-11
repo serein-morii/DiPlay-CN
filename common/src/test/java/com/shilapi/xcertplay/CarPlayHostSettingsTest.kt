@@ -125,6 +125,17 @@ class CarPlayHostSettingsTest {
         }
     }
 
+    @Test fun overlayCloseAndExitActionsHaveClearLabelsAndDistinctEmphasis() {
+        invoke("openSettingsMenu")
+        val close = views(menu()).filterIsInstance<Button>().first {
+            it.contentDescription == activity.getString(R.string.discard_changes_and_exit_settings)
+        }
+        assertEquals(activity.getString(R.string.close), close.text.toString())
+        assertEquals(activity.getString(R.string.exit_application), exitButton().text.toString())
+        assertEquals(DiPlayPalette.of(field("appNight") as Boolean).overlayDanger,
+            exitButton().currentTextColor)
+    }
+
     @Test fun resizingAnOpenMenuSwitchesBetweenRailAndChips() {
         invoke("openSettingsMenu")
         val overlay = menu() as ViewGroup

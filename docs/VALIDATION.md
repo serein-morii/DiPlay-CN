@@ -1,7 +1,14 @@
+# DiPlay CN 0.2.18-cn.3 — 2026-10-12
+
+- The updater retains Gitee, GitHub and two GitHub mirrors as CN release channels. It keeps a SHA-256- and package-verified APK in persistent app-private `files/update/<tag>` and opens the system installer from that copy without another network download. When supported, it also exports the APK to `Downloads/DiPlay`.
+- The required full debug CI command passed locally (250 Gradle tasks), as did `:mobile:lintRelease`, the focused updater/installer/settings tests, the release-version check and the public-tree check.
+- The Download button shows its percentage and progress bar inside the disabled control. Large-font screenshots: [narrow](screenshots/update-progress-narrow-large-font.png), [compact](screenshots/update-progress-compact-large-font.png), [full](screenshots/update-progress-full-large-font.png), and [Arabic RTL](screenshots/update-progress-arabic-large-font.png).
+- The swipe-down settings sheet has a text Close control and a separate tinted Exit Application action. Its [compact](screenshots/overlay-compact-large-font.png), [wide](screenshots/overlay-wide-large-font.png), [light](screenshots/overlay-light-large-font.png), and [Arabic RTL](screenshots/overlay-arabic-large-font.png) large-font layouts were visually inspected.
+- No new physical head-unit validation is claimed for `.3`.
+
 # DiPlay CN 0.2.18-cn.2 — 2026-10-11
 
 - The CN updater patch passed the repository's full debug CI command locally (250 Gradle tasks), mobile Release lint, the release-version and public-tree checks, and focused cache/installer tests. A cached APK is reused only when its stored SHA-256 still matches and Android reports this app's package name.
-- Large-font screenshots of the updater progress row: [compact](screenshots/update-progress-compact-large-font.png), [full](screenshots/update-progress-full-large-font.png), and [Arabic RTL](screenshots/update-progress-arabic-large-font.png). The disabled Download button remains beside the progress value.
 - The `v0.2.18-cn.1` remote release build failed in `common:testDebugUnitTest` before publishing an APK. Its old log truncation omitted the failing test name; the `.2` workflow now prints failing test cases and saves reports if a remote build fails. Do not distribute `.1` as a release.
 - The `.2` GitHub release build and APK identity check succeeded. GitHub's runner then timed out while uploading the APK to Gitee; the exact GitHub APK and SHA-256 file were uploaded from the maintainer machine instead. Both Gitee downloads were compared byte-for-byte with the GitHub artifacts. APK size: 19,152,703 bytes; SHA-256: `ed63824c0e991f04c0314edf65ba8df914cd42d453837b5cb3e53e5fe050f5c9`. The main-branch release workflows now bound each Gitee upload attempt and check for a completed upload after a timeout.
 - No new physical head-unit validation is claimed for `.2`.
