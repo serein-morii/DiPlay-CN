@@ -81,6 +81,7 @@ import com.shilapi.xcertplay.setup.DiLinkGeneration
 import com.shilapi.xcertplay.setup.SetupGuide
 import com.shilapi.xcertplay.transport.EvChargingConnectors
 import com.shilapi.xcertplay.update.BackgroundUpdateScheduler
+import com.shilapi.xcertplay.update.UpdateApkCache
 import com.shilapi.xcertplay.update.UpdateApkExport
 import com.shilapi.xcertplay.update.UpdateAvailability
 import com.shilapi.xcertplay.update.UpdateCatalog
@@ -363,6 +364,10 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
         }
         scheduleBackgroundUpdateChecks()
         availableUpdate = UpdateAvailability.available(this, version())
+        availableUpdate?.let {
+            updateRelease = it
+            updateStage = UpdateStage.AVAILABLE
+        }
         enforceInterfaceSize()
         refreshAppearance()
         rememberLaunchAppearance()
@@ -2445,8 +2450,22 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
             UpdateStage.AVAILABLE -> container.addView(
                 button(getString(R.string.update_download), true) { downloadUpdate() },
                 matchButton(10, 60))
-            UpdateStage.DOWNLOADING -> container.addView(label(getString(R.string.update_downloading, updateProgress ?: 0), 14, MUTED))
-            UpdateStage.VERIFYING -> container.addView(label(getString(R.string.update_verifying), 14, MUTED))
+            UpdateStage.DOWNLOADING, UpdateStage.VERIFYING -> {
+                val progress = if (updateStage == UpdateStage.VERIFYING) getString(R.string.update_verifying)
+                    else "${updateProgress ?: 0}%"
+                val progressDescription = if (updateStage == UpdateStage.VERIFYING) progress
+                    else getString(R.string.update_downloading, updateProgress ?: 0)
+                container.addView(LinearLayout(this).apply {
+                    orientation = LinearLayout.HORIZONTAL
+                    gravity = Gravity.CENTER_VERTICAL
+                    addView(button(getString(R.string.update_download), true) { }.apply {
+                        isEnabled = false
+                        alpha = 0.7f
+                    }, LinearLayout.LayoutParams(0, dp(60), 1f))
+                    addView(label(progress, 14, MUTED).apply { contentDescription = progressDescription },
+                        LinearLayout.LayoutParams(-2, -2).apply { marginStart = dp(SETTINGS_BLOCK_GAP_DP) })
+                }, matchButton(10, 60))
+            }
             UpdateStage.READY -> {
                 container.addView(
                     button(getString(R.string.update_install, updateRelease?.tagName.orEmpty()), true) { installUpdate() },
@@ -2511,8 +2530,7 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
     }
 
     private fun downloadUpdate() {
-        if (updateRelease == null) return
-        lateinit var release: UpdateRelease
+        val selectedRelease = updateRelease ?: return
         updateStage = UpdateStage.DOWNLOADING
         updateSavedPath = null
         updateSavedUri = null
@@ -2521,48 +2539,64 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
         val generation = ++updateGeneration
         render()
         Thread({
-            // Each attempt owns its files, including across activity recreation.
-            val directory = File(cacheDir, "update/${java.util.UUID.randomUUID()}")
             val outcome = runCatching {
-                // The cached release can be a day old. Download the newest one.
-                release = latestRelease() ?: throw IOException(getString(R.string.update_up_to_date))
-                val checksumsFile = File(directory, UpdateCatalog.CHECKSUMS_FILE)
-                UpdateClient.download(release.checksumsUrl, checksumsFile) { _, _ -> }
-                val apkFile = File(directory, release.apkName)
-                UpdateClient.download(release.apkUrl, apkFile) { written, total ->
-                    val percent = total?.takeIf { it > 0 }?.let { (written * 100 / it).toInt() } ?: return@download
-                    if (percent != updateProgress) {
-                        updateProgress = percent
-                        refreshUpdateUi(generation)
+                // A previously verified local copy can be installed even when the release API is offline.
+                val selectedCopy = synchronized(UpdateApkCache.lock(selectedRelease)) {
+                    UpdateApkCache.verifiedApk(cacheDir, selectedRelease)?.takeIf {
+                        packageManager.getPackageArchiveInfo(it.absolutePath, 0)?.packageName == packageName
                     }
                 }
-                updateStage = UpdateStage.VERIFYING
-                refreshUpdateUi(generation)
-                val expected = UpdateChecksums.parse(checksumsFile.readText())
-                val actual = UpdateChecksums.sha256Hex(apkFile)
-                if (!UpdateChecksums.matches(expected, release.apkName, actual)) {
-                    throw IOException("Checksum mismatch for ${release.apkName}")
+                if (selectedCopy != null) return@runCatching Triple(selectedRelease, selectedCopy, true)
+                // The cached release can be a day old. Download the newest one.
+                val release = latestRelease() ?: throw IOException(getString(R.string.update_up_to_date))
+                synchronized(UpdateApkCache.lock(release)) {
+                    val cached = UpdateApkCache.verifiedApk(cacheDir, release)?.takeIf {
+                        packageManager.getPackageArchiveInfo(it.absolutePath, 0)?.packageName == packageName
+                    }
+                    if (cached != null) return@synchronized Triple(release, cached, true)
+                    val directory = UpdateApkCache.directory(cacheDir, release)
+                    if (!directory.isDirectory && !directory.mkdirs()) throw IOException("Update storage is unavailable")
+                    val stagedChecksums = File(directory, "${UpdateCatalog.CHECKSUMS_FILE}.partial")
+                    val stagedApk = File(directory, ".${release.apkName}.partial.apk")
+                    try {
+                        UpdateClient.download(release.checksumsUrl, stagedChecksums) { _, _ -> }
+                        UpdateClient.download(release.apkUrl, stagedApk) { written, total ->
+                            val percent = total?.takeIf { it > 0 }?.let { (written * 100 / it).toInt() } ?: return@download
+                            if (percent != updateProgress) {
+                                updateProgress = percent
+                                refreshUpdateUi(generation)
+                            }
+                        }
+                        updateStage = UpdateStage.VERIFYING
+                        refreshUpdateUi(generation)
+                        val expected = UpdateChecksums.parse(stagedChecksums.readText())
+                        val actual = UpdateChecksums.sha256Hex(stagedApk)
+                        if (!UpdateChecksums.matches(expected, release.apkName, actual)) {
+                            throw IOException("Checksum mismatch for ${release.apkName}")
+                        }
+                        val archivePackage = packageManager.getPackageArchiveInfo(stagedApk.absolutePath, 0)?.packageName
+                        if (archivePackage != packageName) {
+                            throw IOException("Update APK belongs to a different app")
+                        }
+                        Triple(release, UpdateApkCache.publish(cacheDir, release, stagedApk, stagedChecksums), false)
+                    } finally {
+                        stagedApk.delete()
+                        stagedChecksums.delete()
+                    }
                 }
-                val archivePackage = packageManager.getPackageArchiveInfo(apkFile.absolutePath, 0)?.packageName
-                if (archivePackage != packageName) {
-                    throw IOException("Update APK belongs to a different app")
-                }
-                apkFile
-            }.onFailure { directory.deleteRecursively() }
-            val saved = outcome.getOrNull()?.let { UpdateApkExport.copy(applicationContext, it) }
+            }
+            val saved = outcome.getOrNull()?.takeUnless { it.third }?.let { UpdateApkExport.copy(applicationContext, it.second) }
             runOnUiThread {
-                if (generation != updateGeneration || isFinishing || isDestroyed) {
-                    directory.deleteRecursively()
-                    return@runOnUiThread
-                }
+                if (generation != updateGeneration || isFinishing || isDestroyed) return@runOnUiThread
                 outcome.fold(
-                    { file ->
+                    { (release, file, _) ->
                         updateRelease = release
                         updateFile = file
                         updateSavedPath = saved?.path
                         updateSavedUri = saved?.uri
                         updateStage = UpdateStage.READY
                         render()
+                        installApk(file)
                     },
                     { failure ->
                         Log.w("DiPlay-Update", "update download failed", failure)

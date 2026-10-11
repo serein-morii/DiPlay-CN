@@ -29,11 +29,16 @@ import org.robolectric.util.ReflectionHelpers
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 class UpdateAboutScreenshotsTest {
     @Test fun compactAndFullAboutPagesKeepTheUpdateChannelVisible() {
-        capture("en-w600dp-h720dp-port-mdpi", 600, 720, full = false, name = "compact-large-font.png")
-        capture("en-w1280dp-h800dp-land-mdpi", 1280, 800, full = true, name = "full-large-font.png")
+        capture("en-w600dp-h720dp-port-mdpi", 600, 720, full = false,
+            name = "compact-large-font.png", downloading = true)
+        capture("en-w1280dp-h800dp-land-mdpi", 1280, 800, full = true,
+            name = "full-large-font.png", downloading = true)
+        capture("ar-w600dp-h720dp-port-mdpi", 600, 720, full = false,
+            name = "arabic-download-progress-large-font.png", downloading = true)
     }
 
-    private fun capture(qualifiers: String, width: Int, height: Int, full: Boolean, name: String) {
+    private fun capture(qualifiers: String, width: Int, height: Int, full: Boolean, name: String,
+                        downloading: Boolean = false) {
         RuntimeEnvironment.setQualifiers(qualifiers)
         val application = RuntimeEnvironment.getApplication()
         @Suppress("DEPRECATION")
@@ -47,6 +52,13 @@ class UpdateAboutScreenshotsTest {
             Intent(application, DiPlayActivity::class.java).putExtra("page", "settings"),
         ).setup().get()
         try {
+            if (downloading) {
+                val stage = Class.forName("com.shilapi.xcertplay.DiPlayActivity\$UpdateStage")
+                    .enumConstants?.first { (it as Enum<*>).name == "DOWNLOADING" }
+                    ?: error("DOWNLOADING stage not found")
+                ReflectionHelpers.setField(activity, "updateStage", stage)
+                ReflectionHelpers.setField(activity, "updateProgress", 42)
+            }
             ReflectionHelpers.setField(activity, "settingsCategory", SettingsCategory.ABOUT)
             ReflectionHelpers.callInstanceMethod<Unit>(activity, "render")
             val root = activity.findViewById<ViewGroup>(android.R.id.content).getChildAt(0)
@@ -59,6 +71,15 @@ class UpdateAboutScreenshotsTest {
                 it.text.toString().startsWith(activity.getString(R.string.update_channel) + " · ")
             }
             assertTrue(channel != null && channel.width > 0 && channel.height > 0)
+            if (downloading) {
+                val download = descendants(root).filterIsInstance<TextView>().first {
+                    it.text.toString() == activity.getString(R.string.update_download)
+                }
+                val progress = descendants(root).filterIsInstance<TextView>().first {
+                    it.text.toString() == "42%"
+                }
+                assertTrue(!download.isEnabled && download.parent === progress.parent)
+            }
             val scroll = descendants(root).filterIsInstance<ScrollView>().first {
                 descendants(it).any { descendant -> descendant === channel }
             }

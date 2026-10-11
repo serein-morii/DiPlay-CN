@@ -45,7 +45,24 @@ jobs:
           python3 -m unittest discover -s scripts -p 'test_check_release_version.py'
           python3 scripts/check_release_version.py "$GITHUB_REF_NAME"
       - name: Test and build standalone release APK
-        run: ./gradlew :shared:testDebugUnitTest :common:testDebugUnitTest :mobile:lintRelease :mobile:assembleStandaloneRelease --stacktrace > gradle.log 2>&1 || { cat gradle.log | tail -120; exit 1; }
+        run: |
+          if ! ./gradlew :shared:testDebugUnitTest :common:testDebugUnitTest :mobile:lintRelease :mobile:assembleStandaloneRelease --stacktrace > gradle.log 2>&1; then
+            grep -nE 'FAILED|tests completed|^e: |^error: ' gradle.log | tail -60 || true
+            grep -R -n '<failure' common/build/test-results/testDebugUnitTest shared/build/test-results/testDebugUnitTest --include='*.xml' | head -30 || true
+            tail -60 gradle.log
+            exit 1
+          fi
+      - name: Save release diagnostics on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-failure-diagnostics
+          path: |
+            gradle.log
+            common/build/test-results/testDebugUnitTest/
+            shared/build/test-results/testDebugUnitTest/
+            mobile/build/reports/lint-results-release.html
+          if-no-files-found: ignore
       - name: Verify identity is inside the APK and not in git
         run: |
           set -euo pipefail
