@@ -787,7 +787,7 @@
     <string name="update_available_home">有可用更新</string>
     <string name="update_saved_to">已儲存至 %1$s</string>
     <string name="settings_background_update_checks">在背景檢查更新</string>
-    <string name="settings_background_update_checks_description">DiPlay 每天會在 GitHub 上檢查一次新版本，並顯示在主畫面上。未經你點擊，絕不會下載。</string>
+    <string name="settings_background_update_checks_description">DiPlay 每天會透過所選更新通道檢查一次新版本，並顯示在主畫面上。未經你點擊，絕不會下載。</string>
     <string name="settings_cluster_menu_small_title">儀表小螢幕導航</string>
     <string name="settings_cluster_menu_small_state_small">小螢幕中</string>
     <string name="settings_cluster_menu_small_state_full">全螢幕</string>

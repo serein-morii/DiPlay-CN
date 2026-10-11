@@ -20,17 +20,29 @@ class UpdateAvailabilityTest {
     @After fun clear() = UpdateAvailability.clearAllForTest(context)
 
     @Test fun persistsAReleaseThatIsNewerThanTheInstalledBuild() {
-        val release = release("v0.2.16")
+        val release = release("v0.2.16-cn.1")
         UpdateAvailability.save(context, release)
 
         assertEquals(release, UpdateAvailability.available(context, "0.2.15"))
     }
 
     @Test fun removesAReleaseAfterTheAppCatchesUp() {
-        UpdateAvailability.save(context, release("v0.2.16"))
+        UpdateAvailability.save(context, release("v0.2.16-cn.1"))
 
-        assertNull(UpdateAvailability.available(context, "0.2.16"))
+        assertNull(UpdateAvailability.available(context, "0.2.16-cn.1"))
         assertNull(UpdateAvailability.available(context, "0.2.15"))
+    }
+
+    @Test fun discardsAnOfficialApkCachedBeforeCnSourcesWereConnected() {
+        UpdateAvailability.save(context, UpdateRelease(
+            tagName = "v0.2.18",
+            apkName = "DiPlay-0.2.18.apk",
+            apkUrl = "https://example.com/official.apk",
+            checksumsUrl = "https://example.com/SHA256SUMS.txt",
+        ))
+
+        assertNull(UpdateAvailability.available(context, "0.2.17-cn.2"))
+        assertTrue(UpdateAvailability.report(context, 10_000L).contains("cachedRelease=none"))
     }
 
     @Test fun backgroundChecksDefaultOnAndPersistTheChoice() {
@@ -44,12 +56,12 @@ class UpdateAvailabilityTest {
             "Update check: background=on; lastSuccess=never; cachedRelease=none; lastResult=none (never)",
             UpdateAvailability.report(context, 10_000_000L),
         )
-        UpdateAvailability.save(context, release("v0.2.16"))
+        UpdateAvailability.save(context, release("v0.2.16-cn.1"))
         UpdateAvailability.recordAttempt(context, 10_000_000L - 5 * 60_000)
         UpdateAvailability.recordResult(context, 10_000_000L - 60_000, "no validated network (attempt 2)")
         UpdateAvailability.saveBackgroundChecksEnabled(context, false)
         assertEquals(
-            "Update check: background=off; lastSuccess=5 min ago; cachedRelease=v0.2.16; " +
+            "Update check: background=off; lastSuccess=5 min ago; cachedRelease=v0.2.16-cn.1; " +
                 "lastResult=no validated network (attempt 2) (1 min ago)",
             UpdateAvailability.report(context, 10_000_000L),
         )
@@ -67,8 +79,8 @@ class UpdateAvailabilityTest {
 
     private fun release(tag: String) = UpdateRelease(
         tagName = tag,
-        apkName = "DiPlay-$tag.apk",
-        apkUrl = "https://example.com/DiPlay-$tag.apk",
-        checksumsUrl = "https://example.com/SHA256SUMS.txt",
+        apkName = "DiPlay-cn-$tag.apk",
+        apkUrl = "https://example.com/DiPlay-cn-$tag.apk",
+        checksumsUrl = "https://example.com/DiPlay-cn-$tag.apk.sha256",
     )
 }

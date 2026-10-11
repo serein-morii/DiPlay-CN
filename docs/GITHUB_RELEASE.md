@@ -1,6 +1,6 @@
 # DiPlay CN {{VERSION}}
 
-基于官方 DiPlay v0.2.16。包名 `com.shihab.diplay.cn`，可与官方版并存。覆盖安装上一版 CN 即可保留设置。
+基于官方 DiPlay v0.2.17。包名 `com.shihab.diplay.cn`，可与官方版并存。覆盖安装上一版 CN 即可保留设置。
 
 **测试范围：** 实车验证车辆为 **2025 款比亚迪汉 DM-i，车机 DiLink 5.0**。其他车型、其他车机系统不保证所有功能可用；请自行测试，或拉取源代码按本车修改。
 
@@ -9,11 +9,14 @@
 - APK：本 Release 附带的 `DiPlay-cn-v{{VERSION}}.apk`（Gitee 同步：https://gitee.com/oneeyear/DiPlay-CN/releases/latest）
 - 完整优化记录：[docs/CN_OPTIMIZATIONS.md](https://github.com/serein-morii/DiPlay-CN/blob/main/docs/CN_OPTIMIZATIONS.md)
 
+**签名风险：**为保留旧版 CN 的覆盖升级能力，当前 Android 发布签名密钥已公开；“签名一致”不能证明 APK 来自本项目。只从本仓库列出的 GitHub/Gitee 发布页下载，勿安装转发或未知镜像的 APK。详情：[SECURITY.md](https://github.com/serein-morii/DiPlay-CN/blob/main/SECURITY.md)。
+
 **本版更新**
 
-- 下滑设置页调整为 iOS 27 风格的浮层：圆角悬浮面板、带高光的导航和操作栏、胶囊按钮；内容卡保持清晰易读，支持日间和夜间主题。
-- 修复窄屏/高密度布局溢出、窗口变化后不重排、分类与主题切换时滚动位置错误，以及保存后跳转与取消下滑目标修改的问题。
-- 自动化测试、Lint 和 Debug 构建通过；本版尚未实车验证，其他车型和固件仍需反馈。
+- 修复应用内检查更新误查官方版的问题：CN 四通道使用 CN 发布资源，识别 `-cn.N` 版本号并校验 APK 的 SHA-256 和包名。
+- 修复主页“有更新”提示无法打开下载页，以及授权安装权限后不能继续安装的问题。
+- 更新包导出改为先保存新包、成功后清理旧包；发布流程增加 `versionCode` 递增校验。
+- 本版尚未实车验证，其他车型和固件仍需反馈。
 
 请安装在车机上，不要安装在 iPhone 上。车机必须允许安装 APK。
 

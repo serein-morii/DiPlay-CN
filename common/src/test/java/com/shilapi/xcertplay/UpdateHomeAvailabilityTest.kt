@@ -25,7 +25,7 @@ class UpdateHomeAvailabilityTest {
 
     @After fun clear() = UpdateAvailability.clearAllForTest(application)
 
-    @Test @org.junit.Ignore("CN updater has a different flow") fun cachedUpdateAppearsBelowTheVersionAndOpensTheExistingDownloadFlow() {
+    @Test fun cachedUpdateAppearsBelowTheVersionAndOpensTheExistingDownloadFlow() {
         val release = release()
         UpdateAvailability.save(application, release)
         val controller = Robolectric.buildActivity(DiPlayActivity::class.java).setup()
@@ -39,7 +39,8 @@ class UpdateHomeAvailabilityTest {
         assertEquals(DiPlayPalette.DARK.warning, update.currentTextColor)
         update.performClick()
 
-        assertEquals("about", ReflectionHelpers.getField<String>(activity, "page"))
+        assertEquals("settings", ReflectionHelpers.getField<String>(activity, "page"))
+        assertEquals(SettingsCategory.ABOUT, ReflectionHelpers.getField<SettingsCategory>(activity, "settingsCategory"))
         assertTrue(descendants(activity.window.decorView).filterIsInstance<TextView>().any {
             it.text == activity.getString(R.string.update_download)
         })
@@ -62,10 +63,10 @@ class UpdateHomeAvailabilityTest {
     }
 
     private fun release() = UpdateRelease(
-        tagName = "v99.0.0",
-        apkName = "DiPlay.apk",
-        apkUrl = "https://example.com/DiPlay.apk",
-        checksumsUrl = "https://example.com/SHA256SUMS.txt",
+        tagName = "v99.0.0-cn.1",
+        apkName = "DiPlay-cn-v99.0.0-cn.1.apk",
+        apkUrl = "https://example.com/DiPlay-cn-v99.0.0-cn.1.apk",
+        checksumsUrl = "https://example.com/DiPlay-cn-v99.0.0-cn.1.apk.sha256",
     )
 
     private fun descendants(view: View): Sequence<View> = sequence {

@@ -36,7 +36,6 @@ import android.widget.*
 import androidx.activity.ComponentActivity
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.core.content.FileProvider
 import androidx.core.widget.doAfterTextChanged
 import androidx.core.view.doOnLayout
 import androidx.core.view.WindowCompat
@@ -80,6 +79,7 @@ import com.shilapi.xcertplay.update.UpdateChecksums
 import com.shilapi.xcertplay.update.UpdateClient
 import com.shilapi.xcertplay.update.UpdateRelease
 import com.shilapi.xcertplay.update.UpdateReleaseLookup
+import com.shilapi.xcertplay.update.UpdateInstaller
 import java.io.File
 import java.io.IOException
 import java.text.SimpleDateFormat
@@ -224,6 +224,7 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
     @Volatile private var updateProgress: Int? = null
     private var updateRelease: UpdateRelease? = null
     private var updateFile: File? = null
+    private var pendingInstallApk: File? = null
     private var updateMessage: String? = null
     private var carButtonCard: LinearLayout? = null
     private var bydAdbControls: LinearLayout? = null
@@ -490,9 +491,9 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
         applyFullscreenMode()
         // Returning from the "install unknown apps" page finishes a pending update install.
         pendingInstallApk?.let { apk ->
-            if (AppUpdate.canInstall(this)) {
+            if (UpdateInstaller.canInstall(this)) {
                 pendingInstallApk = null
-                if (!AppUpdate.install(this, apk)) toast(getString(R.string.update_install_failed))
+                if (!UpdateInstaller.install(this, apk)) toast(getString(R.string.update_install_failed))
             }
         }
         // Returning from another activity can bring the head unit's own density back.
@@ -2251,82 +2252,19 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
         languageSettings(content)
     }
 
-    /** The last release a dialog was offered for, so auto and manual checks never double-pop. */
-    private var offeredUpdateTag: String? = null
-
-    private fun offerUpdate(release: AppUpdate.Release) {
-        val tag = AppUpdate.normalizeTag(release.tag)
-        if (offeredUpdateTag == tag) return
-        offeredUpdateTag = tag
-        val notes = AppUpdate.plainNotes(release.notes).ifBlank { getString(R.string.update_notes_missing) }
-        // Channels like Gitee often omit the asset size; then the brackets are dropped entirely.
-        val headline = if (release.apkBytes > 0) {
-            getString(R.string.update_available, release.tag, "${release.apkBytes / 1024 / 1024} MB")
-        } else {
-            getString(R.string.update_available_no_size, release.tag)
-        }
-        val message = headline + "\n\n" + notes
-        val view = ScrollView(this).apply {
-            addView(label(message, 16, TEXT).apply { setPadding(dp(24), dp(8), dp(24), dp(8)) })
-            isFillViewport = true
-        }
-        AlertDialog.Builder(this)
-            .setTitle(getString(R.string.update_details_title, release.tag))
-            .setView(view)
-            .setPositiveButton(getString(R.string.download_and_install)) { _, _ -> downloadUpdate(release) }
-            .setNegativeButton(getString(R.string.common_cancel), null)
-            .show()
-    }
-
-    /** A downloaded APK waiting for the "install unknown apps" grant; installed on resume. */
-    private var pendingInstallApk: File? = null
-
-    private fun downloadUpdate(release: AppUpdate.Release) {
-        val progress = android.app.ProgressDialog(this).apply {
-            setMessage(getString(R.string.update_downloading))
-            isIndeterminate = false
-            max = 100
-            setProgressStyle(android.app.ProgressDialog.STYLE_HORIZONTAL)
-            setCancelable(true)
-            show()
-        }
-        AppUpdate.download(
-            this,
-            release,
-            onProgress = { percent -> runOnUiThread { if (percent >= 0) progress.progress = percent else progress.isIndeterminate = true } },
-            onDone = { file ->
-                runOnUiThread {
-                    progress.dismiss()
-                    installOrUpdate(file)
-                }
-            },
-            onError = { message ->
-                runOnUiThread {
-                    progress.dismiss()
-                    toast(getString(R.string.update_download_failed, message))
-                }
-            },
-        )
-    }
-
-    /** The car silently drops the installer intent without the per-app unknown-sources grant. */
-    private fun installOrUpdate(file: File) {
-        if (!AppUpdate.canInstall(this)) {
-            pendingInstallApk = file
-            toast(getString(R.string.update_allow_unknown))
-            AppUpdate.openInstallPermission(this)
-            return
-        }
-        if (!AppUpdate.install(this, file)) {
-            toast(getString(R.string.update_install_failed))
-        }
-    }
-
     private fun about(content: LinearLayout) {
         settingsPageTitle(content, getString(R.string.about), getString(R.string.carplay_at_home_in_your_car))
         section(content, getString(R.string.about_public_preview_prefix, version())) { card ->
             card.addView(label(getString(R.string.an_independent_carplay_receiver_for_android_head_units_wir), 17, TEXT))
             card.addView(updateRow())
+            choice(card, getString(R.string.update_channel), listOf(
+                getString(R.string.update_channel_github),
+                getString(R.string.update_channel_gitee),
+                getString(R.string.update_channel_mirror1),
+                getString(R.string.update_channel_mirror2),
+            ), AirPlayPersistence.loadUpdateChannel(this), reconnects = false) {
+                AirPlayPersistence.saveUpdateChannel(this, it)
+            }
             toggle(card, getString(R.string.settings_background_update_checks),
                 getString(R.string.settings_background_update_checks_description),
                 UpdateAvailability.backgroundChecksEnabled(this)) { UpdateAvailability.saveBackgroundChecksEnabled(this, it) }
@@ -2397,14 +2335,15 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
     }
 
     private fun latestRelease(): UpdateRelease? {
-        return UpdateReleaseLookup.latest(version(), userAgent())
+        return UpdateReleaseLookup.latest(version(), userAgent(), AirPlayPersistence.loadUpdateChannel(this))
     }
 
     private fun openAvailableUpdate(release: UpdateRelease) {
         updateRelease = release
         updateMessage = null
         updateStage = UpdateStage.AVAILABLE
-        page = "about"
+        page = "settings"
+        settingsCategory = SettingsCategory.ABOUT
         render()
     }
 
@@ -2445,6 +2384,10 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
                 if (!UpdateChecksums.matches(expected, release.apkName, actual)) {
                     throw IOException("Checksum mismatch for ${release.apkName}")
                 }
+                val archivePackage = packageManager.getPackageArchiveInfo(apkFile.absolutePath, 0)?.packageName
+                if (archivePackage != packageName) {
+                    throw IOException("Update APK belongs to a different app")
+                }
                 apkFile
             }.onFailure { directory.deleteRecursively() }
             val savedPath = outcome.getOrNull()?.let { UpdateApkExport.copy(applicationContext, it) }
@@ -2474,27 +2417,19 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
 
     private fun installUpdate() {
         val file = updateFile ?: return
-        // Before Oreo, the installer handles the global unknown-sources setting.
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O || packageManager.canRequestPackageInstalls()) {
-            installApk(file)
+        if (UpdateInstaller.canInstall(this)) {
+            if (!UpdateInstaller.install(this, file)) toast(getString(R.string.update_install_failed))
         } else {
-            startActivity(Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:$packageName")))
+            pendingInstallApk = file
+            toast(getString(R.string.update_allow_unknown))
+            if (!UpdateInstaller.requestPermission(this)) toast(getString(R.string.update_install_failed))
         }
-    }
-
-    private fun installApk(file: File) {
-        val uri = FileProvider.getUriForFile(this, "$packageName.update-apks", file)
-        startActivity(
-            Intent(Intent.ACTION_VIEW).apply {
-                setDataAndType(uri, "application/vnd.android.package-archive")
-                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)
-            },
-        )
     }
 
     private fun refreshUpdateUi(generation: Int) {
         runOnUiThread {
-            if (generation != updateGeneration || isFinishing || isDestroyed || page != "about") return@runOnUiThread
+            if (generation != updateGeneration || isFinishing || isDestroyed ||
+                page != "settings" || settingsCategory != SettingsCategory.ABOUT) return@runOnUiThread
             render()
         }
     }

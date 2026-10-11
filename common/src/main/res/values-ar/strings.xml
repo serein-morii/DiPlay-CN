@@ -725,7 +725,7 @@
     <string name="update_available_home">يتوفر تحديث</string>
     <string name="update_saved_to">تم الحفظ في %1$s</string>
     <string name="settings_background_update_checks">التحقق من التحديثات في الخلفية</string>
-    <string name="settings_background_update_checks_description">مرة كل يوم، يتحقق DiPlay من GitHub عن إصدار جديد ويعرضه في الشاشة الرئيسية. لا يتم التنزيل أبدًا دون نقرتك.</string>
+    <string name="settings_background_update_checks_description">مرة كل يوم، يتحقق DiPlay من قناة التحديث المحددة بحثًا عن إصدار جديد ويعرضه في الشاشة الرئيسية. لا يتم التنزيل أبدًا دون نقرتك.</string>
     <string name="settings_cluster_menu_small_title">التنقل في النافذة الصغيرة</string>
     <string name="settings_cluster_menu_small_state_small">النافذة الصغيرة نشطة</string>
     <string name="settings_cluster_menu_small_state_full">النافذة الكاملة</string>

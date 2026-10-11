@@ -10,6 +10,8 @@
 
 [Download the latest CN build](https://github.com/serein-morii/DiPlay-CN/releases/latest) · [Gitee](https://gitee.com/oneeyear/DiPlay-CN/releases/latest) · [CN optimization log](docs/CN_OPTIMIZATIONS.md) · [All CN releases](https://github.com/serein-morii/DiPlay-CN/releases) · [Upstream DiPlay](https://github.com/shihabal3amri/DiPlay/releases/tag/v0.2.17)
 
+**Signing warning:** The CN release signing key is public. A matching Android signature does not prove an APK came from this project. Use only the linked release pages; see [the signing limitation](SECURITY.md). The package name is retained for existing users' in-place updates.
+
 ![DiPlay home](site/assets/home.png)
 
 ## What CN adds on top of upstream
@@ -77,8 +79,8 @@ The website and app support English, Arabic, Russian, Ukrainian, Spanish, Simpli
 
 Based on [xcertplay](https://github.com/shilapi/xcertplay), GPL-3.0. The home/settings UI and website adapt [DiAuto](https://github.com/shihabal3amri/DiAuto), AGPL-3.0; that license is included in `docs/licenses`. Preserve those notices when distributing modifications. CarPlay and its icon belong to Apple Inc.; no Apple or BYD affiliation or endorsement is implied.
 
-This repository starts with a clean public source snapshot. Local research, tester reports and release-signing secrets are excluded. The complete source corresponding to the APK is provided with every release; experimental runtime identity assets are described separately in the build instructions and notices.
+This repository starts with a public source snapshot. Local research and tester reports are excluded. The CN Android release-signing key is intentionally public for update compatibility and is **not a security boundary**; see [SECURITY.md](SECURITY.md). The complete source corresponding to the APK is provided with every release; experimental runtime identity assets are described separately in the build instructions and notices.
 
 ## Local release packaging
 
-The release APK intentionally contains the experimental accessory identity. The Git repository and source archive exclude all accessory and Android signing keys; tests generate synthetic identities at runtime. Source/CI builds omit runtime identity assets by default. Local release builds explicitly select an external asset directory. Publishing the APK makes its bundled identity extractable; building locally does not preserve that identity's confidentiality.
+The release APK intentionally contains the experimental accessory identity. The Git repository and source archive exclude accessory identity keys, **but include the CN Android signing key**. Tests generate synthetic identities at runtime. Source/CI builds omit runtime identity assets by default. Local release builds explicitly select an external asset directory. Publishing the APK makes its bundled identity extractable; building locally does not preserve that identity's confidentiality.

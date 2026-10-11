@@ -820,7 +820,7 @@
     <string name="update_available_home">有可用更新</string>
     <string name="update_saved_to">已保存到 %1$s</string>
     <string name="settings_background_update_checks">在后台检查更新</string>
-    <string name="settings_background_update_checks_description">DiPlay 每天会在 GitHub 上检查一次新版本，并显示在主屏幕上。未经你点击，绝不会下载。</string>
+    <string name="settings_background_update_checks_description">DiPlay 每天会通过所选更新通道检查一次新版本，并显示在主屏幕上。未经你点击，绝不会下载。</string>
     <string name="settings_cluster_menu_small_title">仪表小屏导航</string>
     <string name="settings_cluster_menu_small_state_small">小屏中</string>
     <string name="settings_cluster_menu_small_state_full">全屏</string>

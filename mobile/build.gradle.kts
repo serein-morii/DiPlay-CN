@@ -34,8 +34,8 @@ android {
                 keyAlias = providers.environmentVariable("ANDROID_KEY_ALIAS").getOrElse("")
                 keyPassword = providers.environmentVariable("ANDROID_KEY_PASSWORD").getOrElse("")
             } else {
-                // Stable CN key: CI runners are ephemeral, so a per-run debug key would change the
-                // signature on every build and users could not install updates over each other.
+                // PUBLIC legacy CN key retained only for in-place update compatibility.
+                // It cannot authenticate the publisher of an APK; see SECURITY.md.
                 storeFile = rootProject.file("signing/diplay-cn.jks")
                 storePassword = "diplay-cn"
                 keyAlias = "diplaycn"

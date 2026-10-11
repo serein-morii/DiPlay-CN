@@ -34,6 +34,11 @@ internal object UpdateAvailability {
             apkUrl = values.getString(APK_URL, null) ?: return null,
             checksumsUrl = values.getString(CHECKSUMS_URL, null) ?: return null,
         )
+        // Discard metadata cached by the upstream updater before CN-specific sources were wired.
+        if (release.apkName != "DiPlay-cn-${release.tagName}.apk") {
+            clear(context)
+            return null
+        }
         if (UpdateVersion.isNewer(release.tagName, installedVersion)) return release
         clear(context)
         return null

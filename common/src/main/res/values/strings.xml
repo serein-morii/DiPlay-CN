@@ -861,7 +861,7 @@
     <string name="update_available_home">Update available</string>
     <string name="update_saved_to">Saved to %1$s</string>
     <string name="settings_background_update_checks">Check for updates in the background</string>
-    <string name="settings_background_update_checks_description">Once a day, DiPlay checks GitHub for a new version and shows it on the home screen. It never downloads without your tap.</string>
+    <string name="settings_background_update_checks_description">Once a day, DiPlay checks your selected update channel for a new version and shows it on the home screen. It never downloads without your tap.</string>
     <string name="settings_cluster_menu_small_title">Small-window navi</string>
     <string name="settings_cluster_menu_small_state_small">small window active</string>
     <string name="settings_cluster_menu_small_state_full">full window</string>

@@ -725,7 +725,7 @@
     <string name="update_available_home">Actualización disponible</string>
     <string name="update_saved_to">Guardado en %1$s</string>
     <string name="settings_background_update_checks">Buscar actualizaciones en segundo plano</string>
-    <string name="settings_background_update_checks_description">Una vez al día, DiPlay busca una versión nueva en GitHub y la muestra en la pantalla de inicio. Nunca descarga sin que lo toques.</string>
+    <string name="settings_background_update_checks_description">Una vez al día, DiPlay busca una versión nueva en el canal de actualización seleccionado y la muestra en la pantalla de inicio. Nunca descarga sin que lo toques.</string>
     <string name="settings_cluster_menu_small_title">Navegación en ventana pequeña</string>
     <string name="settings_cluster_menu_small_state_small">ventana pequeña activa</string>
     <string name="settings_cluster_menu_small_state_full">ventana completa</string>

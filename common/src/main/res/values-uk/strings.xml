@@ -737,7 +737,7 @@
     <string name="update_available_home">Доступне оновлення</string>
     <string name="update_saved_to">Збережено в %1$s</string>
     <string name="settings_background_update_checks">Перевіряти оновлення у фоні</string>
-    <string name="settings_background_update_checks_description">Раз на добу DiPlay перевіряє GitHub на нову версію і показує її на головному екрані. Завантаження починається лише після вашого дотику.</string>
+    <string name="settings_background_update_checks_description">Раз на добу DiPlay перевіряє вибраний канал оновлень на нову версію і показує її на головному екрані. Завантаження починається лише після вашого дотику.</string>
     <string name="settings_cluster_menu_small_title">Навігація в малому вікні</string>
     <string name="settings_cluster_menu_small_state_small">мале вікно активне</string>
     <string name="settings_cluster_menu_small_state_full">повне вікно</string>

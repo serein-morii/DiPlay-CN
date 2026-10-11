@@ -17,6 +17,8 @@ jobs:
       OFFICIAL_APK_SHA256: 62b31f79db32bc7c85013ae830460b697a5952fad571ed0030b97341dde0b2e3
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Reject credential files in public source
         run: python3 scripts/check_public_tree.py
       - uses: actions/setup-java@v4
@@ -38,14 +40,10 @@ jobs:
           echo "DIPLAY_AUTH_ASSETS_DIR=$assets" >> "$GITHUB_ENV"
       - name: The release notes must use the version placeholder
         run: grep -q '{{VERSION}}' docs/GITHUB_RELEASE.md
-      - name: The tag must match the app versionName
+      - name: The tag and versionCode must be upgradeable
         run: |
-          version=$(grep -o 'versionName = "[^"]*"' mobile/build.gradle.kts | cut -d'"' -f2)
-          tag="${GITHUB_REF_NAME#v}"
-          if [ "$version" != "$tag" ]; then
-            echo "::error::tag $GITHUB_REF_NAME does not match versionName $version"
-            exit 1
-          fi
+          python3 -m unittest discover -s scripts -p 'test_check_release_version.py'
+          python3 scripts/check_release_version.py "$GITHUB_REF_NAME"
       - name: Test and build standalone release APK
         run: ./gradlew :shared:testDebugUnitTest :common:testDebugUnitTest :mobile:lintRelease :mobile:assembleStandaloneRelease --stacktrace > gradle.log 2>&1 || { cat gradle.log | tail -120; exit 1; }
       - name: Verify identity is inside the APK and not in git

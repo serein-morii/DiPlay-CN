@@ -1,8 +1,10 @@
 package com.shilapi.xcertplay.update
 
 import android.content.ContentResolver
+import android.content.ContentUris
 import android.content.ContentValues
 import android.content.Context
+import android.net.Uri
 import android.os.Build
 import android.os.Environment
 import android.provider.MediaStore
@@ -33,18 +35,23 @@ internal object UpdateApkExport {
 
     private fun copyToDirectory(directory: File, apk: File): File {
         if (!directory.isDirectory && !directory.mkdirs()) throw IOException("Update storage is unavailable")
+        val destination = File(directory, apk.name)
+        if (!destination.isFile || UpdateChecksums.sha256Hex(destination) != UpdateChecksums.sha256Hex(apk)) {
+            val staged = File.createTempFile("diplay-update-", ".partial", directory)
+            try {
+                apk.copyTo(staged, overwrite = true)
+                if (!staged.renameTo(destination)) throw IOException("Update could not be published")
+            } finally {
+                staged.delete()
+            }
+        }
         // Keep only the newest APK so a long-lived head unit does not collect old releases.
-        directory.listFiles()?.filter { it.isFile && it.name != apk.name }?.forEach { it.delete() }
-        return apk.copyTo(File(directory, apk.name), overwrite = true)
+        directory.listFiles()?.filter { it.isFile && it != destination && it.name.endsWith(".apk") }
+            ?.forEach { it.delete() }
+        return destination
     }
 
     private fun copyToDownloads(resolver: ContentResolver, apk: File): String {
-        // Only entries created by this app are visible to these queries, so other apps' files are safe.
-        resolver.delete(
-            MediaStore.Downloads.EXTERNAL_CONTENT_URI,
-            "${MediaStore.Downloads.RELATIVE_PATH}=? AND ${MediaStore.Downloads.MIME_TYPE}=?",
-            arrayOf("$DOWNLOADS_DIRECTORY/", APK_MIME),
-        )
         val values = ContentValues().apply {
             put(MediaStore.Downloads.DISPLAY_NAME, apk.name)
             put(MediaStore.Downloads.MIME_TYPE, APK_MIME)
@@ -64,10 +71,33 @@ internal object UpdateApkExport {
             val name = resolver.query(uri, arrayOf(MediaStore.Downloads.DISPLAY_NAME), null, null, null)?.use {
                 if (it.moveToFirst()) it.getString(0) else null
             } ?: apk.name
+            // Only after the new APK is published may older app-owned Downloads copies be removed.
+            // A broken provider must not turn a successful export into a failed update.
+            runCatching {
+                val oldCopies = mutableListOf<Uri>()
+                resolver.query(
+                    MediaStore.Downloads.EXTERNAL_CONTENT_URI,
+                    arrayOf(MediaStore.Downloads._ID),
+                    "${MediaStore.Downloads.RELATIVE_PATH}=? AND ${MediaStore.Downloads.MIME_TYPE}=?",
+                    arrayOf("$DOWNLOADS_DIRECTORY/", APK_MIME),
+                    null,
+                )?.use { cursor ->
+                    while (cursor.moveToNext()) {
+                        oldCopies += ContentUris.withAppendedId(MediaStore.Downloads.EXTERNAL_CONTENT_URI, cursor.getLong(0))
+                    }
+                }
+                // A provider may canonicalize the inserted URI to a different volume name.
+                // Compare row IDs, not URI strings, so cleanup cannot delete the new APK.
+                oldCopies.filterNot { sameDownloadRow(it, uri) }
+                    .forEach { old -> runCatching { resolver.delete(old, null, null) } }
+            }
             return "$DOWNLOADS_DIRECTORY/$name"
         } catch (error: Exception) {
             runCatching { resolver.delete(uri, null, null) }
             throw error
         }
     }
+
+    internal fun sameDownloadRow(first: Uri, second: Uri): Boolean =
+        ContentUris.parseId(first) == ContentUris.parseId(second)
 }

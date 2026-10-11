@@ -16,6 +16,19 @@ class UpdateVersionTest {
     }
 
     @Test
+    fun cnRevisionAdvancesWithinAnUpstreamPatch() {
+        assertTrue(UpdateVersion.isNewer("v0.2.17-cn.3", "0.2.17-cn.2"))
+        assertFalse(UpdateVersion.isNewer("v0.2.17-cn.1", "0.2.17-cn.2"))
+        assertFalse(UpdateVersion.isNewer("v0.2.17", "0.2.17-cn.2"))
+    }
+
+    @Test
+    fun comparesHistoricalFourComponentVersionsBeforeCnRevisions() {
+        assertTrue(UpdateVersion.isNewer("v0.2.8.5-cn.1", "0.2.8.4-cn.9"))
+        assertFalse(UpdateVersion.isNewer("v0.2.8.4-cn.9", "0.2.8.5-cn.1"))
+    }
+
+    @Test
     fun olderTagIsIgnored() {
         assertFalse(UpdateVersion.isNewer("v0.2.13", "0.2.14"))
     }
