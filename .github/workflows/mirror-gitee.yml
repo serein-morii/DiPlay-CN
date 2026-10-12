@@ -1,0 +1,38 @@
+name: Retry Gitee release mirror
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing DiPlay CN GitHub release tag
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  sync_gitee:
+    name: Mirror verified APK to Gitee
+    runs-on: macos-latest
+    timeout-minutes: 15
+    env:
+      RELEASE_TAG: ${{ inputs.tag }}
+      GH_TOKEN: ${{ github.token }}
+      GITEE_TOKEN: ${{ secrets.GITEE_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download the existing GitHub release
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ ! "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+-cn\.[0-9]+$ ]]; then
+            echo "::error::Invalid DiPlay CN release tag"
+            exit 1
+          fi
+          gh release download "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" \
+            --pattern "DiPlay-cn-$RELEASE_TAG.apk*"
+          gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" \
+            --json body --jq .body > release-notes.md
+      - name: Verify and sync to Gitee
+        run: bash scripts/sync_gitee_release.sh

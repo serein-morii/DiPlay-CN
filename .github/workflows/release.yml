@@ -6,12 +6,14 @@ on:
       - 'v*-cn.*'
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   release:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    permissions:
+      contents: write
     env:
       OFFICIAL_APK_URL: https://github.com/shihabal3amri/DiPlay/releases/download/v0.2.14/DiPlay-0.2.14.apk
       OFFICIAL_APK_SHA256: 62b31f79db32bc7c85013ae830460b697a5952fad571ed0030b97341dde0b2e3
@@ -77,6 +79,16 @@ jobs:
           sha256sum "$apk" > "$apk.sha256"
           cp docs/GITHUB_RELEASE.md release-notes.md
           sed -i "s/{{VERSION}}/${GITHUB_REF_NAME#v}/g" release-notes.md
+      - name: Save files for the Gitee mirror job
+        uses: actions/upload-artifact@v4
+        with:
+          name: gitee-release-files
+          path: |
+            DiPlay-cn-${{ github.ref_name }}.apk
+            DiPlay-cn-${{ github.ref_name }}.apk.sha256
+            release-notes.md
+          if-no-files-found: error
+          retention-days: 7
       - name: Publish GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
@@ -92,81 +104,19 @@ jobs:
             --verify-tag \
             --title "DiPlay CN ${GITHUB_REF_NAME#v}" \
             --notes-file release-notes.md
+  sync_gitee:
+    name: Mirror verified APK to Gitee
+    needs: release
+    runs-on: macos-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: gitee-release-files
       - name: Sync APK to Gitee
         env:
           GITEE_TOKEN: ${{ secrets.GITEE_TOKEN }}
+          RELEASE_TAG: ${{ github.ref_name }}
         shell: bash
-        run: |
-          set -euo pipefail
-          if [ -z "${GITEE_TOKEN:-}" ]; then
-            echo "::error::GITEE_TOKEN secret is not configured"
-            exit 1
-          fi
-          api="https://gitee.com/api/v5/repos/oneeyear/DiPlay-CN"
-          id="$(curl -fsS --connect-timeout 10 --max-time 30 --get \
-            --data-urlencode "access_token=$GITEE_TOKEN" "$api/releases/tags/$GITHUB_REF_NAME" |
-            python3 -c 'import json,sys; data=json.load(sys.stdin); print((data.get("id") or "") if isinstance(data,dict) else "")' || true)"
-          if [ -z "$id" ]; then
-            code="$(curl -sS -o /tmp/gitee-create.json -w '%{http_code}' -X POST "$api/releases" \
-              --data-urlencode "access_token=$GITEE_TOKEN" \
-              --data-urlencode "tag_name=$GITHUB_REF_NAME" \
-              --data-urlencode "name=DiPlay CN ${GITHUB_REF_NAME#v}" \
-              --data-urlencode "target_commitish=main" \
-              --data-urlencode "body=$(cat release-notes.md)")"
-            id="$(python3 -c 'import json; print(json.load(open("/tmp/gitee-create.json")).get("id") or "")' 2>/dev/null || true)"
-            if [ -z "$id" ]; then
-              echo "::warning::Gitee release creation failed (HTTP $code): $(head -c 400 /tmp/gitee-create.json 2>/dev/null)"
-            fi
-          fi
-          if [ -z "$id" ]; then
-            echo "::error::could not create or find the Gitee release"
-            exit 1
-          fi
-          verify_asset() {
-            local file="$1" url downloaded
-            url="$(curl -fsS --connect-timeout 10 --max-time 30 --get \
-              --data-urlencode "access_token=$GITEE_TOKEN" "$api/releases/tags/$GITHUB_REF_NAME" |
-              python3 -c 'import json,sys; name=sys.argv[1]; data=json.load(sys.stdin); assets=data.get("assets", []) if isinstance(data,dict) else []; print(next((a.get("browser_download_url", "") for a in assets if a.get("name") == name), ""))' "$file")" || return 1
-            [ -n "$url" ] || return 1
-            downloaded="$(mktemp)"
-            if ! curl -fsSL --connect-timeout 10 --max-time 180 "$url" -o "$downloaded"; then
-              rm -f "$downloaded"
-              return 1
-            fi
-            if ! cmp -s "$file" "$downloaded"; then
-              rm -f "$downloaded"
-              echo "::error::Gitee asset $file differs from the GitHub release artifact"
-              exit 1
-            fi
-            rm -f "$downloaded"
-          }
-          for f in "DiPlay-cn-$GITHUB_REF_NAME.apk" "DiPlay-cn-$GITHUB_REF_NAME.apk.sha256"; do
-            if verify_asset "$f"; then
-              echo "Gitee asset already verified: $f"
-              continue
-            fi
-            ok=""
-            for attempt in 1 2; do
-              if curl -fsS --connect-timeout 10 --max-time 120 \
-                  --speed-limit 1024 --speed-time 45 -X POST "$api/releases/$id/attach_files" \
-                  -F "access_token=$GITEE_TOKEN" -F "file=@$f" >/dev/null || verify_asset "$f"; then
-                ok=1; break
-              fi
-              echo "attach $f attempt $attempt failed"
-              [ "$attempt" = 2 ] || sleep 15
-            done
-            if [ -z "$ok" ]; then
-              echo "::error::attaching $f failed after retries"
-              exit 1
-            fi
-            verified=""
-            for attempt in 1 2; do
-              if verify_asset "$f"; then verified=1; break; fi
-              [ "$attempt" = 2 ] || sleep 10
-            done
-            if [ -z "$verified" ]; then
-              echo "::error::Gitee asset $f could not be downloaded and verified"
-              exit 1
-            fi
-          done
-          echo "Gitee release assets verified: id=$id"
+        run: bash scripts/sync_gitee_release.sh
