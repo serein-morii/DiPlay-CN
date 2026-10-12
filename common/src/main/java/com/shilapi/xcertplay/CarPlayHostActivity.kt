@@ -2678,7 +2678,6 @@ class CarPlayHostActivity : ComponentActivity() {
             background = overlayGlassChrome(overlayPalette.overlayFooter,
                 OVERLAY_PANEL_RADIUS_DP, bottomCornersOnly = true)
         }
-        val exitButton = overlayDestructiveButton(getString(R.string.exit_application)) { exitApplication() }
         val saveButton = overlayPrimaryButton("⟳  " + getString(R.string.save_and_reconnect)) { saveSettingsAndReconnect() }
         val saveNotice = menuText(getString(R.string.settings_save_notice), 12f, MENU_SECONDARY).apply {
             gravity = Gravity.CENTER
@@ -2784,24 +2783,20 @@ class CarPlayHostActivity : ComponentActivity() {
                 }
             }
             val primaryWidth = maxOf(dp(200), desiredWidth(saveButton) + dp(OVERLAY_ACTION_GAP_DP))
-            val footerNeeded = desiredWidth(exitButton) + primaryWidth + dp(24 * 2) +
+            val footerNeeded = primaryWidth + dp(24 * 2) +
                 (if (wide) dp(160 + OVERLAY_BLOCK_GAP_DP * 2) else 0)
             val stackFooter = footerNeeded > panelWidth
             if (shownFooterMode != (stackFooter to wide)) {
                 shownFooterMode = stackFooter to wide
                 footer.removeAllViews()
-                listOf(exitButton, saveButton, saveNotice).forEach(::detach)
+                listOf(saveButton, saveNotice).forEach(::detach)
                 footer.orientation = if (stackFooter) LinearLayout.VERTICAL else LinearLayout.HORIZONTAL
                 if (stackFooter) {
                     footer.setPadding(dp(16), dp(10), dp(16), dp(10))
                     footer.addView(saveButton, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
                         ViewGroup.LayoutParams.WRAP_CONTENT))
-                    footer.addView(exitButton, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
-                        ViewGroup.LayoutParams.WRAP_CONTENT).apply { topMargin = dp(OVERLAY_ACTION_GAP_DP) })
                 } else {
                     footer.setPadding(dp(24), dp(10), dp(24), dp(10))
-                    footer.addView(exitButton, LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
-                        ViewGroup.LayoutParams.WRAP_CONTENT))
                     if (wide) footer.addView(saveNotice, LinearLayout.LayoutParams(0,
                         ViewGroup.LayoutParams.WRAP_CONTENT, 1f).apply {
                         marginStart = dp(OVERLAY_BLOCK_GAP_DP)
@@ -3236,6 +3231,14 @@ class CarPlayHostActivity : ComponentActivity() {
                 else -> buildMoreCards()
             }
             page.addView(overlayDeck(cards))
+            if (category.key == "more") {
+                // Exiting ends CarPlay. Keep it at the end of the scrollable More page, away
+                // from the fixed Save action that a driver may reach for while scrolling.
+                page.addView(overlayDestructiveButton(getString(R.string.exit_application)) {
+                    exitApplication()
+                }, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT).apply { topMargin = dp(OVERLAY_BLOCK_GAP_DP) })
+            }
             pages[category.key] = page
         }
         return pages

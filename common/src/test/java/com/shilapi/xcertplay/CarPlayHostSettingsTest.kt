@@ -136,6 +136,14 @@ class CarPlayHostSettingsTest {
             exitButton().currentTextColor)
     }
 
+    @Test fun exitStaysInScrollableMorePageAwayFromFixedSave() {
+        setField("overlayMenuCategoryKey", "more")
+        invoke("openSettingsMenu")
+        val contentScroll = field("overlaySettingsContentScroll") as ScrollView
+        assertTrue("Exit belongs to the scrollable content", views(contentScroll).contains(exitButton()))
+        assertFalse("Save must remain fixed outside the scroll", views(contentScroll).contains(saveButton()))
+    }
+
     @Test fun resizingAnOpenMenuSwitchesBetweenRailAndChips() {
         invoke("openSettingsMenu")
         val overlay = menu() as ViewGroup
@@ -493,6 +501,21 @@ class CarPlayHostSettingsTest {
     @GraphicsMode(GraphicsMode.Mode.NATIVE)
     fun arabicLargeFontSettingsScreenshot() = checkLargeFontScreenshot("overlay-arabic-large-font.png", 600, 720)
 
+    @Test
+    @Config(qualifiers = "en-w600dp-h720dp-mdpi")
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    fun compactMoreLargeFontScreenshot() = checkLargeFontScreenshot("overlay-more-compact-large-font.png", 600, 720)
+
+    @Test
+    @Config(qualifiers = "en-w1920dp-h1080dp-mdpi")
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    fun wideMoreLargeFontScreenshot() = checkLargeFontScreenshot("overlay-more-wide-large-font.png", 1920, 1080)
+
+    @Test
+    @Config(qualifiers = "ar-rSA-w600dp-h720dp-mdpi")
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    fun arabicMoreLargeFontScreenshot() = checkLargeFontScreenshot("overlay-more-arabic-large-font.png", 600, 720)
+
     @Test fun savingPersistsSettingsAndRestartsOnce() {
         attachController()
         invoke("openSettingsMenu")
@@ -784,7 +807,7 @@ class CarPlayHostSettingsTest {
         activity.resources.updateConfiguration(config, activity.resources.displayMetrics)
         if (name.contains("arabic")) assertEquals("Arabic resource direction",
             View.LAYOUT_DIRECTION_RTL, activity.resources.configuration.layoutDirection)
-        setField("overlayMenuCategoryKey", "display")
+        setField("overlayMenuCategoryKey", if (name.contains("more")) "more" else "display")
         invoke("openSettingsMenu")
         if (name.contains("light")) {
             AirPlayPersistence.saveAppAppearance(activity, AppAppearance.LIGHT)
@@ -795,6 +818,10 @@ class CarPlayHostSettingsTest {
         if (name.contains("arabic")) assertEquals("Arabic direction after opening",
             View.LAYOUT_DIRECTION_RTL, activity.resources.configuration.layoutDirection)
         layoutMenu(root, width, height)
+        if (name.contains("more")) {
+            val contentScroll = field("overlaySettingsContentScroll") as ScrollView
+            contentScroll.scrollTo(0, contentScroll.getChildAt(0).height - contentScroll.height)
+        }
         val panel = (root as ViewGroup).getChildAt(0)
         assertInsidePanel(fullSettingsButton(), panel)
         assertInsidePanel(saveButton(), panel)
