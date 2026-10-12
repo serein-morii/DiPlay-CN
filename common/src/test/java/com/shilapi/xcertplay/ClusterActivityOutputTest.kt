@@ -39,6 +39,39 @@ class ClusterActivityOutputTest {
         } finally { ClusterActivityOutput.stop(owner) }
     }
 
+    @Test fun theRouteSettlesWhenTheWindowConfirmsOrTheShellRejectsTheLaunch() {
+        val app = org.robolectric.RuntimeEnvironment.getApplication()
+        AirPlayPersistence.saveAdbClusterEnabled(app, true)
+        val owner = Any()
+        ClusterActivityOutput.bind(owner, 4) { }
+        val token = "01234567-89ab-cdef-0123-456789abcdef"
+        fun admit(display: Int) {
+            ClusterActivityOutput::class.java.getDeclaredField("launchToken")
+                .apply { isAccessible = true }.set(ClusterActivityOutput, token)
+            ClusterActivityOutput::class.java.getDeclaredField("expectedDisplay")
+                .apply { isAccessible = true }.setInt(ClusterActivityOutput, display)
+        }
+        val activity = org.robolectric.Robolectric.buildActivity(AdbClusterActivity::class.java).get()
+        try {
+            assertFalse(ClusterActivityOutput.routeSettling())
+            ClusterActivityOutput.launchPending = true
+            assertTrue(ClusterActivityOutput.routeSettling())
+            admit(display = 1)
+            ClusterActivityOutput.completeLaunch(token, current = true, accepted = true) { }
+            // The shell accepted the launch; the window has not reported its display yet.
+            assertTrue(ClusterActivityOutput.routeSettling())
+            assertTrue(ClusterActivityOutput.confirm(activity, token, 1))
+            assertFalse(ClusterActivityOutput.routeSettling())
+
+            ClusterActivityOutput.stopForSettings()
+            ClusterActivityOutput.bind(owner, 4) { }
+            admit(display = 1)
+            ClusterActivityOutput.launchPending = true
+            ClusterActivityOutput.completeLaunch(token, current = true, accepted = false) { }
+            assertFalse(ClusterActivityOutput.routeSettling())
+        } finally { ClusterActivityOutput.stop(owner) }
+    }
+
     @Test fun rejectedShellLaunchInvalidatesAdmissionBeforeRestoringOemState() {
         val owner = Any()
         ClusterActivityOutput.bind(owner, 4) { }

@@ -6,6 +6,20 @@ For the USB trailer, software-window video and RFCOMM reliability changes, compl
 [connection reliability matrix](CONNECTION_RELIABILITY.md#vehicle-acceptance-before-release).
 Record the exact candidate APK and each untested setup before a release.
 
+## Host unit tests
+
+Run the complete unit-test, lint and debug-build command in [AGENTS.md](../AGENTS.md).
+The USB permission command tests need a POSIX shell: `sh` on Linux/macOS, or Git for Windows.
+On Windows the tests find the standard `%ProgramFiles%/Git/bin/sh.exe` installation automatically;
+set `DIPLAY_TEST_SHELL` to the executable path for a custom installation.
+Scripts are sent through stdin so the host cannot reinterpret their embedded quotes.
+
+Robolectric uses host files even when executing Android framework code. Journal tests use a narrow
+`AtomicFile` rename shadow to reproduce Android's replace-existing behavior on Windows. Update
+installation tests use the same FileProvider path shadow as diagnostic export tests. Both retain
+the real journal and provider logic; regression tests check stage persistence, sync failure and
+rejection of sibling directories outside the provider root.
+
 ## Custom stream resolution
 
 In the home settings and the in-session menu, confirm the accepted range is **30–160%**. Try 160%, cancel an edit, save an unrelated setting, and reconnect; the exact saved percentage must survive. Enter 161% in the numeric dialog and confirm it stays open with an error. Reset must only change the draft to 100% until Save/Apply is selected.

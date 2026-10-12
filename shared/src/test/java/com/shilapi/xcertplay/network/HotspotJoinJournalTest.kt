@@ -8,11 +8,25 @@ import org.robolectric.annotation.Config
 import java.nio.file.Files
 
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [33], manifest = Config.NONE)
+@Config(sdk = [33], manifest = Config.NONE, shadows = [AtomicFileRenameTestShadow::class])
 class HotspotJoinJournalTest {
     private val codec = object : HotspotJoinJournal.Codec<String> {
         override fun encode(config: String) = config.toByteArray()
         override fun decode(bytes: ByteArray) = String(bytes)
+    }
+    @Test fun eachTransactionStageReplacesTheExistingJournalAndSurvivesRecreation() {
+        val directory = Files.createTempDirectory("synthetic-hotspot-stages").toFile()
+        try {
+            val record = HotspotJoinTransaction.Record("token", "firmware-a", "synthetic-before",
+                "synthetic-after", HotspotJoinTransaction.Stage.PREPARED)
+            for (stage in HotspotJoinTransaction.Stage.entries) {
+                HotspotJoinJournal(directory, "firmware-a", codec).save(record.at(stage))
+                val saved = HotspotJoinJournal(directory, "firmware-a", codec).load()!!
+                assertEquals(stage, saved.stage)
+                assertEquals(record.original, saved.original)
+                assertEquals(record.target, saved.target)
+            }
+        } finally { directory.deleteRecursively() }
     }
     @Test fun storesCompletePrivateSnapshotsAndRefusesCorruptionOrFirmwareChanges() {
         val directory = Files.createTempDirectory("synthetic-hotspot").toFile()

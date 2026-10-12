@@ -6,9 +6,11 @@ import android.content.pm.ResolveInfo
 import android.net.Uri
 import androidx.core.content.FileProvider
 import com.shilapi.xcertplay.DiPlayActivity
+import com.shilapi.xcertplay.FileProviderPathTestShadow
 import java.io.ByteArrayInputStream
 import java.io.File
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertThrows
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -19,7 +21,7 @@ import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [25, 28, 33])
+@Config(sdk = [25, 28, 33], shadows = [FileProviderPathTestShadow::class])
 class UpdateInstallCompatibilityTest {
     private val apkType = "application/vnd.android.package-archive"
     private val publicCopy = Uri.parse("content://media/external/downloads/42")
@@ -66,6 +68,14 @@ class UpdateInstallCompatibilityTest {
         assertEquals(publicCopy, started.data)
         val report = UpdateAvailability.report(RuntimeEnvironment.getApplication(), System.currentTimeMillis())
         assertEquals(true, report.contains("lastInstall=direct uri=public installers=1"))
+    }
+
+    @Test fun providerRejectsSiblingDirectoriesWithTheSameUpdatePrefix() {
+        val context = RuntimeEnvironment.getApplication()
+        val outside = File(context.cacheDir, "update-other/DiPlay.apk")
+        assertThrows(IllegalArgumentException::class.java) {
+            FileProvider.getUriForFile(context, "${context.packageName}.update-apks", outside)
+        }
     }
 
     @Test fun swappedPublicCopyFallsBackToTheProviderUri() {

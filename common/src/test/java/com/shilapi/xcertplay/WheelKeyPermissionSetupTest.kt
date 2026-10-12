@@ -54,6 +54,9 @@ class WheelKeyPermissionSetupTest {
         val writes = commands.filter { it.contains("settings put secure enabled_accessibility_services") }
         assertEquals(2, writes.size)
         assertTrue(writes[0].contains("'$other:another.package/.Service'"))
+        // Android clears its crashed mark only if its observer sees the list without the service (#606).
+        assertTrue(writes[0].contains("&& sleep 1"))
+        assertFalse(writes[1].contains("sleep"))
         assertEquals("$other:another.package/.Service:$ours",
             Settings.Secure.getString(context.contentResolver, Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES))
     }

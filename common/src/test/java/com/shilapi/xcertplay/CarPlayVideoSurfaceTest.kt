@@ -20,6 +20,19 @@ class CarPlayVideoSurfaceTest {
         assertEquals(CarPlayVideoSurfaceMode.SURFACE, carPlayVideoSurfaceMode(false, directVideoOutput = true))
     }
 
+    @Test fun theLastPictureStaysUntilAFrameIsRenderedOrItsTimeRunsOut() {
+        // Still the count from before DiPlay left: nothing new on the screen yet.
+        assertFalse(lastPictureDone(rendered = 5_000, baseline = 5_000, elapsedMillis = 400, maxMillis = 30_000))
+        // A parked decoder rendered on: the new surface has a picture.
+        assertTrue(lastPictureDone(rendered = 5_001, baseline = 5_000, elapsedMillis = 400, maxMillis = 30_000))
+        // A decoder built anew counts from 0 and has rendered nothing yet, then its first frame.
+        assertFalse(lastPictureDone(rendered = 0, baseline = 5_000, elapsedMillis = 400, maxMillis = 30_000))
+        assertTrue(lastPictureDone(rendered = 1, baseline = 5_000, elapsedMillis = 400, maxMillis = 30_000))
+        // No decoder at all (-1): only the time limit ends it.
+        assertFalse(lastPictureDone(rendered = -1, baseline = -1, elapsedMillis = 400, maxMillis = 30_000))
+        assertTrue(lastPictureDone(rendered = -1, baseline = -1, elapsedMillis = 30_001, maxMillis = 30_000))
+    }
+
     @Test fun aBackgroundSessionIsAdoptedOnlyWithTheSamePacing() {
         // A Smooth video change whose reconnect stopped early leaves the old session running.
         assertFalse(backgroundSessionMatchesView(sinkPaces = false, viewSmoothVideo = true))

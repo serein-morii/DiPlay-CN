@@ -77,7 +77,7 @@
     <string name="status_attaching_ncm">Conectando la red NCM/AirPlay</string>
     <string name="status_failed">Error: %1$s</string>
     <string name="msg_car_hotspot_off">El punto de acceso del coche «%1$s» está apagado. Actívalo en la configuración del coche antes de conectarte.</string>
-    <string name="home_public_preview">VISTA PREVIA PÚBLICA  ·\u0020\u0020</string>
+    <string name="home_public_preview">VISTA PREVIA PÚBLICA  ·\u0020%1$s</string>
     <string name="choose_iphone_prefix">Elegir iPhone ·\u0020</string>
     <string name="audio_saved_value">Guardado: %1$d</string>
     <string name="about_public_preview_prefix">Vista previa ·\u0020</string>
@@ -369,6 +369,7 @@
     <string name="token_optional">Token (opcional)</string>
     <string name="transport_error_reconnecting">Error de transporte; reconectando</string>
     <string name="turn_on_bluetooth">Activar Bluetooth</string>
+    <string name="turn_on_bluetooth_in_the_head_unit_s_settings_to_connect">Activa el Bluetooth en los ajustes de la unidad principal para conectarte.</string>
     <string name="turn_on_wi_fi_in_the_head_unit_s_settings_to_connect">Activa el Wi‑Fi en los ajustes de la unidad principal para conectarte.</string>
     <string name="turn_the_car_s_wi_fi_switch_on_allow_location_nearby_devic">Activa el interruptor Wi‑Fi del coche. Permite Ubicación/«Dispositivos cercanos» si se te pide y activa la ubicación cuando Android lo solicite. Si la reproducción se traba, prueba el punto de acceso integrado del coche a 5 GHz.</string>
     <string name="usage_access_enabled">Acceso al uso: activado</string>
@@ -740,6 +741,8 @@
     <string name="backup_page_hint">Escanea el código con la cámara del teléfono para abrir esta página en su navegador. Exportar guarda un archivo de ajustes; importar carga uno.</string>
     <string name="backup_other_addresses">Si el código no funciona, prueba a cambiar la dirección IP del navegador por %1$s.</string>
     <string name="backup_no_network">No hay red Wi-Fi disponible. Activa el hotspot del coche o conecta el teléfono al Wi-Fi del coche primero.</string>
+    <string name="backup_type_address">¿Sin cámara? Abre %1$s en un navegador e introduce el código %2$s.</string>
+    <string name="backup_code_entry_closed">Se introdujeron demasiados códigos incorrectos y el código ya no sirve. Sal de esta página y ábrela de nuevo para obtener uno nuevo. El código QR sigue funcionando.</string>
     <string name="backup_summary">Se importaron %1$d ajustes, se omitieron %2$d.</string>
     <string name="backup_import_invalid">Este archivo no es una copia de seguridad de ajustes de DiPlay.</string>
     <string name="settings_background_update_checks">Buscar actualizaciones en segundo plano</string>
@@ -838,4 +841,25 @@
     <string name="bluetooth_connections_not_real">El Bluetooth de Android de esta unidad principal indica una conexión, pero nada llega al iPhone: incluso la conexión a un servicio que no existe tiene éxito. Aquí el Bluetooth lo gestiona un módulo propio del fabricante que las apps no pueden usar, por lo que CarPlay inalámbrico no puede funcionar en esta unidad principal. Prueba una conexión USB.</string>
     <string name="settings_fce_cluster_guidance">Indicaciones en el cuadro FCE (experimental)</string>
     <string name="settings_fce_cluster_guidance_description">Muestra las flechas de CarPlay y la distancia al próximo giro en la vista de navegación del cuadro de instrumentos en unidades FCE, escribiendo en el servicio del vehículo de la unidad. Probado solo en un coche; desactívalo si el cuadro se comporta de forma inesperada.</string>
+    <string name="settings_cluster_music">Música en el cuadro (experimental)</string>
+    <string name="settings_cluster_music_description">Muestra la portada cuadrada sobre el mapa del cuadro. Elige portada temporal (8 segundos) o permanente; el título y artista siempre aparecen sobre ella durante 8 segundos al cambiar de canción. La posición y el tamaño se aplican al instante. Requiere proyección al cuadro y datos del iPhone.</string>
+    <string name="settings_cluster_music_mode">Visibilidad de la portada</string>
+    <string name="settings_cluster_music_temporary">Temporal · 8 segundos</string>
+    <string name="settings_cluster_music_permanent">Permanente</string>
+    <string name="settings_cluster_music_horizontal">Tarjeta musical · posición horizontal</string>
+    <string name="settings_cluster_music_vertical">Tarjeta musical · posición vertical</string>
+    <string name="settings_cluster_music_size">Tarjeta musical · tamaño</string>
+    <string name="settings_cluster_music_unknown">Artista desconocido</string>
+    <string name="connection_help_reset_wifi">Un grupo Wi-Fi Direct anterior puede impedir la conexión. Pulsa Restablecer Wi-Fi de CarPlay abajo y vuelve a conectarte.</string>
+    <string name="connection_help_bluetooth_unusable">Esta unidad no puede enviar datos Bluetooth al iPhone. CarPlay inalámbrico no funcionará aquí. Usa un cable USB de datos.</string>
+    <string name="connection_help_hotspot">Comprueba que el punto de acceso del coche esté activo y que su nombre y contraseña coincidan con DiPlay. Si es posible, usa 5 GHz y reintenta.</string>
+    <string name="connection_help_iphone_wifi">Mantén Wi-Fi y Bluetooth activos. Conecta el iPhone al punto de acceso del coche y activa la conexión automática. Reintenta o guarda un informe de diagnóstico.</string>
+    <string name="connection_help_permissions">Concede a DiPlay los permisos necesarios de USB, dispositivos cercanos o ubicación en la unidad y reintenta.</string>
+    <string name="connection_help_usb">Usa un puerto y cable USB con datos. Desbloquea el iPhone, acepta las solicitudes de confianza y CarPlay y reintenta.</string>
+    <string name="connection_help_bluetooth">Desbloquea el iPhone, activa Bluetooth y Wi-Fi y enlázalo con la unidad. Mantenlo cerca y reintenta.</string>
+    <string name="connection_help_general">Reintenta la conexión. Si vuelve a fallar, regresa a DiPlay y guarda un informe en Ajustes → Diagnóstico.</string>
+    <string name="connection_help_wifi_direct">Mantén activados el Wi-Fi y el Bluetooth de la unidad y el iPhone desbloqueado y cerca, y reintenta. Si sigue fallando, olvida el coche en el iPhone en Ajustes → General → CarPlay y vuelve a conectarte.</string>
+    <string name="connection_help_existing_wifi">Comprueba que la unidad y el iPhone estén en la misma red Wi-Fi y que su nombre y contraseña coincidan con DiPlay, y reintenta.</string>
+    <string name="settings_report_on_phone">Obtener el informe en un teléfono</string>
+    <string name="settings_report_on_phone_hint">Escanea el código con la cámara del teléfono para abrir esta página en su navegador y elige Descargar informe. Mantén esta pantalla abierta hasta que termine la descarga.</string>
 </resources>

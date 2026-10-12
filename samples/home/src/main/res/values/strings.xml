@@ -1,0 +1,23 @@
+<resources>
+    <string name="home_apps">Apps</string>
+    <string name="home_byd_home">BYD home</string>
+    <string name="home_edit">Edit</string>
+    <string name="home_done">Done</string>
+    <string name="home_widgets">Widgets</string>
+    <string name="home_add">＋ Add</string>
+    <string name="home_close">Close</string>
+    <string name="home_byd_unavailable">BYD home is not available</string>
+    <string name="home_no_widgets">No widgets installed</string>
+    <string name="home_add_widget">Add a widget</string>
+    <string name="home_allow_widgets">Allow widgets</string>
+    <string name="home_allow_widgets_description">This head unit has no screen to allow widgets. Allow DiPlay Home once over ADB:\n\nadb shell appwidget grantbind --package %1$s --user 0</string>
+    <string name="home_remove_widget">Remove widget</string>
+    <string name="home_map_stopped">DiPlay stopped</string>
+    <string name="home_map_not_installed">DiPlay is not installed</string>
+    <string name="home_map_connecting">Connecting to DiPlay…</string>
+    <string name="home_map_refused">DiPlay refused the connection</string>
+    <string name="home_map_missing">DiPlay sent no map</string>
+    <string name="home_map_disabled">In DiPlay, turn on\n\"Share the live map with other launchers\"</string>
+    <string name="home_map_unsupported">This head unit is too old for the live map</string>
+    <string name="home_map_error">DiPlay could not show the map</string>
+</resources>

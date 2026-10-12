@@ -1,6 +1,6 @@
 # DiPlay CN
 
-> 简体中文说明见 [README.zh-CN.md](README.zh-CN.md)。本仓库基于上游 DiPlay `v0.2.18`。
+> 简体中文说明见 [README.zh-CN.md](README.zh-CN.md)。本仓库基于上游 DiPlay `v0.2.19`。
 
 **CarPlay for compatible BYD Android head units.** Wired and wireless, with the familiar DiAuto interface. Independent app: `com.shihab.diplay.cn`; installs alongside official DiPlay.
 
@@ -8,7 +8,7 @@
 >
 > **Tested vehicle: 2025 BYD Han DM-i, DiLink 5.0.** Other models and other head-unit systems are not guaranteed. Test on your own car, or fork the source and adapt it.
 
-[Download the latest CN build](https://github.com/serein-morii/DiPlay-CN/releases/latest) · [Gitee](https://gitee.com/oneeyear/DiPlay-CN/releases/latest) · [CN optimization log](docs/CN_OPTIMIZATIONS.md) · [All CN releases](https://github.com/serein-morii/DiPlay-CN/releases) · [Upstream DiPlay](https://github.com/shihabal3amri/DiPlay/releases/tag/v0.2.18)
+[Download the latest CN build](https://github.com/serein-morii/DiPlay-CN/releases/latest) · [Gitee](https://gitee.com/oneeyear/DiPlay-CN/releases/latest) · [CN optimization log](docs/CN_OPTIMIZATIONS.md) · [All CN releases](https://github.com/serein-morii/DiPlay-CN/releases) · [Upstream DiPlay](https://github.com/shihabal3amri/DiPlay/releases/tag/v0.2.19)
 
 **Signing warning:** The CN release signing key is public. A matching Android signature does not prove an APK came from this project. Use only the linked release pages; see [the signing limitation](SECURITY.md). The package name is retained for existing users' in-place updates.
 
@@ -16,7 +16,7 @@
 
 ## What CN adds on top of upstream
 
-Every CN change is written down in the **[CN optimization log](docs/CN_OPTIMIZATIONS.md)** — each release, what changed and why. Current base: upstream `v0.2.18`.
+Every CN change is written down in the **[CN optimization log](docs/CN_OPTIMIZATIONS.md)** — each release, what changed and why. Current base: upstream `v0.2.19`.
 
 - Custom dashboard turn card, CN edition: size 30–95 % and opacity 20–100 % sliders, day/night glass following the head unit, a trip info strip (arrival · duration · distance), and the card survives wireless session drops.
 - In-app updates since `0.2.10-cn.8`: About → Check for updates downloads and installs the next CN build over the current one, settings kept. Four channels: Gitee (default), GitHub, gh-proxy.com, ghproxy.net.
@@ -27,7 +27,7 @@ Every CN change is written down in the **[CN optimization log](docs/CN_OPTIMIZAT
 - DiLink 5 full/small cluster-map reconciliation, a proportional turn-card placement preview, connection-stage hints, and optional reconnect when the selected iPhone rejoins Bluetooth.
 - Release APK built as a release variant with the official identity, sized like the official package, signed with one stable CN key since `0.2.10-cn.4` so updates overlay-install.
 
-## 0.2.18 — CN synchronized preview
+## 0.2.19 — CN synchronized preview
 
 Install on the **car**, not the iPhone. No jailbreak, dongle, Mac, account or authentication server is required for use. Core CarPlay does not require ADB; optional dashboard, battery, wheel-speed and parked-video features do. Your head unit must permit APK installation. Wireless supports Wi-Fi Direct, the car’s existing hotspot or Same LAN. Wi-Fi Direct on Android 7.1–9 uses a firmware-dependent legacy path; Android 7.1–8.1 still needs in-car testing.
 
@@ -43,19 +43,17 @@ This is **not an Apple-certified product**. The APK bundles an experimental acce
 
 **Trademarks and liability**: this project has no affiliation with or authorization from Apple Inc. or BYD; "CarPlay" and "BYD" are trademarks of their owners, used here only descriptively for compatibility; the optional in-app display names are the user's own local personalization. The software is provided free of charge, as-is, contains no Apple proprietary code and circumvents no technical protection measures; use at your own risk. See each release's disclaimer.
 
-## What’s new in 0.2.18
+## What’s new in 0.2.19
 
-- CN patch `.2`: update progress stays beside a disabled Download button; a verified local APK opens the installer again without another APK download, including after returning to the app.
-- Wired CarPlay no longer drops every few minutes when a USB read finishes just as DiPlay stops waiting for it, and it now starts on Android 7.1 head units, on head units whose USB audio driver held the iPhone, and without a VPN dialog when network ADB is approved.
-- Fewer short music dropouts, and the connection screen shows the real stage and failure in every app language.
-- On head units whose Android Bluetooth cannot reach the iPhone, wireless CarPlay stops with a clear message and suggests USB.
-- The wheel's next and previous keys change CarPlay tracks on the CarPlay screen without the wheel-key service, Geely/Lynk `geely_fx11` head units get wheel media keys and Siri, and wheel keys stuck on "Allowed, starting…" recover by themselves.
-- Back up and restore settings from a phone through a QR code in **Settings → About**, and pick another installer, such as MT Manager, for updates.
-- New experimental, off-by-default options: Harman full screen, square corners, clearer navigation voice over USB, MediaTek low-latency decoding, a media-key audio focus opt-out, car phone audio for calls, a cluster speedometer and FCE cluster guidance.
+- Wired CarPlay starts faster on many head units, requests CarPlay mode on iOS 26, and can recover USB permission through approved ADB on older head units.
+- Calls, Siri and navigation prompts use the correct 16 kHz playback clock; microphone startup and background music buffering are more robust.
+- DiLink 4 dashboard-map and reversing-camera display transitions no longer trigger the reported restart or reduced-size display cases.
+- Japanese, complete Traditional Chinese and additional Arabic translations; phone-accessible diagnostic reports and contextual connection recovery tips.
+- CN retains its four-channel updater, verified cached APK reuse, full swipe-down settings menu and DiLink 5 small/full cluster-map handling.
 
-See [0.2.18 release notes](docs/RELEASE-NOTES-0.2.18.md) and [validation](docs/VALIDATION.md) for contribution links and remaining physical tests. General stutter, calls/Siri, decoder and model-specific reports still need current-device evidence. [0.2.17 notes](docs/RELEASE-NOTES-0.2.17.md) remain available as historical guidance.
+See [0.2.19 release notes](docs/RELEASE-NOTES-0.2.19.md) and [validation](docs/VALIDATION.md) for contribution links and remaining physical tests. General stutter, calls/Siri, decoder and model-specific reports still need current-device evidence. [0.2.18 notes](docs/RELEASE-NOTES-0.2.18.md) remain available as historical guidance.
 
-If a problem remains, reproduce it on **0.2.18-cn.3**, then use **Settings → Diagnostics → Save diagnostic report**. Android 10+ normally saves to **Downloads/DiPlay**; Android 7.1–9 asks for storage access and saves there too. If unavailable, use **View report** or **Share** from the confirmation, which identifies external/private fallback storage. Review the `.txt` and add it to a matching [existing CN issue](https://github.com/serein-morii/DiPlay-CN/issues), or [create one](https://github.com/serein-morii/DiPlay-CN/issues/new). Include vehicle/head-unit model, exact firmware and Android/DiLink, phone/iOS, connection backend, relevant settings, steps and failure time. Reports are shared only when you choose; never post your hotspot password.
+If a problem remains, reproduce it on **0.2.19-cn.1**, then use **Settings → Diagnostics → Save diagnostic report**. Android 10+ normally saves to **Downloads/DiPlay**; Android 7.1–9 asks for storage access and saves there too. If unavailable, use **View report** or **Share** from the confirmation, which identifies external/private fallback storage. Review the `.txt` and add it to a matching [existing CN issue](https://github.com/serein-morii/DiPlay-CN/issues), or [create one](https://github.com/serein-morii/DiPlay-CN/issues/new). Include vehicle/head-unit model, exact firmware and Android/DiLink, phone/iOS, connection backend, relevant settings, steps and failure time. Reports are shared only when you choose; never post your hotspot password.
 
 ## Documentation
 

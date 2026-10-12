@@ -39,6 +39,10 @@ object IphoneCarPlayConfiguration {
         return chosen
     }
 
+    /** Only CarPlay mode adds Apple Ethernet; iOS 17+ offers USBMUX and NCM without it (#634). */
+    fun isCarPlayMode(configuration: UsbConfiguration): Boolean =
+        usbMuxInterface(configuration) != null && hasCdcNcm(configuration) && hasAppleEthernet(configuration)
+
     fun describe(configuration: UsbConfiguration): String =
         (0 until configuration.interfaceCount).joinToString(",") { index ->
             val usbInterface = configuration.getInterface(index)

@@ -2159,10 +2159,15 @@ private class AudioRenderer(
         diagnosticStage = "decoder-input"
         // While a blocking track write holds this thread, decoded output fills up and the decoder
         // stops taking input. Dropping the packet after one 10 ms wait cut ~21 ms of music every
-        // 10-20 s on DiLink 3.0 (#381); drain the output and keep waiting instead.
+        // 10-20 s on DiLink 3.0 (#381); drain the output and wait again instead. One drain and
+        // retry is enough for that, and the pump always makes it. Waiting the video's 500 ms
+        // for every packet let a slowed decoder fall ever further behind instead: with the
+        // CarPlay screen in the background, the queue grew to 190 packets and the track
+        // underran every few seconds (#649).
         val index = DecoderInputPump.acquire(
             running = { running }, drain = { drainCodec(codec) },
             dequeue = { codec.dequeueInputBuffer(INPUT_TIMEOUT_US) },
+            timeoutNs = AUDIO_INPUT_WAIT_NS,
         )
         if (index < 0) {
             inputDropped++
@@ -2378,7 +2383,10 @@ private class AudioRenderer(
             previous?.let { (current - it) and 0xffff_ffffL }
         }
         val queuedFrames = playbackHeadFrames?.let { (totalWrittenFrames - it).coerceAtLeast(0L) }
-        val line = "audio stats audioType=${format.audioType} channel=$mappedChannel " +
+        // "PHONE " marks the iPhone's own log lines, which the report drops, and it dropped every
+        // call's playback line with it (#647).
+        val channelName = if (mappedChannel == AudioChannel.PHONE) "CALL" else mappedChannel?.name
+        val line = "audio stats audioType=${format.audioType} channel=$channelName " +
             "routeType=${currentTrack?.routedDevice?.type ?: -1} codec=${format.codec} " +
             "trackState=${currentTrack?.state ?: -1} playState=${currentTrack?.playState ?: -1} " +
             "sampleRate=${currentTrack?.sampleRate ?: format.sampleRate} " +
@@ -2488,6 +2496,7 @@ private class AudioRenderer(
         const val OPUS_CODEC_DELAY_NANOS = 6_500_000L
         const val OPUS_SEEK_PRE_ROLL_NANOS = 80_000_000L
         const val INPUT_TIMEOUT_US = 10_000L
+        const val AUDIO_INPUT_WAIT_NS = 100_000_000L
         const val AUDIO_POLL_MILLIS = 10L
         const val BUFFER_TAIL_WAIT_NS = 500_000_000L
         // Holds a burst after a Wi-Fi gap (~4 s of AAC) instead of dropping it.

@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DiPlay</title>
+<style>
+:root { color-scheme: dark; }
+body { margin:0; padding:24px 20px 40px; background:#101418; color:#e8eaed;
+  font:16px/1.5 -apple-system,"Segoe UI",Roboto,"Noto Sans",sans-serif; }
+main { max-width:520px; margin:0 auto; }
+h1 { font-size:22px; margin:0 0 4px; }
+.card { background:#1b2129; border:1px solid #2a323d; border-radius:16px; padding:18px; margin-top:20px; }
+.card p { color:#9aa0a6; font-size:14px; margin:0 0 14px; }
+input { display:block; width:100%; box-sizing:border-box; margin-bottom:14px; padding:12px 14px; border-radius:12px;
+  border:1px solid #2a323d; background:#101418; color:#e8eaed; font-size:28px; letter-spacing:6px; text-align:center; }
+button { display:block; width:100%; box-sizing:border-box; text-align:center; padding:13px 16px;
+  border-radius:999px; border:0; font-size:16px; font-weight:600; cursor:pointer; background:#a8c7fa; color:#0b2540; }
+button:disabled, input:disabled { opacity:.5; }
+#result { margin-top:12px; font-size:14px; color:#f28b82; min-height:20px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>DiPlay</h1>
+  <form class="card" id="form">
+    <p id="prompt"></p>
+    <input id="code" inputmode="numeric" autocomplete="off" maxlength="7" autofocus>
+    <button id="open"></button>
+    <div id="result"></div>
+  </form>
+</main>
+<script>
+var L = {
+  en: {prompt:"Enter the code shown on the head unit.",open:"Open",wrong:"Wrong code. Tries left: %1.",
+    locked:"Too many wrong codes. On the head unit, leave the page and open it again to get a new code.",
+    fail:"Could not reach the head unit. Check the connection and try again."},
+  zh: {prompt:"请输入车机上显示的验证码。",open:"打开",wrong:"验证码错误。剩余次数：%1。",
+    locked:"错误次数过多。请在车机上离开此页面后重新打开，以取得新的验证码。",
+    fail:"无法连接车机，请检查连接后重试。"},
+  "zh-TW": {prompt:"請輸入車機上顯示的驗證碼。",open:"開啟",wrong:"驗證碼錯誤。剩餘次數：%1。",
+    locked:"錯誤次數過多。請在車機上離開此頁面後重新開啟，以取得新的驗證碼。",
+    fail:"無法連線至車機，請檢查連線後重試。"},
+  es: {prompt:"Introduce el código que muestra la unidad principal.",open:"Abrir",wrong:"Código incorrecto. Intentos restantes: %1.",
+    locked:"Demasiados códigos incorrectos. En la unidad principal, sal de la página y ábrela de nuevo para obtener un código nuevo.",
+    fail:"No se pudo conectar con la unidad. Comprueba la conexión e inténtalo de nuevo."},
+  ru: {prompt:"Введите код, показанный на головном устройстве.",open:"Открыть",wrong:"Неверный код. Осталось попыток: %1.",
+    locked:"Слишком много неверных кодов. На головном устройстве закройте страницу и откройте её снова, чтобы получить новый код.",
+    fail:"Не удалось связаться с устройством. Проверьте соединение и повторите попытку."},
+  uk: {prompt:"Введіть код, показаний на головному пристрої.",open:"Відкрити",wrong:"Неправильний код. Залишилося спроб: %1.",
+    locked:"Забагато неправильних кодів. На головному пристрої закрийте сторінку й відкрийте її знову, щоб отримати новий код.",
+    fail:"Не вдалося зв'язатися з пристроєм. Перевірте з'єднання та спробуйте ще раз."},
+  ar: {prompt:"أدخل الرمز المعروض على وحدة القيادة.",open:"فتح",wrong:"رمز غير صحيح. المحاولات المتبقية: %1.",
+    locked:"أُدخلت رموز غير صحيحة كثيرة. في وحدة القيادة، غادر الصفحة وافتحها مجددًا للحصول على رمز جديد.",
+    fail:"تعذّر الوصول إلى وحدة القيادة. تحقق من الاتصال وأعد المحاولة."},
+  ja: {prompt:"車載端末に表示されているコードを入力してください。",open:"開く",wrong:"コードが違います。残り %1 回です。",
+    locked:"間違ったコードが多すぎます。車載端末でこのページを閉じてもう一度開くと、新しいコードが表示されます。",
+    fail:"車載端末に接続できませんでした。接続を確認してもう一度お試しください。"}
+};
+var lang = (navigator.language || "en").toLowerCase();
+var key = lang in L ? lang
+  : lang.indexOf("zh") === 0 ? (lang.indexOf("tw") > 0 || lang.indexOf("hk") > 0 || lang.indexOf("hant") > 0 ? "zh-TW" : "zh")
+  : lang.indexOf("es") === 0 ? "es"
+  : lang.indexOf("ru") === 0 ? "ru"
+  : lang.indexOf("uk") === 0 ? "uk"
+  : lang.indexOf("ar") === 0 ? "ar"
+  : lang.indexOf("ja") === 0 ? "ja" : "en";
+var t = L[key];
+var $ = function(id) { return document.getElementById(id); };
+document.documentElement.lang = key;
+document.documentElement.dir = key === "ar" ? "rtl" : "ltr";
+$("prompt").textContent = t.prompt;
+$("open").textContent = t.open;
+function closed() { $("result").textContent = t.locked; $("code").disabled = true; $("open").disabled = true; }
+$("form").addEventListener("submit", function(event) {
+  event.preventDefault();
+  // A code that is not six digits yet is not sent, so it does not cost a try.
+  if ($("code").value.replace(/\D/g, "").length !== 6) { $("code").focus(); return; }
+  $("open").disabled = true;
+  $("result").textContent = "";
+  fetch("code", {method: "POST", headers: {"Content-Type": "text/plain"}, body: $("code").value})
+    .then(function(r) { return r.json(); })
+    .then(function(j) {
+      if (j.path) { location.replace(j.path); return; }
+      if (j.locked) { closed(); return; }
+      $("result").textContent = t.wrong.replace("%1", j.left);
+      $("code").value = ""; $("code").focus(); $("open").disabled = false;
+    })
+    .catch(function() { $("result").textContent = t.fail; $("open").disabled = false; });
+});
+</script>
+</body>
+</html>

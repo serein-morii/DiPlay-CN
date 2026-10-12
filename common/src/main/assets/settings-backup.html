@@ -39,6 +39,11 @@ input[type=file] { display:none; }
     <input type="file" id="file" accept="application/json,.json">
     <div id="result"></div>
   </div>
+  <div class="card" id="report">
+    <h2 id="reportTitle"></h2>
+    <p id="reportText"></p>
+    <a class="btn" id="reportBtn" href="report" download></a>
+  </div>
 </main>
 <script>
 var L = {
@@ -47,43 +52,57 @@ var L = {
     importTitle:"Import",importText:"Load a settings file exported from a DiPlay head unit. Settings missing from the file keep their current value.",
     picking:"Reading file…",invalid:"This file is not a DiPlay settings backup.",
     open:"Choose file and import",
-    done:"Imported %1 settings, skipped %2.",fail:"Import failed. Check the connection and try again."},
+    done:"Imported %1 settings, skipped %2.",fail:"Import failed. Check the connection and try again.",
+    reportTitle:"Diagnostic report",reportText:"Save this head unit's diagnostic report as a text file. Protocol payloads and credentials are excluded.",report:"Download report"},
   zh: {title:"DiPlay 设置",sub:"在手机上备份或恢复 DiPlay 设置。",
     exportTitle:"导出",exportText:"将这台车机的当前设置保存为文件。",export:"导出设置",
     importTitle:"导入",importText:"载入从 DiPlay 车机导出的设置文件。文件中缺失的配置项保持当前值。",
     picking:"正在读取文件…",invalid:"这不是 DiPlay 设置备份文件。",
     open:"选择文件并导入",
-    done:"已导入 %1 项设置，跳过 %2 项。",fail:"导入失败，请检查连接后重试。"},
+    done:"已导入 %1 项设置，跳过 %2 项。",fail:"导入失败，请检查连接后重试。",
+    reportTitle:"诊断报告",reportText:"将这台车机的诊断报告保存为文本文件。不包含协议数据和凭据。",report:"下载报告"},
   "zh-TW": {title:"DiPlay 設定",sub:"在手機上備份或還原 DiPlay 設定。",
     exportTitle:"匯出",exportText:"將這台車機的目前設定儲存為檔案。",export:"匯出設定",
     importTitle:"匯入",importText:"載入從 DiPlay 車機匯出的設定檔。檔案中缺少的設定項目保持目前值。",
     picking:"正在讀取檔案…",invalid:"這不是 DiPlay 設定備份檔。",
     open:"選擇檔案並匯入",
-    done:"已匯入 %1 項設定，略過 %2 項。",fail:"匯入失敗，請檢查連線後重試。"},
+    done:"已匯入 %1 項設定，略過 %2 項。",fail:"匯入失敗，請檢查連線後重試。",
+    reportTitle:"診斷報告",reportText:"將這台車機的診斷報告儲存為文字檔。不包含通訊協定資料和認證資訊。",report:"下載報告"},
   es: {title:"Ajustes de DiPlay",sub:"Copia o restaura los ajustes de DiPlay en este teléfono.",
     exportTitle:"Exportar",exportText:"Guarda los ajustes actuales de esta unidad en un archivo.",export:"Exportar ajustes",
     importTitle:"Importar",importText:"Carga un archivo de ajustes exportado de una unidad DiPlay. Los ajustes ausentes conservan su valor.",
     picking:"Leyendo archivo…",invalid:"Este archivo no es una copia de seguridad de DiPlay.",
     open:"Elegir archivo e importar",
-    done:"Importados %1 ajustes, omitidos %2.",fail:"No se pudo importar. Comprueba la conexión."},
+    done:"Importados %1 ajustes, omitidos %2.",fail:"No se pudo importar. Comprueba la conexión.",
+    reportTitle:"Informe de diagnóstico",reportText:"Guarda el informe de diagnóstico de esta unidad como archivo de texto. Las cargas del protocolo y las credenciales quedan excluidas.",report:"Descargar informe"},
   ru: {title:"Настройки DiPlay",sub:"Резервная копия или восстановление настроек DiPlay на этом телефоне.",
     exportTitle:"Экспорт",exportText:"Сохранить текущие настройки этого устройства в файл.",export:"Экспорт настроек",
     importTitle:"Импорт",importText:"Загрузите файл настроек, экспортированный с устройства DiPlay. Отсутствующие настройки сохранят текущие значения.",
     picking:"Чтение файла…",invalid:"Этот файл не является резервной копией настроек DiPlay.",
     open:"Выбрать файл и импортировать",
-    done:"Импортировано настроек: %1, пропущено: %2.",fail:"Не удалось импортировать. Проверьте подключение."},
+    done:"Импортировано настроек: %1, пропущено: %2.",fail:"Не удалось импортировать. Проверьте подключение.",
+    reportTitle:"Диагностический отчёт",reportText:"Сохранить диагностический отчёт этого устройства в текстовый файл. Данные протокола и учётные данные исключены.",report:"Скачать отчёт"},
   uk: {title:"Налаштування DiPlay",sub:"Резервна копія або відновлення налаштувань DiPlay на цьому телефоні.",
     exportTitle:"Експорт",exportText:"Зберегти поточні налаштування цього пристрою у файл.",export:"Експорт налаштувань",
     importTitle:"Імпорт",importText:"Завантажте файл налаштувань, експортований з пристрою DiPlay. Відсутні налаштування збережуть поточні значення.",
     picking:"Читання файлу…",invalid:"Цей файл не є резервною копією налаштувань DiPlay.",
     open:"Вибрати файл та імпортувати",
-    done:"Імпортовано налаштувань: %1, пропущено: %2.",fail:"Не вдалося імпортувати. Перевірте з'єднання."},
+    done:"Імпортовано налаштувань: %1, пропущено: %2.",fail:"Не вдалося імпортувати. Перевірте з'єднання.",
+    reportTitle:"Діагностичний звіт",reportText:"Зберегти діагностичний звіт цього пристрою у текстовий файл. Протокольні дані та облікові дані не включаються.",report:"Завантажити звіт"},
   ar: {title:"إعدادات DiPlay",sub:"نسخ احتياطي أو استعادة إعدادات DiPlay على هذا الهاتف.",
     exportTitle:"تصدير",exportText:"حفظ الإعدادات الحالية لهذه الوحدة في ملف.",export:"تصدير الإعدادات",
     importTitle:"استيراد",importText:"حمّل ملف إعدادات تم تصديره من وحدة DiPlay. الإعدادات غير الموجودة تحتفظ بقيمتها.",
     picking:"جارٍ قراءة الملف…",invalid:"هذا الملف ليس نسخة احتياطية لإعدادات DiPlay.",
     open:"اختيار ملف واستيراده",
-    done:"تم استيراد %1 من الإعدادات، وتجاهل %2.",fail:"فشل الاستيراد. تحقق من الاتصال وأعد المحاولة."}
+    done:"تم استيراد %1 من الإعدادات، وتجاهل %2.",fail:"فشل الاستيراد. تحقق من الاتصال وأعد المحاولة.",
+    reportTitle:"تقرير التشخيص",reportText:"حفظ تقرير تشخيص هذه الوحدة في ملف نصي. تُستبعد حمولات البروتوكول وبيانات الاعتماد.",report:"تنزيل التقرير"},
+  ja: {title:"DiPlay の設定",sub:"このスマートフォンで DiPlay の設定をバックアップまたは復元します。",
+    exportTitle:"エクスポート",exportText:"この車載端末の現在の設定をファイルに保存します。",export:"設定をエクスポート",
+    importTitle:"インポート",importText:"DiPlay の車載端末からエクスポートした設定ファイルを読み込みます。ファイルにない設定は現在の値のままです。",
+    picking:"ファイルを読み込んでいます…",invalid:"このファイルは DiPlay の設定バックアップではありません。",
+    open:"ファイルを選んでインポート",
+    done:"%1 件の設定をインポートし、%2 件をスキップしました。",fail:"インポートできませんでした。接続を確認してもう一度お試しください。",
+    reportTitle:"診断レポート",reportText:"この車載端末の診断レポートをテキストファイルとして保存します。プロトコルのデータと認証情報は含まれません。",report:"レポートをダウンロード"}
 };
 var lang = (navigator.language || "en").toLowerCase();
 var key = lang in L ? lang
@@ -91,7 +110,8 @@ var key = lang in L ? lang
   : lang.indexOf("es") === 0 ? "es"
   : lang.indexOf("ru") === 0 ? "ru"
   : lang.indexOf("uk") === 0 ? "uk"
-  : lang.indexOf("ar") === 0 ? "ar" : "en";
+  : lang.indexOf("ar") === 0 ? "ar"
+  : lang.indexOf("ja") === 0 ? "ja" : "en";
 var t = L[key];
 var $ = function(id) { return document.getElementById(id); };
 document.title = t.title;
@@ -104,6 +124,9 @@ $("exportBtn").textContent = t.export;
 $("importTitle").textContent = t.importTitle;
 $("importText").textContent = t.importText;
 $("importBtn").textContent = t.open;
+$("reportTitle").textContent = t.reportTitle;
+$("reportText").textContent = t.reportText;
+$("reportBtn").textContent = t.report;
 document.documentElement.dir = key === "ar" ? "rtl" : "ltr";
 $("importBtn").addEventListener("click", function() { $("file").click(); });
 $("file").addEventListener("change", function() {

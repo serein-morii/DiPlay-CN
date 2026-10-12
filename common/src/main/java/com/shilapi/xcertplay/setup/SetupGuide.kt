@@ -1,6 +1,7 @@
 package com.shilapi.xcertplay.setup
 
 import android.content.Context
+import com.shilapi.xcertplay.AirPlayPersistence
 
 /** Which features the setup guide offers for each DiLink generation, and how well each is proven. */
 object SetupGuide {
@@ -38,6 +39,25 @@ object SetupGuide {
     /** A DiLink 3 car with the DiLink 4 route on never sends the DiLink 3 dashboard commands. */
     fun hasConflictingClusterRoute(generation: DiLinkGeneration, adbClusterEnabled: Boolean): Boolean =
         generation == DiLinkGeneration.DILINK_3 && adbClusterEnabled
+
+    fun navigationAudioChannelDefault(generation: DiLinkGeneration): Int = when (generation) {
+        DiLinkGeneration.DILINK_3, DiLinkGeneration.DILINK_4 -> 14
+        DiLinkGeneration.DILINK_5 -> 15
+        DiLinkGeneration.UNKNOWN -> 0
+    }
+
+    fun applyGenerationDefaults(context: Context, generation: DiLinkGeneration): Boolean =
+        AirPlayPersistence.applySetupNavigationAudioChannelDefault(
+            context,
+            navigationAudioChannelDefault(generation),
+        )
+
+    /**
+     * Applies the generation defaults when the driver confirms the car on a first setup only. A driver who
+     * re-runs the guide, or set DiPlay up before the guide existed, keeps the routing left on automatic.
+     */
+    fun applyFirstSetupDefaults(context: Context, generation: DiLinkGeneration, phoneChosen: Boolean): Boolean =
+        shouldOpenOnLaunch(seen(context), phoneChosen) && applyGenerationDefaults(context, generation)
 
     private fun prefs(context: Context) = context.getSharedPreferences("diplay", Context.MODE_PRIVATE)
 

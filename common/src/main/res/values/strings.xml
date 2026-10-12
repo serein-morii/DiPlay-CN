@@ -77,7 +77,7 @@
     <string name="status_attaching_ncm">Attaching NCM/AirPlay network</string>
     <string name="status_failed">Failed: %1$s</string>
     <string name="msg_car_hotspot_off">The car hotspot “%1$s” is off. Turn it on in the car settings before connecting.</string>
-    <string name="home_public_preview">PUBLIC PREVIEW  ·\u0020\u0020</string>
+    <string name="home_public_preview">PUBLIC PREVIEW  ·\u0020%1$s</string>
     <string name="choose_iphone_prefix">Choose iPhone ·\u0020</string>
     <string name="audio_saved_value">Saved: %1$d</string>
     <string name="about_public_preview_prefix">Public preview ·\u0020</string>
@@ -419,6 +419,7 @@
     <string name="token_optional">Token (optional)</string>
     <string name="transport_error_reconnecting">Transport error; reconnecting</string>
     <string name="turn_on_bluetooth">Turn on Bluetooth</string>
+    <string name="turn_on_bluetooth_in_the_head_unit_s_settings_to_connect">Turn on Bluetooth in the head unit’s settings to connect.</string>
     <string name="turn_on_wi_fi_in_the_head_unit_s_settings_to_connect">Turn on Wi-Fi in the head unit’s settings to connect.</string>
     <string name="turn_the_car_s_wi_fi_switch_on_allow_location_nearby_devic">Turn the car’s Wi-Fi switch on. Allow Location / Nearby devices if requested and enable Location when Android asks. If playback stutters, try the built-in car hotspot at 5 GHz.</string>
     <string name="usage_access_enabled">Usage Access: enabled</string>
@@ -876,6 +877,8 @@
     <string name="backup_page_hint">Scan the code with the phone camera to open this page in its browser. Export saves a settings file, import loads one.</string>
     <string name="backup_other_addresses">If the code does not open, try changing the IP address in your browser to %1$s.</string>
     <string name="backup_no_network">No usable Wi-Fi network. Turn on the car hotspot or connect the phone to the car Wi-Fi first.</string>
+    <string name="backup_type_address">No camera? Open %1$s in a browser and enter the code %2$s.</string>
+    <string name="backup_code_entry_closed">Too many wrong codes were entered, so the code no longer works. Leave this page and open it again for a new one. The QR code still works.</string>
     <string name="backup_summary">Imported %1$d settings, skipped %2$d.</string>
     <string name="backup_import_invalid">This file is not a DiPlay settings backup.</string>
     <string name="settings_background_update_checks">Check for updates in the background</string>
@@ -939,4 +942,25 @@
     <string name="bluetooth_connections_not_real">This head unit’s Android Bluetooth reports a connection, but nothing reaches the iPhone: even a connection to a service that does not exist succeeds. Bluetooth here is handled by the maker’s own module, which apps cannot use, so wireless CarPlay cannot work on this head unit. Try a USB connection.</string>
     <string name="settings_fce_cluster_guidance">Guidance in the FCE cluster (experimental)</string>
     <string name="settings_fce_cluster_guidance_description">Shows CarPlay arrows and the next-turn distance in the instrument cluster’s navigation view on FCE head units, by writing to the head unit’s vehicle service. Tested on one car only; turn it off if the cluster behaves unexpectedly.</string>
+    <string name="settings_cluster_music">Music on cluster (experimental)</string>
+    <string name="settings_cluster_music_description">Show a square album cover over the cluster map. Choose temporary (8 seconds) or permanent artwork; the title and artist always appear over the cover for 8 seconds when the song changes. Position and size apply immediately. Requires cluster projection and iPhone metadata.</string>
+    <string name="settings_cluster_music_mode">Album cover visibility</string>
+    <string name="settings_cluster_music_temporary">Temporary · 8 seconds</string>
+    <string name="settings_cluster_music_permanent">Permanent</string>
+    <string name="settings_cluster_music_horizontal">Music card · horizontal position</string>
+    <string name="settings_cluster_music_vertical">Music card · vertical position</string>
+    <string name="settings_cluster_music_size">Music card · size</string>
+    <string name="settings_cluster_music_unknown">Unknown artist</string>
+    <string name="connection_help_reset_wifi">An old Wi-Fi Direct group may block this connection. Select Reset CarPlay Wi-Fi below, then connect again.</string>
+    <string name="connection_help_bluetooth_unusable">This head unit cannot send Bluetooth data to the iPhone. Wireless CarPlay cannot work here. Use a USB data cable.</string>
+    <string name="connection_help_hotspot">Check that the car hotspot is on and its name and password match DiPlay settings. If available, use 5 GHz, then retry.</string>
+    <string name="connection_help_iphone_wifi">Keep Wi-Fi and Bluetooth on. On the iPhone, join the car hotspot and enable Auto-Join, then retry. Save a diagnostic report if it still fails.</string>
+    <string name="connection_help_permissions">Allow the requested USB, Nearby devices or Location permissions for DiPlay on the head unit, then retry.</string>
+    <string name="connection_help_usb">Use a USB data port and a data-capable cable. Unlock the iPhone, approve Trust and CarPlay, then retry.</string>
+    <string name="connection_help_bluetooth">Unlock the iPhone, enable Bluetooth and Wi-Fi, and pair it with the head unit. Keep it nearby, then retry.</string>
+    <string name="connection_help_general">Retry the connection. If it fails again, return to DiPlay and save a report under Settings → Diagnostics.</string>
+    <string name="connection_help_wifi_direct">Keep the head unit\'s Wi-Fi and Bluetooth on and the iPhone unlocked nearby, then retry. If it keeps failing, forget the car on the iPhone under Settings → General → CarPlay and connect again.</string>
+    <string name="connection_help_existing_wifi">Make sure the head unit and the iPhone are on the same Wi-Fi network and its name and password match DiPlay settings, then retry.</string>
+    <string name="settings_report_on_phone">Get the report on a phone</string>
+    <string name="settings_report_on_phone_hint">Scan the code with the phone camera to open this page in its browser, then choose Download report. Keep this screen open until the download has finished.</string>
 </resources>

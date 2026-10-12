@@ -5,7 +5,7 @@
         <item name="android:windowLightStatusBar">false</item>
         <item name="android:navigationBarColor">#0C111B</item>
         <item name="android:statusBarColor">#0C111B</item>
-        <item name="android:windowBackground">#0C111B</item>
+        <item name="android:windowBackground">@color/window_background_dark</item>
         <!-- Without it, API 31+ draws a white splash before the dark Home screen. -->
         <item name="android:windowSplashScreenBackground" tools:targetApi="31">#0C111B</item>
         <item name="android:windowActionModeOverlay">true</item>
@@ -16,18 +16,18 @@
         <item name="android:windowLightNavigationBar">true</item>
         <item name="android:navigationBarColor">#E9EEF6</item>
         <item name="android:statusBarColor">#E9EEF6</item>
-        <item name="android:windowBackground">#E9EEF6</item>
+        <item name="android:windowBackground">@color/window_background_light</item>
         <item name="android:windowSplashScreenBackground" tools:targetApi="31">#E9EEF6</item>
     </style>
     <style name="Theme.Xcertplay.Dialog.Dark" parent="android:Theme.Material.Dialog.Alert">
         <item name="android:fontFamily">sans</item>
         <item name="android:colorAccent">#A6C8FF</item>
-        <item name="android:windowBackground">#151E2C</item>
+        <item name="android:windowBackground">@color/dialog_background_dark</item>
     </style>
     <style name="Theme.Xcertplay.Dialog.Light" parent="android:Theme.Material.Light.Dialog.Alert">
         <item name="android:fontFamily">sans</item>
         <item name="android:colorAccent">#245A9C</item>
-        <item name="android:windowBackground">#F8FAFD</item>
+        <item name="android:windowBackground">@color/dialog_background_light</item>
     </style>
     <style name="Theme.AdbCluster" parent="android:Theme.Material.NoActionBar">
         <item name="android:windowIsTranslucent">true</item>

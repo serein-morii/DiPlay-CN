@@ -65,6 +65,13 @@ class SetupGuideTest {
         assertNull(DiLinkGeneration.detect(null, null, null, 28).evidence)
     }
 
+    @Test fun generationsChooseTheirNavigationAudioDefaults() {
+        assertEquals(14, SetupGuide.navigationAudioChannelDefault(DiLinkGeneration.DILINK_3))
+        assertEquals(14, SetupGuide.navigationAudioChannelDefault(DiLinkGeneration.DILINK_4))
+        assertEquals(15, SetupGuide.navigationAudioChannelDefault(DiLinkGeneration.DILINK_5))
+        assertEquals(0, SetupGuide.navigationAudioChannelDefault(DiLinkGeneration.UNKNOWN))
+    }
+
     @Test fun diLink4ClusterRouteIsOnlyOfferedOnDiLink4() {
         fun offered(generation: DiLinkGeneration) =
             SetupGuide.features(generation).any { it.feature == Feature.DILINK4_ADB_CLUSTER }

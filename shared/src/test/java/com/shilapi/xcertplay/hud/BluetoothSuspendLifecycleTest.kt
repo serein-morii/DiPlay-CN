@@ -125,6 +125,19 @@ class BluetoothSuspendLifecycleTest {
         assertEquals(true, enabled)
     }
 
+    @Test fun radioEnabledFallsBackToDefaultAdapterWhenBluetoothManagerIsNull() {
+        val wrappedContext = object : ContextWrapper(app) {
+            override fun getSystemService(name: String): Any? {
+                if (Context.BLUETOOTH_SERVICE == name) return null
+                return super.getSystemService(name)
+            }
+        }
+        val defaultAdapter = BluetoothAdapter.getDefaultAdapter()
+        assertNotNull(defaultAdapter)
+        shadowOf(defaultAdapter).setState(BluetoothAdapter.STATE_ON)
+        assertFalse(BydBluetoothSuspend.isSuspendedByUs(wrappedContext))
+    }
+
     @Test fun oldControllerCloseCannotCancelNewControllerDelay() {
         val journal = Journal(); var enabled: Boolean? = true
         val lease = BluetoothSuspendLease(journal, { enabled }, { enabled = it }, { enabled == it })

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="contrib_audio_home_channel_preview_unavailable">تعذّر معاينة مسار صوت Android رقم %1$d على هذا الجهاز.</string>
+    <string name="contrib_audio_home_choice_summary">%1$s · %2$s</string>
+    <string name="contrib_audio_home_media_channel_label">مسار صوت الوسائط</string>
+    <string name="contrib_audio_home_nav_channel_label">مسار صوت الملاحة</string>
+    <string name="contrib_audio_home_nav_channel_note">0 = توجيه تلقائي. تختار القيم من 1 إلى 20 معرّفات مسارات الصوت القديمة، بما فيها مخارج الشركة المصنّعة إذا كانت وحدة السيارة تدعمها. اضغط على قيمة لمعاينتها. تُطبَّق التغييرات عند إعادة الاتصال.</string>
+    <string name="contrib_audio_home_toggle_audio_focus">التركيز الصوتي</string>
+    <string name="contrib_audio_home_toggle_audio_focus_desc">تطلب وسائط CarPlay التركيز الصوتي. إذا اختفى الصوت عند تفعيله (بعض وحدات السيارة لا تتعامل معه جيدًا)، فأوقفه. تُطبَّق التغييرات عند إعادة الاتصال.</string>
+    <string name="audio_focus_auto_yield">كتم الوسائط عند فقدان التركيز الصوتي مؤقتًا</string>
+    <string name="audio_focus_auto_yield_desc">عند تفعيل التركيز الصوتي، تُكتم الوسائط أثناء مقاطعات صوت Android، بما فيها المكالمات. يعود الصوت عند استعادة التركيز. أوقف هذا الخيار إذا كانت وحدة السيارة لا تعيد التركيز الصوتي. تُطبَّق التغييرات عند إعادة الاتصال.</string>
+</resources>

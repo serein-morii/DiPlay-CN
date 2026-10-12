@@ -50,7 +50,7 @@ class MainActivity : Activity() {
         override fun onServiceDisconnected(name: ComponentName) {
             service = null
             attached = false
-            show("DiPlay stopped; waiting for it to come back")
+            show(getString(R.string.maphost_stopped))
         }
     }
 
@@ -81,15 +81,15 @@ class MainActivity : Activity() {
             }
         }
         val buttons = LinearLayout(this).apply {
-            addView(sizeButton("Smaller", -200))
-            addView(sizeButton("Larger", 200))
+            addView(sizeButton(getString(R.string.maphost_smaller), -200))
+            addView(sizeButton(getString(R.string.maphost_larger), 200))
         }
         setContentView(LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setBackgroundColor(Color.rgb(20, 24, 32))
             setPadding(48, 48, 48, 48)
             addView(TextView(context).apply {
-                text = "My launcher"; setTextColor(Color.WHITE); textSize = 32f
+                text = getString(R.string.maphost_title); setTextColor(Color.WHITE); textSize = 32f
             })
             addView(status)
             addView(buttons)
@@ -105,12 +105,12 @@ class MainActivity : Activity() {
         val intent = Intent(ACTION)
         val info = packageManager.queryIntentServices(intent, 0).firstOrNull()?.serviceInfo
         if (info == null) {
-            show("DiPlay is not installed")
+            show(getString(R.string.maphost_not_installed))
             return
         }
         intent.setClassName(info.packageName, info.name)
         bound = bindService(intent, connection, BIND_AUTO_CREATE)
-        show(if (bound) "Connecting to ${info.packageName}" else "DiPlay refused the connection")
+        show(if (bound) getString(R.string.maphost_connecting, info.packageName) else getString(R.string.maphost_refused))
     }
 
     override fun onStop() {
@@ -131,7 +131,7 @@ class MainActivity : Activity() {
             putInt(KEY_WIDTH, mapView.width)
             putInt(KEY_HEIGHT, mapView.height)
         }
-        show("Asking DiPlay for the map")
+        show(getString(R.string.maphost_requesting))
     }
 
     private fun onReply(message: Message) {
@@ -140,7 +140,7 @@ class MainActivity : Activity() {
                 @Suppress("DEPRECATION")
                 val surfacePackage = message.data.getParcelable<SurfaceControlViewHost.SurfacePackage>(KEY_SURFACE_PACKAGE)
                 if (surfacePackage == null) {
-                    show("DiPlay sent no map")
+                    show(getString(R.string.maphost_missing))
                     return
                 }
                 mapView.setChildSurfacePackage(surfacePackage)
@@ -152,9 +152,9 @@ class MainActivity : Activity() {
                 attached = false
                 show(
                 when (message.data.getString(KEY_ERROR)) {
-                    ERROR_DISABLED -> "Turn on \"Share the live map with other launchers\" in DiPlay"
-                    ERROR_UNSUPPORTED -> "This head unit is too old (Android 11 or newer is needed)"
-                    else -> "DiPlay could not show the map: ${message.data.getString(KEY_ERROR)}"
+                    ERROR_DISABLED -> getString(R.string.maphost_disabled)
+                    ERROR_UNSUPPORTED -> getString(R.string.maphost_unsupported)
+                    else -> getString(R.string.maphost_error, message.data.getString(KEY_ERROR))
                 },
                 )
             }
@@ -162,7 +162,7 @@ class MainActivity : Activity() {
     }
 
     private fun streamText(active: Boolean) =
-        if (active) "Live map from DiPlay. Tap it to open CarPlay." else "Map attached; waiting for CarPlay"
+        getString(if (active) R.string.maphost_live else R.string.maphost_waiting)
 
     private fun send(what: Int, fill: Bundle.() -> Unit) {
         val target = service ?: return

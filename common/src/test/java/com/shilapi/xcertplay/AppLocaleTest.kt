@@ -104,6 +104,23 @@ class AppLocaleTest {
         assertEquals("應用程式語言", wrapped.getString(R.string.language_app_language))
     }
 
+    @Test fun japaneseIsSelectableOnAndroid13() {
+        AppLocale.save(context, AppLocale.JAPANESE)
+        assertEquals("ja", manager.applicationLocales.toLanguageTags())
+        assertEquals(AppLocale.JAPANESE, AppLocale.preference(context))
+        assertEquals("日本語", AppLocale.displayName(context, AppLocale.JAPANESE))
+        assertSame(context, AppLocale.wrap(context))
+    }
+
+    @Test @Config(sdk = [28, 32])
+    fun japaneseWorksOnOlderAndroidAndUsesTranslatedResources() {
+        AppLocale.save(context, AppLocale.JAPANESE)
+        val wrapped = AppLocale.wrap(context)
+        assertEquals("ja", wrapped.resources.configuration.locales.toLanguageTags())
+        assertEquals("アプリの言語", wrapped.getString(R.string.language_app_language))
+        assertEquals(View.LAYOUT_DIRECTION_LTR, wrapped.resources.configuration.layoutDirection)
+    }
+
     @Test @Config(sdk = [28, 32])
     fun systemTraditionalRegionsResolveTraditionalResourcesWithoutAnOverride() {
         AppLocale.save(context, AppLocale.SYSTEM)
@@ -124,10 +141,18 @@ class AppLocaleTest {
         assertEquals(AppLocale.SYSTEM, AppLocale.preference(context))
     }
 
-    @Test @Config(sdk = [28], qualifiers = "ja")
+    @Test @Config(sdk = [28], qualifiers = "it")
     fun firstLaunchOnUnsupportedLanguageDefaultsToSimplifiedChinese() {
         AppLocale.wrap(context)
         val wrapped = AppLocale.wrap(context)
         assertEquals(Locale.SIMPLIFIED_CHINESE.language, wrapped.resources.configuration.locales[0].language)
+    }
+
+    @Test @Config(sdk = [28], qualifiers = "ja")
+    fun firstLaunchKeepsJapaneseNowThatItIsSupported() {
+        val wrapped = AppLocale.wrap(context)
+        assertEquals(AppLocale.SYSTEM, AppLocale.preference(context))
+        assertEquals("ja", wrapped.resources.configuration.locales[0].language)
+        assertEquals("アプリの言語", wrapped.getString(R.string.language_app_language))
     }
 }

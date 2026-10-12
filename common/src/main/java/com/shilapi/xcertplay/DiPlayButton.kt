@@ -8,8 +8,9 @@ import android.graphics.drawable.GradientDrawable
 import android.graphics.drawable.RippleDrawable
 import android.graphics.drawable.StateListDrawable
 import android.widget.Button
+import androidx.core.graphics.ColorUtils
 
-internal enum class DiPlayButtonKind { PRIMARY, SECONDARY, DANGER }
+internal enum class DiPlayButtonKind { PRIMARY, SECONDARY, DANGER, TONAL_DANGER }
 
 /**
  * Button for views built in code outside `DiPlayActivity`, whose own `button()` stays private.
@@ -60,6 +61,14 @@ internal class DiPlayButton(context: Context) : Button(context) {
                 fill = palette.overlayDanger
                 text = Color.WHITE
                 stroke = fill
+            }
+            DiPlayButtonKind.TONAL_DANGER -> {
+                val surface = if (overlay) palette.overlayBackground else palette.surface
+                fill = ColorUtils.blendARGB(surface, palette.overlayDanger, 0.16f)
+                text = if (ColorUtils.calculateLuminance(surface) < 0.5)
+                    ColorUtils.blendARGB(palette.overlayDanger, Color.WHITE, 0.40f)
+                else palette.overlayDanger
+                stroke = ColorUtils.blendARGB(surface, palette.overlayDanger, 0.48f)
             }
         }
         val radius = minOf(24f * density, (if (height > 0) height else minHeight) * 20f / 56)

@@ -4,6 +4,7 @@ import android.app.AlertDialog
 import android.os.Looper
 import android.provider.Settings
 import com.shilapi.xcertplay.adb.LocalAdb
+import java.io.File
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.CopyOnWriteArrayList
@@ -192,10 +193,26 @@ class UsbPermissionSetupTest {
             "; printf '%s' \"\$saved\" ); result=\$?; if [ \"\$result\" != 0 ]; then printf UNCHANGED; fi;"
     )
 
+    @Test fun shellHarnessPreservesQuotedArgumentsAndLiteralMetacharacters() {
+        assertEquals("two words\n\"quoted\"\n\$literal", runShell(
+            "printf '%s\\n' 'two words' '\"quoted\"'; printf '%s' '\$literal'",
+        ))
+    }
+
     private fun runShell(script: String): String {
-        val process = ProcessBuilder("sh", "-c", script).redirectErrorStream(true).start()
-        assertTrue(process.waitFor(3, TimeUnit.SECONDS))
-        return process.inputStream.bufferedReader().readText()
+        val gitShell = File(System.getenv("ProgramFiles") ?: "C:/Program Files", "Git/bin/sh.exe")
+        val shell = System.getenv("DIPLAY_TEST_SHELL")
+            ?: if (File.separatorChar == '\\' && gitShell.isFile) gitShell.absolutePath else "sh"
+        // Windows reconstructs the -c argument and can strip its embedded quotes.
+        // Stdin delivers the exact Android shell command, without a host command-line parser.
+        val process = ProcessBuilder(shell).redirectErrorStream(true).start()
+        try {
+            process.outputStream.bufferedWriter(Charsets.UTF_8).use { it.write(script + "\n") }
+            assertTrue(process.waitFor(3, TimeUnit.SECONDS))
+            return process.inputStream.bufferedReader(Charsets.UTF_8).readText()
+        } finally {
+            process.destroy()
+        }
     }
 
     private class FakeClient : UsbPermissionSetup.Client {

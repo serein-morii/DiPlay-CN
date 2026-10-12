@@ -52,8 +52,56 @@ class AdaptiveSettingsUiTest {
     private val context get() = RuntimeEnvironment.getApplication()
     private var activity: DiPlayActivity? = null
 
+    @Test
+    @Config(sdk = [29], qualifiers = "ja-w320dp-h600dp")
+    fun japaneseSettingsDoNotEllipsizeVisibleTextOnNarrowScreens() {
+        verifySettingsDoNotEllipsizeVisibleText("アプリの言語")
+    }
+
+    @Test
+    @Config(sdk = [29], qualifiers = "zh-rTW-w320dp-h600dp-xhdpi")
+    fun traditionalChineseSettingsFitNarrowScreensWithLargeFonts() {
+        RuntimeEnvironment.setFontScale(1.3f)
+        AirPlayPersistence.saveAudioFocusEnabled(context, true)
+        verifySettingsDoNotEllipsizeVisibleText("應用程式語言")
+    }
+
+    @Test
+    @Config(sdk = [29], qualifiers = "zh-rTW-w1000dp-h700dp-xhdpi")
+    fun traditionalChineseSettingsFitExpandedScreensWithLargeFonts() {
+        RuntimeEnvironment.setFontScale(1.3f)
+        AirPlayPersistence.saveAudioFocusEnabled(context, true)
+        verifySettingsDoNotEllipsizeVisibleText("應用程式語言")
+    }
+
+    private fun verifySettingsDoNotEllipsizeVisibleText(languageLabel: String) {
+        val screen = openSettings()
+        assertEquals(languageLabel, screen.getString(R.string.language_app_language))
+
+        fun verifyVisibleText() {
+            layoutRoot(screen)
+            for (view in texts(screen)) {
+                if (view.visibility != View.VISIBLE) continue
+                val lines = view.layout ?: continue
+                for (line in 0 until lines.lineCount) {
+                    assertEquals("Truncated localized label: ${view.text}", 0, lines.getEllipsisCount(line))
+                }
+            }
+        }
+
+        verifyVisibleText()
+        for (category in SettingsCategory.entries.filter { it != SettingsCategory.OVERVIEW }) {
+            ReflectionHelpers.callInstanceMethod<Unit>(
+                screen, "openSettingsCategory",
+                ReflectionHelpers.ClassParameter(SettingsCategory::class.java, category),
+            )
+            verifyVisibleText()
+        }
+    }
+
     @After fun tearDown() {
         activity?.finish()
+        RuntimeEnvironment.setFontScale(1f)
         AppAppearanceRuntime.resetForTest()
         context.getSharedPreferences("diplay", 0).edit().clear().commit()
         context.getSharedPreferences("xcertplay_airplay", 0).edit().clear().commit()
@@ -283,13 +331,24 @@ class AdaptiveSettingsUiTest {
         val screen = openSettings()
         fun box() = descendants(screen.window.decorView).filterIsInstance<EditText>()
             .single { it.contentDescription == screen.getString(R.string.settings_search) }
-        assertFalse("Opening settings must not focus the search box", box().hasFocus())
-        assertFalse(texts(screen).any { it is android.widget.Button && it.text == screen.getString(R.string.settings_search) })
+        assertTrue(descendants(screen.window.decorView).none { it is EditText })
+        descendants(screen.window.decorView).single {
+            it.contentDescription == screen.getString(R.string.settings_search)
+        }.performClick()
+        shadowOf(Looper.getMainLooper()).idle()
+        assertTrue(box().hasFocus())
 
+        val editor = box()
         box().setText("FRAME rate")
         shadowOf(Looper.getMainLooper()).idle()
 
-        // Indexing re-rendered the header; the new box keeps the query and focus.
+        // Typing and clearing a query must keep the keyboard's original editor.
+        assertSame(editor, box())
+        box().setText("")
+        shadowOf(Looper.getMainLooper()).idle()
+        box().setText("FRAME rate")
+        shadowOf(Looper.getMainLooper()).idle()
+        assertSame(editor, box())
         assertEquals("FRAME rate", box().text.toString())
         assertTrue(box().hasFocus())
         val popup = ReflectionHelpers.getField<PopupWindow>(screen, "settingsSearchPopup")
@@ -303,13 +362,17 @@ class AdaptiveSettingsUiTest {
         assertFalse(popup.isShowing)
         assertEquals(SettingsCategory.DISPLAY, ReflectionHelpers.getField<SettingsCategory>(screen, "settingsCategory"))
         assertTrue(texts(screen).any { it.text.startsWith(screen.getString(R.string.frame_rate) + " · ") })
-        assertEquals("", box().text.toString())
+        assertTrue(descendants(screen.window.decorView).none { it is EditText })
     }
 
     @Test fun backClosesAnOpenSearchBeforeLeavingSettings() {
         val screen = openSettings()
         fun box() = descendants(screen.window.decorView).filterIsInstance<EditText>()
             .single { it.contentDescription == screen.getString(R.string.settings_search) }
+        descendants(screen.window.decorView).single {
+            it.contentDescription == screen.getString(R.string.settings_search)
+        }.performClick()
+        shadowOf(Looper.getMainLooper()).idle()
         box().setText("no such setting zz")
         shadowOf(Looper.getMainLooper()).idle()
         val popup = ReflectionHelpers.getField<PopupWindow>(screen, "settingsSearchPopup")
@@ -320,9 +383,68 @@ class AdaptiveSettingsUiTest {
 
         assertEquals("settings", ReflectionHelpers.getField<String>(screen, "page"))
         assertFalse(popup.isShowing)
-        assertEquals("", box().text.toString())
+        assertTrue(descendants(screen.window.decorView).none { it is EditText })
         screen.onBackPressedDispatcher.onBackPressed()
         assertEquals("home", ReflectionHelpers.getField<String>(screen, "page"))
+    }
+
+    @Test fun rebuiltSearchFieldsDoNotLeaveLayoutListenersOnTheWindow() {
+        val screen = openSettings()
+        descendants(screen.window.decorView).single {
+            it.contentDescription == screen.getString(R.string.settings_search)
+        }.performClick()
+        shadowOf(Looper.getMainLooper()).idle()
+        fun globalLayoutListeners(): Int {
+            val listeners = ReflectionHelpers.getField<Any?>(screen.window.decorView.viewTreeObserver, "mOnGlobalLayoutListeners")
+                ?: return 0
+            return ReflectionHelpers.callInstanceMethod<Int>(listeners, "size")
+        }
+        val before = globalLayoutListeners()
+        repeat(5) {
+            ReflectionHelpers.callInstanceMethod<Unit>(screen, "render")
+            shadowOf(Looper.getMainLooper()).idle()
+        }
+        assertTrue(descendants(screen.window.decorView).any { it is EditText })
+        assertEquals(before, globalLayoutListeners())
+    }
+
+    @Test
+    @Config(qualifiers = "en-w900dp-h600dp-land")
+    fun backCollapsesAnEmptySearchAndFullLayoutKeepsItsExistingLabel() {
+        val screen = openSettings()
+        val button = descendants(screen.window.decorView).single {
+            it.contentDescription == screen.getString(R.string.settings_search)
+        }
+        assertTrue(button is android.widget.Button)
+        assertEquals(screen.getString(R.string.settings_search_hint), (button as TextView).text.toString())
+        button.performClick()
+        shadowOf(Looper.getMainLooper()).idle()
+        assertTrue(descendants(screen.window.decorView).any { it is EditText && it.hasFocus() })
+        screen.onBackPressedDispatcher.onBackPressed()
+        assertEquals("settings", ReflectionHelpers.getField<String>(screen, "page"))
+        assertTrue(descendants(screen.window.decorView).none { it is EditText })
+        assertTrue(descendants(screen.window.decorView).single {
+            it.contentDescription == screen.getString(R.string.settings_search)
+        }.hasFocus())
+    }
+
+    @Test
+    @Config(qualifiers = "en-w500dp-h400dp-land")
+    fun compactSearchUsesAnIconTheSameSizeAsAppearanceAndCollapsesAfterBack() {
+        val screen = openSettings()
+        fun search() = descendants(screen.window.decorView).single {
+            it.contentDescription == screen.getString(R.string.settings_search)
+        }
+        val appearance = descendants(screen.window.decorView).single { it.tag == "app_appearance_button" }
+        assertTrue(search() is android.widget.ImageButton)
+        assertEquals(appearance.layoutParams.width, search().layoutParams.width)
+        assertEquals(appearance.layoutParams.height, search().layoutParams.height)
+        search().performClick()
+        shadowOf(Looper.getMainLooper()).idle()
+        assertTrue(search() is EditText)
+        screen.onBackPressedDispatcher.onBackPressed()
+        assertTrue(search() is android.widget.ImageButton)
+        assertEquals("settings", ReflectionHelpers.getField<String>(screen, "page"))
     }
 
     @Test
@@ -827,7 +949,7 @@ class AdaptiveSettingsUiTest {
         val appearance = descendants(screen.window.decorView).single { it.tag == "app_appearance_button" }
         val actions = (appearance.parent as ViewGroup).let { header ->
             (0 until header.childCount).map(header::getChildAt)
-                .filter { it is android.widget.Button || it is EditText || it === appearance }
+                .filter { it is android.widget.Button || it is android.widget.ImageButton || it is EditText }
         }
         assertTrue(actions.size >= 3)
         assertEquals(1, actions.map { it.layoutParams.height }.toSet().size)
@@ -985,6 +1107,21 @@ class AdaptiveSettingsUiTest {
             val workers = CopyOnWriteArrayList<Thread>()
             var entered = CountDownLatch(1)
         }
+    }
+
+    // The report is troubleshooting evidence: its way onto a phone starts in Diagnostics and returns there.
+    @Test fun diagnosticsOpensThePhonePageAndBackReturnsToDiagnostics() {
+        val screen = openSettings()
+        descendants(screen.window.decorView).first { candidate ->
+            candidate.contentDescription == screen.getString(R.string.settings_open_category, screen.getString(R.string.diagnostics))
+        }.performClick()
+        texts(screen).first { it.text == screen.getString(R.string.settings_report_on_phone) }.performClick()
+        // The phone page, under the name the driver tapped.
+        assertTrue(texts(screen).any { it.text == screen.getString(R.string.settings_report_on_phone) })
+        assertFalse(texts(screen).any { it.text == screen.getString(R.string.backup_title) })
+        assertFalse(texts(screen).any { it.text == screen.getString(R.string.save_diagnostic_report) })
+        screen.onBackPressedDispatcher.onBackPressed()
+        assertTrue(texts(screen).any { it.text == screen.getString(R.string.save_diagnostic_report) })
     }
 
     private fun openSettings(): DiPlayActivity = Robolectric.buildActivity(

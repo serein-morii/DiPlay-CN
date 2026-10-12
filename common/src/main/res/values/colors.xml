@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+    Window backgrounds must be resource references: Android 9 and older read windowBackground with
+    getResourceId(), so a literal colour there leaves the window with no background at all and
+    dialogs draw over the screen behind them (#640, #617).
+    -->
+    <color name="window_background_dark">#0C111B</color>
+    <color name="window_background_light">#E9EEF6</color>
+    <color name="dialog_background_dark">#151E2C</color>
+    <color name="dialog_background_light">#F8FAFD</color>
+</resources>

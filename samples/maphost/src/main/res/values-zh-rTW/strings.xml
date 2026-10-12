@@ -1,0 +1,16 @@
+<resources>
+    <string name="maphost_title">我的啟動器</string>
+    <string name="maphost_smaller">縮小</string>
+    <string name="maphost_larger">放大</string>
+    <string name="maphost_stopped">DiPlay 已停止，正在等待重新啟動</string>
+    <string name="maphost_not_installed">尚未安裝 DiPlay</string>
+    <string name="maphost_connecting">正在連線 %1$s</string>
+    <string name="maphost_refused">DiPlay 拒絕連線</string>
+    <string name="maphost_requesting">正在向 DiPlay 要求地圖</string>
+    <string name="maphost_missing">DiPlay 未提供地圖</string>
+    <string name="maphost_disabled">請在 DiPlay 中開啟「與其他啟動器共用即時地圖」</string>
+    <string name="maphost_unsupported">此車機的 Android 版本過舊，需要 Android 11 以上</string>
+    <string name="maphost_error">DiPlay 無法顯示地圖：%1$s</string>
+    <string name="maphost_live">DiPlay 即時地圖。點選以開啟 CarPlay。</string>
+    <string name="maphost_waiting">地圖已連接，正在等待 CarPlay</string>
+</resources>

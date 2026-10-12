@@ -288,6 +288,17 @@ object AirPlayPersistence {
             .apply()
     }
 
+    /** Applies a nonzero setup-guide default only when no current or legacy choice exists. */
+    fun applySetupNavigationAudioChannelDefault(context: Context, channel: Int): Boolean {
+        if (channel !in AUDIO_CHANNELS || channel == 0) return false
+        val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        if (prefs.contains(KEY_NAVIGATION_AUDIO_CHANNEL) || prefs.contains(KEY_NAVIGATION_STREAM_TYPE)) return false
+        prefs.edit()
+            .putInt(KEY_NAVIGATION_AUDIO_CHANNEL, channel)
+            .apply()
+        return true
+    }
+
     fun loadWirelessEnabled(context: Context): Boolean =
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
             .getBoolean(KEY_WIRELESS_ENABLED, true)

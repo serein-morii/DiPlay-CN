@@ -57,6 +57,24 @@ class CarHotspotAdbFallbackTest {
         assertTrue(commands.all { it.endsWith("help") })
     }
 
+    @Test fun theReportSaysWhyTheAdbPathStopped() {
+        // #616: an Android 10 DiLink 3.0 failed within 90 ms and the report did not say which step stopped.
+        val logs = mutableListOf<String>()
+        CarHotspotAdbFallback.start(deadline(), { false }, { null }, { _, _ -> null }, { logs += it })
+        assertEquals(listOf("car hotspot: ADB cannot read the AP state; not starting it"), logs)
+
+        logs.clear()
+        CarHotspotAdbFallback.start(deadline(), { false }, { false }, { _, _ -> "Connectivity service commands:\n  help" }, { logs += it })
+        assertEquals(listOf("car hotspot: firmware lists no hotspot start command in cmd connectivity/tethering help"), logs)
+
+        logs.clear()
+        CarHotspotAdbFallback.start(deadline(), { false }, { false }, { command, _ ->
+            if (command.endsWith("help")) "  start-tethering wifi" else "\nSecurityException: no tether permission\nDIPLAY_HOTSPOT_EXIT:0"
+        }, { logs += it })
+        assertEquals(listOf("car hotspot: firmware rejected 'cmd connectivity start-tethering wifi': " +
+            "SecurityException: no tether permission"), logs)
+    }
+
     @Test fun unknownAppStatusCanBeConfirmedThroughCurrentTetheredApDump() {
         var on = false
         assertTrue(CarHotspotAdbFallback.start(deadline(), { false }, { null }, { command, _ ->

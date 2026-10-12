@@ -1,3 +1,14 @@
+# DiPlay 0.2.19 — 2026-10-12
+
+- Start wired CarPlay several seconds sooner by not waiting 2 s on each refused USB network write, ask for CarPlay mode first on iOS 26, grant USB access through approved ADB on Android 7.1–9 head units without a USB permission page, and let Auto-confirm USB permission find the system dialog (#644, #689).
+- Report the playback position of 16 kHz calls, Siri and navigation prompts at their own rate instead of three times too fast, restart a microphone whose first read fails, and stop background music underruns from a 0.5 s audio wait (#644).
+- Keep CarPlay from restarting at the first touch with the DiLink 4 dashboard map on and from staying scaled down after the reversing camera, show the last picture when a SurfaceView output comes back, and redesign the in-CarPlay settings menu (#663, #674, #669, #642).
+- Japanese, complete Traditional Chinese with guides, and 67 more Arabic strings (#646, #691, #682, #681, #631).
+- Download the diagnostic report on a phone by QR code or a typed address and code, keep the phone page answering behind idle connections, show connection recovery tips and a Bluetooth-off message, and fix wireless CarPlay on MIUI 13 (#686, #687, #685, #677, #679, #673).
+- Set BYD navigation audio defaults on a first setup, add an optional album-artwork card on the dashboard map, record why the car hotspot could not be started, and fall back to the default Bluetooth adapter (#656, #660, #667, #641).
+
+See [0.2.19 release notes](docs/RELEASE-NOTES-0.2.19.md) for contribution links and limits, and [validation](docs/VALIDATION.md) for checks. Full-release vehicle acceptance is not claimed.
+
 # DiPlay 0.2.18 — 2026-10-11
 
 - Keep wired sessions running when a USB read finishes as DiPlay stops waiting for it, start wired CarPlay on Android 7.1 head units, when a head-unit USB audio driver holds the iPhone, and without a VPN dialog over approved network ADB (#625, #614, #618).

@@ -207,7 +207,7 @@
     <string name="frame_rate">影格率</string>
     <string name="full_screen">全螢幕顯示</string>
     <string name="adapt_pip_resolution">畫中畫與分割畫面自適應</string>
-    <string name="adapt_pip_resolution_description">切換至桌面畫中畫或分割畫面浮動小視窗時，自動斷開重連以適應視窗解析度，消除上下左右黑邊。保持關閉可實現 0 毫秒 GPU 秒級自適應且不重連。</string>
+    <string name="adapt_pip_resolution_description">重新連線 CarPlay，讓串流解析度適應多視窗或畫中畫的長寬比。保持關閉時，使用 GPU 即時縮放，不需重新連線。</string>
     <string name="fullscreen">全螢幕</string>
     <string name="getting_carplay_ready">正在準備 CarPlay…</string>
     <string name="got_it">知道了</string>
@@ -380,6 +380,7 @@
     <string name="token_optional">權杖（選用）</string>
     <string name="transport_error_reconnecting">傳輸錯誤；正在重新連線</string>
     <string name="turn_on_bluetooth">開啟藍牙</string>
+    <string name="turn_on_bluetooth_in_the_head_unit_s_settings_to_connect">請在車機設定中開啟藍牙後再連線。</string>
     <string name="turn_on_wi_fi_in_the_head_unit_s_settings_to_connect">請在車機設定中開啟 Wi-Fi 後再連線。</string>
     <string name="turn_the_car_s_wi_fi_switch_on_allow_location_nearby_devic">開啟車機的 Wi-Fi 開關。如有提示，請允許位置／附近的裝置權限，並在 Android 詢問時啟用位置。如果播放卡頓，請嘗試使用 5 GHz 的內建車機熱點。</string>
     <string name="usage_access_enabled">使用狀況存取權限：已啟用</string>
@@ -553,7 +554,7 @@
     <string name="center_map_auto_hide_description">開啟音樂、倒車影像、全螢幕設定等App時自動隱藏浮動視窗，返回桌面時自動恢復</string>
     <string name="center_map_auto_hide_active">離開桌面自動隱藏：已開啟（使用狀況存取權限 / 輔助使用服務）</string>
     <string name="center_map_auto_hide_needed">離開桌面自動隱藏：未開啟。請開啟輔助使用服務或透過 ADB 授予使用狀況存取權限。</string>
-    <string name="center_map_card_description">DiPlay 在背景運行時，儀表板地圖也會以卡片形式顯示在主螢幕上：比亞迪主螢幕、地圖主螢幕或你的預設啟動器。點選卡片開啟 CarPlay，拖曳可移動卡片，雙指縮放可調整大小。儀表板上的地圖不受影響。需要“顯示在其他App上層”權限。</string>
+    <string name="center_map_card_description">DiPlay 在背景執行時，儀表板地圖也會以卡片形式顯示在主螢幕上：比亞迪主螢幕、地圖主螢幕或你的預設啟動器。點選卡片開啟 CarPlay，拖曳可移動卡片，雙指縮放可調整大小。儀表板上的地圖不受影響。需要“顯示在其他App上層”權限。</string>
     <string name="center_map_overlay_allowed">顯示在其他App上層：已允許</string>
     <string name="center_map_overlay_missing">顯示在其他應用程式上層：未允許。請在應用程式設定中允許，或透過 ADB：adb shell appops set %1$s SYSTEM_ALERT_WINDOW allow</string>
     <string name="center_map_usage_allowed">使用狀況存取權限：已允許，卡片只在主螢幕上顯示</string>
@@ -563,7 +564,7 @@
     <string name="launcher_map_sharing_description">支援 DiPlay 的啟動器可以在自己的主螢幕中顯示即時儀表板地圖。預設關閉，因為開啟後車機上的任何App都可以請求該地圖。詳見 docs/LAUNCHER_INTEGRATION.md。</string>
     <string name="adb_cluster_activity_label">儀表地圖</string>
     <string name="adb_cluster_activity_mode">DiLink 4 儀表影片（ADB，實驗性）</string>
-    <string name="adb_cluster_activity_description">透過內建ADB直接在已驗證儀表副屏啟動地圖。請先授權ADB，再重新連線iPhone。</string>
+    <string name="adb_cluster_activity_description">透過內建ADB直接在已驗證儀表副螢幕啟動地圖。請先授權ADB，再重新連線iPhone。</string>
     <string name="adb_cluster_authorize">授權 ADB / 再試一次儀表移動</string>
     <string name="adb_cluster_open">再試一次儀表地圖</string>
     <string name="adb_cluster_routing">正在透過ADB啟動儀表地圖…</string>
@@ -581,15 +582,15 @@
     <string name="hotspot_permission_granted">授權成功。</string>
     <string name="hotspot_permission_failed">未獲得所請求的權限。請檢查車機設定後再試一次。</string>
     <string name="hotspot_control_on">車機熱點已開啟。</string>
-    <string name="hotspot_control_unsupported">當前韌體不支援自動開啟熱點，請在車機設定中開啟。</string>
+    <string name="hotspot_control_unsupported">目前韌體不支援自動開啟熱點，請在車機設定中開啟。</string>
     <string name="hotspot_control_timeout">等待車機熱點開啟超時，請在車機設定中開啟。</string>
     <string name="hotspot_control_failed">車機熱點開啟失敗，請在車機設定中開啟。</string>
     <string name="byd_adb_features">比亞迪功能 · 需要 ADB</string>
-    <string name="location_reporting_reconnects">變更此設定會重新連線當前 CarPlay 會話。</string>
+    <string name="location_reporting_reconnects">變更此設定會重新連線進行中的 CarPlay。</string>
     <string name="diagnostic_report_saved_in_app">由於公開儲存位置無法使用，報告已私密儲存到 DiPlay。您可以在此分享或檢視報告。不會自動傳送任何內容。</string>
     <string name="diagnostic_report_saved_to_path">報告已儲存到：\n%1$s\n\n您也可以在此分享或檢視報告。不會自動傳送任何內容。</string>
     <string name="view_diagnostic_report">檢視報告</string>
-    <string name="diagnostic_report_copy_hint">長按報告文本即可選擇並複製。如果沒有可用的分享App，可以使用此方式。</string>
+    <string name="diagnostic_report_copy_hint">長按報告文字即可選擇並複製。如果沒有可用的分享App，可以使用此方式。</string>
     <string name="wheel_map_zoom">用方向盤按鍵縮放儀表板地圖</string>
     <string name="wheel_map_zoom_description">儀表板顯示 CarPlay 地圖時，比亞迪自訂按鍵可在音量和儀表板地圖縮放之間切換音量鍵。通話時按鍵始終調整音量。部分車型的中控音量與方向盤傳送相同按鍵，因此縮放模式下它也會縮放地圖。使用 DiPlay 方向盤按鍵服務；儀表板上的提示需要 ADB。</string>
     <string name="wheel_keys_service_on">方向盤按鍵服務：已開啟</string>
@@ -634,7 +635,7 @@
     <string name="wheel_key_none">無</string>
     <string name="wheel_key_in_use">此按鍵已用於%1$s。請選擇其他按鍵。</string>
     <string name="wheel_siri_key">方向盤 Siri 按鍵</string>
-    <string name="wheel_siri_key_description">在 CarPlay 顯示於螢幕時，用你選擇的方向盤按鍵開啟 Siri。車輛自身保留的按鍵只能搭配方向盤按鍵服務使用，該服務在 CarPlay 處於背景時也可使用。未連接 CarPlay 或通話時，該按鍵保留車輛原有功能。</string>
+    <string name="wheel_siri_key_description">在 CarPlay 顯示於螢幕時，用你選擇的方向盤按鍵開啟 Siri。車輛自身保留的按鍵只能搭配方向盤按鍵服務使用，該服務在 CarPlay 處於背景時也可使用。未連線 CarPlay 或通話時，該按鍵保留車輛原有功能。</string>
     <string name="wheel_key_role_back">返回</string>
     <string name="wheel_key_service_label">DiPlay 方向盤按鍵</string>
     <string name="wheel_key_service_description">可選的方向盤按鍵過濾，用於導航播報音量、儀表地圖縮放、CarPlay 搖桿及通話控制。不讀取螢幕內容。</string>
@@ -643,7 +644,7 @@
     <string name="cluster_safe_area_edit">儀表安全區域 · 編輯框</string>
     <string name="cluster_safe_area_reset">重設儀表安全區域</string>
     <string name="cluster_safe_area_hint">拖曳四條綠色邊界，儲存後在下次 CarPlay 連線時生效。自訂區域會替代車輛標記偏移，重設後恢復。</string>
-    <string name="cluster_safe_area_live_hint">在此拖曳綠色邊界，儀表會同步顯示區域框。儲存後重新連線生效；取消保留當前區域。</string>
+    <string name="cluster_safe_area_live_hint">在此拖曳綠色邊界，儀表會同步顯示區域框。儲存後重新連線生效；取消保留目前區域。</string>
     <string name="oem_cluster_map">隱藏原車儀表地圖</string>
     <string name="oem_cluster_map_description">可選：DiPlay 投放期間暫停原車地圖的儀表投放。關閉時不修改原車地圖。組件模式只隱藏儀表投放，整套模式會停用整個原車地圖，停止投放後恢復原狀態。需要已授權的本機 ADB，重新連線後生效。</string>
     <string name="oem_cluster_hold_off">關閉</string>
@@ -710,7 +711,7 @@
     <string name="settings_direct_video_output">直接影片輸出（實驗性）</string>
     <string name="settings_direct_video_output_description">將 CarPlay 畫面直接交給車機的系統合成器，而不是在 DiPlay 視窗內繪製。可將延遲降低約一次螢幕更新。畫面調整不適用。會重新連線至 CarPlay。</string>
     <string name="settings_low_latency_decoder">低延遲解碼（實驗性）</string>
-    <string name="settings_low_latency_decoder_description">要求高通影片解碼器在每一幀解碼後立即輸出，而不是保留後續幀，並由專用執行緒立即顯示每個已解碼的幀，無需等待下一幀到達。可將延遲降低數十毫秒。如果畫面出現花屏或凍結，請關閉。下次連線時生效。</string>
+    <string name="settings_low_latency_decoder_description">要求高通影片解碼器在每一幀解碼後立即輸出，而不是保留後續幀，並由專用執行緒立即顯示每個已解碼的幀，無需等待下一幀到達。可將延遲降低數十毫秒。如果畫面出現破圖或凍結，請關閉。下次連線時生效。</string>
     <string name="settings_fps_counter">FPS 計數器</string>
     <string name="settings_fps_counter_description">在 CarPlay 右上角顯示計數器：每秒顯示的幀數（50 以上為綠色，30 以上為黃色，低於 30 為紅色）、每秒從 iPhone 接收的幀數以及解碼時間。畫面靜止時幀數很少，因為 iPhone 不會傳送幀。</string>
     <string name="manual_grant_cmd_hint">或在電腦上執行以下 ADB 指令：</string>
@@ -801,7 +802,9 @@
     <string name="backup_open_description">顯示 QR 碼，同一網路內的手機瀏覽器即可匯出或匯入 DiPlay 設定。離開頁面後服務自動停止。</string>
     <string name="backup_page_hint">用手機相機掃碼，在瀏覽器中開啟此頁面。匯出儲存設定檔，匯入載入設定檔。</string>
     <string name="backup_other_addresses">若掃碼無法開啟，請嘗試將瀏覽器中的 IP 位址改為 %1$s。</string>
-    <string name="backup_no_network">沒有可用的 Wi-Fi 網路。請先開啟車載熱點，或讓手機連接車機 Wi-Fi。</string>
+    <string name="backup_no_network">沒有可用的 Wi-Fi 網路。請先開啟車載熱點，或讓手機連線至車機 Wi-Fi。</string>
+    <string name="backup_type_address">沒有相機？在瀏覽器中開啟 %1$s，然後輸入驗證碼 %2$s。</string>
+    <string name="backup_code_entry_closed">驗證碼輸入錯誤次數過多，已停用。請離開此頁面後重新開啟，以取得新的驗證碼。掃碼仍可使用。</string>
     <string name="backup_summary">已匯入 %1$d 項設定，略過 %2$d 項。</string>
     <string name="backup_import_invalid">這不是 DiPlay 設定備份檔。</string>
     <string name="settings_background_update_checks">在背景檢查更新</string>
@@ -844,7 +847,7 @@
     <string name="settings_gesture_disabled">關閉</string>
     <string name="settings_gesture_disabled_hint">已關閉向下滑動開啟快捷選單的手勢。</string>
     <string name="settings_gesture_disabled_action">快捷選單 · 關閉向下滑動（點選切換）</string>
-    <string name="cluster_small_window_card_opacity">小屏轉向卡 · 透明度</string>
+    <string name="cluster_small_window_card_opacity">小螢幕轉向卡 · 透明度</string>
 
     <!-- Optional BYD ambient lighting. -->
     <string name="settings_ambient_title">氛圍燈（實驗性）</string>
@@ -881,9 +884,9 @@
     <string name="settings_ambient_checking">檢查中…</string>
     <string name="settings_ambient_unavailable">唯讀檢查失敗：缺少既有 ADB 授權或支援的燈光介面。未儲存燈光設定。請停車後另行設定存取；本功能不啟用 ADB，也不請求授權。</string>
     <string name="settings_disable_media_key_audio_focus">停用媒體按鍵音訊焦點（實驗性）</string>
-    <string name="settings_disable_media_key_audio_focus_description">CarPlay 音樂播放時不再由 DiPlay 要求媒體音訊焦點。若車機將實體音量鍵導向 DiPlay，導致音量鍵無法調整音量，請開啟此項。部分依賴音訊焦點的車機可能無法繼續使用方向盤播放、暫停和切歌鍵。下次連接 CarPlay 時生效。</string>
+    <string name="settings_disable_media_key_audio_focus_description">CarPlay 音樂播放時不再由 DiPlay 要求媒體音訊焦點。若車機將實體音量鍵導向 DiPlay，導致音量鍵無法調整音量，請開啟此項。部分依賴音訊焦點的車機可能無法繼續使用方向盤播放、暫停和切歌鍵。下次連線至 CarPlay 時生效。</string>
     <string name="settings_ambient_album">跟隨專輯封面</string>
-    <string name="settings_ambient_album_description">按封面取色並近似匹配原車可用色號。灰黑或無封面時使用全部31色；大面積白色封面可使用白色或冷白。</string>
+    <string name="settings_ambient_album_description">按封面取色並近似對應原車可用色號。灰黑或無封面時使用全部31色；大面積白色封面可使用白色或冷白。</string>
     <string name="settings_cluster_speedometer">儀表板速度計（實驗性）</string>
     <string name="settings_cluster_speedometer_description">透過已授權的 ADB 顯示車輛速度。讀數無法取得或過期時隱藏。變更立即生效。</string>
     <string name="settings_cluster_speedometer_horizontal">速度計水平位置</string>
@@ -898,4 +901,25 @@
     <string name="bluetooth_connections_not_real">此車機的系統藍牙回報「已連線」，但實際上沒有連到 iPhone：連一個不存在的服務也回報成功。這裡的藍牙由廠商自己的模組處理，App 無法使用，所以此車機無法使用無線 CarPlay。請嘗試使用 USB 連線。</string>
     <string name="settings_fce_cluster_guidance">FCE 儀表導航（實驗性）</string>
     <string name="settings_fce_cluster_guidance_description">在 FCE 平台車機上，透過車機的車輛服務把 CarPlay 轉向箭頭和到下一路口的距離顯示在儀表的導航畫面。僅在一輛車上測試過；如果儀表顯示異常，請關閉。</string>
+    <string name="settings_cluster_music">儀表音樂（實驗性）</string>
+    <string name="settings_cluster_music_description">在儀表地圖上顯示方形專輯封面。可選擇暫時（8秒）或常駐封面；切歌時，歌曲名稱和藝人始終在封面上顯示8秒。位置和大小變更立即生效。需要儀表投影及iPhone歌曲資訊。</string>
+    <string name="settings_cluster_music_mode">封面顯示模式</string>
+    <string name="settings_cluster_music_temporary">暫時 · 8秒</string>
+    <string name="settings_cluster_music_permanent">常駐</string>
+    <string name="settings_cluster_music_horizontal">音樂卡片 · 水平位置</string>
+    <string name="settings_cluster_music_vertical">音樂卡片 · 垂直位置</string>
+    <string name="settings_cluster_music_size">音樂卡片 · 大小</string>
+    <string name="settings_cluster_music_unknown">未知藝人</string>
+    <string name="connection_help_reset_wifi">先前的 Wi-Fi Direct 連線可能阻止新連線。點選下方的「重設 CarPlay Wi-Fi」，再重新連線。</string>
+    <string name="connection_help_bluetooth_unusable">此車機的藍牙無法將資料傳送到 iPhone，因此無法使用無線 CarPlay。請使用支援資料傳輸的 USB 線。</string>
+    <string name="connection_help_hotspot">請確認車機熱點已開啟，且名稱與密碼和 DiPlay 設定相同。如有支援，改用 5 GHz 後重試。</string>
+    <string name="connection_help_iphone_wifi">保持 Wi-Fi 與藍牙開啟。在 iPhone 上加入車機熱點並啟用自動加入，再重試。若仍失敗，請儲存診斷報告。</string>
+    <string name="connection_help_permissions">請在車機上允許 DiPlay 所需的 USB、附近裝置或位置資訊權限，再重試。</string>
+    <string name="connection_help_usb">使用支援資料傳輸的 USB 連接埠和線材。解鎖 iPhone，允許信任及 CarPlay 提示，再重試。</string>
+    <string name="connection_help_bluetooth">解鎖 iPhone，開啟藍牙與 Wi-Fi，並與車機配對。讓 iPhone 保持在附近，再重試。</string>
+    <string name="connection_help_general">請重新連線。若仍失敗，請返回 DiPlay，在「設定 → 診斷」中儲存報告。</string>
+    <string name="connection_help_wifi_direct">保持車機的 Wi-Fi 與藍牙開啟，iPhone 解鎖並放在附近，再重試。若仍失敗，請在 iPhone 的「設定 → 一般 → CarPlay」中忘記這輛車，再重新連線。</string>
+    <string name="connection_help_existing_wifi">請確認車機和 iPhone 連線的是同一個 Wi-Fi 網路，且網路名稱和密碼與 DiPlay 設定相同，再重試。</string>
+    <string name="settings_report_on_phone">在手機上取得報告</string>
+    <string name="settings_report_on_phone_hint">用手機相機掃碼，在瀏覽器中開啟此頁面，然後選擇「下載報告」。下載完成前請保持此畫面開啟。</string>
 </resources>

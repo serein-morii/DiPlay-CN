@@ -137,6 +137,7 @@ internal class ClusterMapPresentation(
         root.addView(waitingLabel, FrameLayout.LayoutParams(videoParams))
         turnCardView = ClusterTurnCardView(context).apply { visibility = View.GONE }
         root.addView(turnCardView, FrameLayout.LayoutParams(-1, -1))
+        root.addView(ClusterMusicView(context), FrameLayout.LayoutParams(videoParams))
         root.addView(ClusterSpeedometerView(context), FrameLayout.LayoutParams(-1, -1))
         // Start with the placeholder visible; SurfaceView would otherwise cover the light
         // backdrop with an empty black surface before the first stream notification.

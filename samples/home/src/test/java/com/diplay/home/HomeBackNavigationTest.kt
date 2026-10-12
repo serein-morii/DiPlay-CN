@@ -7,6 +7,7 @@ import org.junit.Assert.*
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.Robolectric
+import org.robolectric.RuntimeEnvironment
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.LooperMode
@@ -16,18 +17,28 @@ import org.robolectric.annotation.LooperMode
 @LooperMode(LooperMode.Mode.PAUSED)
 class HomeBackNavigationTest {
     @Test fun backDismissesAppsBeforeLeavingWidgetEditMode() {
+        verifyBackNavigation()
+    }
+
+    @Test @Config(qualifiers = "zh-rTW")
+    fun traditionalChineseHomeKeepsEditingAndBackNavigationWorking() {
+        assertEquals("編輯", RuntimeEnvironment.getApplication().getString(R.string.home_edit))
+        verifyBackNavigation()
+    }
+
+    private fun verifyBackNavigation() {
         val controller = Robolectric.buildActivity(HomeActivity::class.java).setup().visible()
         val activity = controller.get()
         try {
-            text(activity.window.decorView, "Edit").performClick()
-            text(activity.window.decorView, "Apps").performClick()
-            val close = text(activity.window.decorView, "Close")
+            text(activity.window.decorView, activity.getString(R.string.home_edit)).performClick()
+            text(activity.window.decorView, activity.getString(R.string.home_apps)).performClick()
+            val close = text(activity.window.decorView, activity.getString(R.string.home_close))
             assertTrue(close.isShown)
             activity.onBackPressedDispatcher.onBackPressed()
             assertFalse(close.isShown)
-            assertTrue(text(activity.window.decorView, "Done").isShown)
+            assertTrue(text(activity.window.decorView, activity.getString(R.string.home_done)).isShown)
             activity.onBackPressedDispatcher.onBackPressed()
-            assertTrue(text(activity.window.decorView, "Edit").isShown)
+            assertTrue(text(activity.window.decorView, activity.getString(R.string.home_edit)).isShown)
             assertFalse(activity.isFinishing)
         } finally {
             controller.pause().stop().destroy()

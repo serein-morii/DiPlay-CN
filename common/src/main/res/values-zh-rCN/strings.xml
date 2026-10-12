@@ -77,7 +77,7 @@
     <string name="status_attaching_ncm">正在连接 NCM/AirPlay 网络</string>
     <string name="status_failed">失败：%1$s</string>
     <string name="msg_car_hotspot_off">车机热点“%1$s”未开启。请在车机设置中开启后再连接。</string>
-    <string name="home_public_preview">公开预览  ·\u0020\u0020</string>
+    <string name="home_public_preview">公开预览  ·\u0020%1$s</string>
     <string name="choose_iphone_prefix">选择 iPhone ·\u0020</string>
     <string name="audio_saved_value">已保存：%1$d</string>
     <string name="about_public_preview_prefix">公开预览 ·\u0020</string>
@@ -381,6 +381,7 @@
     <string name="token_optional">令牌（可选）</string>
     <string name="transport_error_reconnecting">传输错误；正在重新连接</string>
     <string name="turn_on_bluetooth">打开蓝牙</string>
+    <string name="turn_on_bluetooth_in_the_head_unit_s_settings_to_connect">请在车机设置中打开蓝牙后再连接。</string>
     <string name="turn_on_wi_fi_in_the_head_unit_s_settings_to_connect">请在车机设置中打开 Wi-Fi 后再连接。</string>
     <string name="turn_the_car_s_wi_fi_switch_on_allow_location_nearby_devic">打开车机的 Wi-Fi 开关。如提示请允许位置/附近的设备权限，并在 Android 询问时启用位置。如果播放卡顿，请尝试使用 5 GHz 的内置车机热点。</string>
     <string name="usage_access_enabled">使用访问权限：已启用</string>
@@ -835,6 +836,8 @@
     <string name="backup_page_hint">用手机相机扫码，在浏览器中打开此页面。导出保存设置文件，导入载入设置文件。</string>
     <string name="backup_other_addresses">若扫码无法打开，请尝试将浏览器中的 IP 地址改为 %1$s。</string>
     <string name="backup_no_network">没有可用的 Wi-Fi 网络。请先开启车载热点，或让手机连接车机 Wi-Fi。</string>
+    <string name="backup_type_address">没有相机？在浏览器中打开 %1$s，然后输入验证码 %2$s。</string>
+    <string name="backup_code_entry_closed">验证码输错次数过多，已停用。请离开此页面后重新打开，以取得新的验证码。扫码仍可使用。</string>
     <string name="backup_summary">已导入 %1$d 项设置，跳过 %2$d 项。</string>
     <string name="backup_import_invalid">这不是 DiPlay 设置备份文件。</string>
     <string name="settings_background_update_checks">在后台检查更新</string>
@@ -898,4 +901,25 @@
     <string name="bluetooth_connections_not_real">此车机的系统蓝牙回报“已连接”，但实际上没有连到 iPhone：连一个不存在的服务也回报成功。这里的蓝牙由厂商自己的模块处理，应用无法使用，所以此车机无法使用无线 CarPlay。请尝试 USB 连接。</string>
     <string name="settings_fce_cluster_guidance">FCE 仪表导航（实验性）</string>
     <string name="settings_fce_cluster_guidance_description">在 FCE 平台车机上，通过车机的车辆服务把 CarPlay 转向箭头和到下一路口的距离显示在仪表的导航界面。仅在一辆车上测试过；如果仪表显示异常，请关闭。</string>
+    <string name="settings_cluster_music">仪表音乐（实验性）</string>
+    <string name="settings_cluster_music_description">在仪表地图上显示方形专辑封面。可选择临时（8秒）或常驻封面；切歌时，歌曲名称和艺人始终在封面上显示8秒。位置和大小更改立即生效。需要仪表投屏及iPhone歌曲信息。</string>
+    <string name="settings_cluster_music_mode">封面显示模式</string>
+    <string name="settings_cluster_music_temporary">临时 · 8秒</string>
+    <string name="settings_cluster_music_permanent">常驻</string>
+    <string name="settings_cluster_music_horizontal">音乐卡片 · 水平位置</string>
+    <string name="settings_cluster_music_vertical">音乐卡片 · 垂直位置</string>
+    <string name="settings_cluster_music_size">音乐卡片 · 大小</string>
+    <string name="settings_cluster_music_unknown">未知艺人</string>
+    <string name="connection_help_reset_wifi">旧的 Wi-Fi Direct 连接可能阻止新连接。点击下方的“重置 CarPlay Wi-Fi”，然后重新连接。</string>
+    <string name="connection_help_bluetooth_unusable">此车机的蓝牙无法向 iPhone 传输数据，因此无法使用无线 CarPlay。请使用支持数据传输的 USB 线。</string>
+    <string name="connection_help_hotspot">请确认车机热点已开启，且名称和密码与 DiPlay 设置一致。若支持，使用 5 GHz 后重试。</string>
+    <string name="connection_help_iphone_wifi">保持 Wi-Fi 和蓝牙开启。在 iPhone 上连接车机热点并启用自动加入，然后重试。若仍失败，请保存诊断报告。</string>
+    <string name="connection_help_permissions">请在车机上允许 DiPlay 所需的 USB、附近设备或位置信息权限，然后重试。</string>
+    <string name="connection_help_usb">使用支持数据传输的 USB 接口和线缆。解锁 iPhone，允许信任和 CarPlay 提示，然后重试。</string>
+    <string name="connection_help_bluetooth">解锁 iPhone，开启蓝牙和 Wi-Fi，并与车机配对。保持 iPhone 在附近后重试。</string>
+    <string name="connection_help_general">请重试连接。如仍失败，请返回 DiPlay，在“设置 → 诊断”中保存报告。</string>
+    <string name="connection_help_wifi_direct">保持车机的 Wi-Fi 和蓝牙开启，iPhone 解锁并放在附近，然后重试。如果仍然失败，请在 iPhone 的“设置 → 通用 → CarPlay 车载”中忘记这辆车，再重新连接。</string>
+    <string name="connection_help_existing_wifi">请确认车机和 iPhone 连接的是同一个 Wi-Fi 网络，且网络名称和密码与 DiPlay 设置一致，然后重试。</string>
+    <string name="settings_report_on_phone">在手机上取得报告</string>
+    <string name="settings_report_on_phone_hint">用手机相机扫码，在浏览器中打开此页面，然后选择“下载报告”。下载完成前请保持此画面开启。</string>
 </resources>

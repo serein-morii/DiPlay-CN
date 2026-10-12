@@ -23,6 +23,7 @@ class Iap2UsbMuxHost private constructor(
     private var failure: IphoneUsbException? = null
     private var nextMuxSequence = 0
     private var nextMuxAcknowledgement = 0
+    private var receivedFrames = 0
     private var nextSourcePort = FIRST_SOURCE_PORT
     private lateinit var readerThread: Thread
     private val receiveFrames = UsbMuxFrameBuffer { line ->
@@ -160,7 +161,8 @@ class Iap2UsbMuxHost private constructor(
                 receiveFrames.takeFrame()?.let { frame ->
                     // LIVI only trusts the length field on receive: iPhone replies do not
                     // carry the 0xFEEDFACE word in the header's fourth field.
-                    Log.i(
+                    // One line per frame filled logcat within a minute of a wired session (#634).
+                    if (++receivedFrames <= LOGGED_RX_FRAMES) Log.i(
                         "xcertplay-usb",
                         "usbmux rx proto=${frame.protocol} length=${frame.length} word8=0x" +
                             frame.word8.toUInt().toString(16),
@@ -265,6 +267,7 @@ class Iap2UsbMuxHost private constructor(
 
     companion object {
         const val LOCKDOWN_PORT = 62078
+        private const val LOGGED_RX_FRAMES = 50
 
         private const val PROTOCOL_VERSION = 0
         private const val PROTOCOL_SETUP = 2

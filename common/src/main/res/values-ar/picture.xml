@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="picture_adjustments">ضبط الصورة</string>
+    <string name="picture_live_hint">تُطبَّق مباشرةً على فيديو CarPlay الرئيسي. تُحفظ التغييرات فورًا. عرض الأصل للمقارنة المؤقتة فقط.</string>
+    <string name="picture_show_original">عرض الأصل</string>
+    <string name="picture_done">تم</string>
+    <string name="picture_brightness">السطوع</string>
+    <string name="picture_contrast">التباين</string>
+    <string name="picture_saturation">التشبّع</string>
+    <string name="picture_warmth">دفء الألوان</string>
+    <string name="picture_reset">إعادة ضبط الصورة</string>
+</resources>

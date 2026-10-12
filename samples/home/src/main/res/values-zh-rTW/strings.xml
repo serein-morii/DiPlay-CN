@@ -1,0 +1,23 @@
+<resources>
+    <string name="home_apps">應用程式</string>
+    <string name="home_byd_home">比亞迪主畫面</string>
+    <string name="home_edit">編輯</string>
+    <string name="home_done">完成</string>
+    <string name="home_widgets">小工具</string>
+    <string name="home_add">＋ 新增</string>
+    <string name="home_close">關閉</string>
+    <string name="home_byd_unavailable">無法開啟比亞迪主畫面</string>
+    <string name="home_no_widgets">尚未安裝小工具</string>
+    <string name="home_add_widget">新增小工具</string>
+    <string name="home_allow_widgets">允許小工具</string>
+    <string name="home_allow_widgets_description">此車機沒有小工具授權畫面。請透過 ADB 為 DiPlay Home 授權一次：\n\nadb shell appwidget grantbind --package %1$s --user 0</string>
+    <string name="home_remove_widget">移除小工具</string>
+    <string name="home_map_stopped">DiPlay 已停止</string>
+    <string name="home_map_not_installed">尚未安裝 DiPlay</string>
+    <string name="home_map_connecting">正在連線 DiPlay…</string>
+    <string name="home_map_refused">DiPlay 拒絕連線</string>
+    <string name="home_map_missing">DiPlay 未提供地圖</string>
+    <string name="home_map_disabled">請在 DiPlay 中開啟\n「與其他啟動器共用即時地圖」</string>
+    <string name="home_map_unsupported">此車機的 Android 版本過舊，無法使用即時地圖</string>
+    <string name="home_map_error">DiPlay 無法顯示地圖</string>
+</resources>

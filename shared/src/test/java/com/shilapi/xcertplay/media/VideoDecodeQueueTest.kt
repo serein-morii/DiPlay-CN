@@ -73,6 +73,24 @@ class VideoDecodeQueueTest {
         assertEquals(3, attempts)
         assertEquals(-1, DecoderInputPump.acquire(running = { false }, drain = { fail() }, dequeue = { fail(); 0 }))
     }
+    @Test fun aWaitShorterThanOneDrainStillDrainsAndRetriesOnce() {
+        // Audio caps the wait at 100 ms (#649); a blocking track write can take longer than that.
+        var time = 0L
+        var drains = 0
+        var dequeues = 0
+        assertEquals(-1, DecoderInputPump.acquire(
+            running = { true }, drain = { drains++; time += 260 }, dequeue = { dequeues++; -1 },
+            nanoTime = { time }, timeoutNs = 100,
+        ))
+        assertEquals(1, drains)
+        assertEquals(1, dequeues)
+        time = 0
+        assertEquals(4, DecoderInputPump.acquire(
+            running = { true }, drain = { time += 260 }, dequeue = { 4 },
+            nanoTime = { time }, timeoutNs = 100,
+        ))
+    }
+
     @Test fun invalidatedChainDropsOldFramesAndResyncButPreservesTheNextControlSegment() {
         for (barrier in listOf(
             VideoJob.Config(VideoCodec.H264, byteArrayOf(1)), VideoJob.SurfaceChanged(null),

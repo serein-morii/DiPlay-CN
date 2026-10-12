@@ -52,7 +52,7 @@ class DiPlayMapPanel(context: Context) : FrameLayout(context) {
         override fun onServiceDisconnected(name: ComponentName) {
             service = null
             attached = false
-            show("DiPlay stopped")
+            show(context.getString(R.string.home_map_stopped))
         }
     }
 
@@ -83,12 +83,12 @@ class DiPlayMapPanel(context: Context) : FrameLayout(context) {
         val info = context.packageManager.queryIntentServices(intent, 0).firstOrNull()?.serviceInfo
         diPlayPackage = info?.packageName
         if (info == null) {
-            show("DiPlay is not installed")
+            show(context.getString(R.string.home_map_not_installed))
             return
         }
         intent.setClassName(info.packageName, info.name)
         bound = context.bindService(intent, connection, Context.BIND_AUTO_CREATE)
-        show(if (bound) "Connecting to DiPlay…" else "DiPlay refused the connection")
+        show(context.getString(if (bound) R.string.home_map_connecting else R.string.home_map_refused))
     }
 
     fun stop() {
@@ -127,7 +127,7 @@ class DiPlayMapPanel(context: Context) : FrameLayout(context) {
             MSG_ATTACHED -> {
                 @Suppress("DEPRECATION")
                 val surfacePackage = message.data.getParcelable<SurfaceControlViewHost.SurfacePackage>(KEY_SURFACE_PACKAGE)
-                    ?: return show("DiPlay sent no map")
+                    ?: return show(context.getString(R.string.home_map_missing))
                 map.setChildSurfacePackage(surfacePackage)
                 attached = true
                 // DiPlay draws its own "waiting" text until the map streams.
@@ -137,9 +137,9 @@ class DiPlayMapPanel(context: Context) : FrameLayout(context) {
                 attached = false
                 show(
                 when (message.data.getString(KEY_ERROR)) {
-                    ERROR_DISABLED -> "In DiPlay, turn on\n\"Share the live map with other launchers\""
-                    ERROR_UNSUPPORTED -> "This head unit is too old for the live map"
-                    else -> "DiPlay could not show the map"
+                    ERROR_DISABLED -> context.getString(R.string.home_map_disabled)
+                    ERROR_UNSUPPORTED -> context.getString(R.string.home_map_unsupported)
+                    else -> context.getString(R.string.home_map_error)
                 },
                 )
             }

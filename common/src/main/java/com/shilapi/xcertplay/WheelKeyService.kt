@@ -402,6 +402,7 @@ class WheelKeyService : AccessibilityService() {
         }
 
         private const val GRANT_EXIT = "DIPLAY_WHEEL_EXIT"
+        private const val CRASH_RESET_PAUSE_SECONDS = 1
         private fun checkedShell(command: String, shell: (String) -> String?): String? {
             val lines = shell("( $command ); result=\$?; printf '\\n$GRANT_EXIT:%s\\n' \"\$result\"")
                 ?.trimEnd()?.lines() ?: return null
@@ -422,9 +423,18 @@ class WheelKeyService : AccessibilityService() {
             val lists = allowedServices(current, component(context).flattenToString()) ?: return false
             // Binding may finish after the read. Check again immediately before a destructive rebind,
             // after the continuation callback, without blocking the service's main-thread callback.
+            // Android marks a service whose process died as crashed and does not bind it again until
+            // its settings observer reads a list without it. Written back at once, the observer read
+            // the full list both times, and the keys stayed on "Allowed, starting…" with the service
+            // under "Crashed services" in dumpsys accessibility (#606), so the list is left without
+            // it for a moment first.
             lists.first?.let {
                 if (!shouldContinue()) return false
-                if (!connected() && checkedShell("settings put secure enabled_accessibility_services '$it'", shell) == null) return false
+                if (!connected() && checkedShell(
+                        "settings put secure enabled_accessibility_services '$it' && sleep $CRASH_RESET_PAUSE_SECONDS",
+                        shell,
+                    ) == null
+                ) return false
             }
             for (command in listOf(
                 "settings put secure enabled_accessibility_services '${lists.second}'",

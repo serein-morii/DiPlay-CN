@@ -51,19 +51,19 @@ class HomeActivity : ComponentActivity() {
                 LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(16) })
             addView(View(context), LinearLayout.LayoutParams(-1, 0, 1f))
             addView(LinearLayout(context).apply {
-                addView(pill("Apps") { showApps(true) }, weighted())
+                addView(pill(getString(R.string.home_apps)) { showApps(true) }, weighted())
                 addView(pill("CarPlay") { mapPanel.openCarPlay() }, weighted())
-                addView(pill("BYD home") { openBydHome() }, weighted())
+                addView(pill(getString(R.string.home_byd_home)) { openBydHome() }, weighted())
             }, LinearLayout.LayoutParams(-1, dp(72)).apply { topMargin = dp(16) })
         }
-        editButton = pill("Edit") { setEditing(!board.editing) }
+        editButton = pill(getString(R.string.home_edit)) { setEditing(!board.editing) }
         val right = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             addView(LinearLayout(context).apply {
                 gravity = Gravity.CENTER_VERTICAL
-                addView(label("Widgets", 28f), LinearLayout.LayoutParams(0, -2, 1f))
+                addView(label(getString(R.string.home_widgets), 28f), LinearLayout.LayoutParams(0, -2, 1f))
                 addView(editButton, LinearLayout.LayoutParams(dp(120), dp(56)))
-                addView(pill("＋ Add") { board.pick() }, LinearLayout.LayoutParams(dp(140), dp(56)).apply { marginStart = dp(12) })
+                addView(pill(getString(R.string.home_add)) { board.pick() }, LinearLayout.LayoutParams(dp(140), dp(56)).apply { marginStart = dp(12) })
             })
             addView(ScrollView(context).apply { addView(widgetColumn) },
                 LinearLayout.LayoutParams(-1, 0, 1f).apply { topMargin = dp(16) })
@@ -125,13 +125,13 @@ class HomeActivity : ComponentActivity() {
 
     private fun setEditing(editing: Boolean) {
         board.editing = editing
-        editButton.text = if (editing) "Done" else "Edit"
+        editButton.setText(if (editing) R.string.home_done else R.string.home_edit)
     }
 
     private fun openBydHome() {
         val byd = Intent().setClassName(BYD_HOME_PACKAGE, BYD_HOME_ACTIVITY).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         if (runCatching { startActivity(byd) }.isFailure) {
-            Toast.makeText(this, "BYD home is not available", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, R.string.home_byd_unavailable, Toast.LENGTH_LONG).show()
         }
     }
 
@@ -149,8 +149,8 @@ class HomeActivity : ComponentActivity() {
             setPadding(dp(28), dp(24), dp(28), dp(24))
             addView(LinearLayout(context).apply {
                 gravity = Gravity.CENTER_VERTICAL
-                addView(label("Apps", 28f), LinearLayout.LayoutParams(0, -2, 1f))
-                addView(pill("Close") { showApps(false) }, LinearLayout.LayoutParams(dp(140), dp(56)))
+                addView(label(getString(R.string.home_apps), 28f), LinearLayout.LayoutParams(0, -2, 1f))
+                addView(pill(getString(R.string.home_close)) { showApps(false) }, LinearLayout.LayoutParams(dp(140), dp(56)))
             })
             addView(GridView(context).apply {
                 numColumns = GridView.AUTO_FIT
@@ -174,8 +174,9 @@ class HomeActivity : ComponentActivity() {
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 52f)
         })
         addView(TextClock(context).apply {
-            format12Hour = "EEEE, d MMMM"
-            format24Hour = "EEEE, d MMMM"
+            val datePattern = android.text.format.DateFormat.getBestDateTimePattern(resources.configuration.locales[0], "EEEEdMMMM")
+            format12Hour = datePattern
+            format24Hour = datePattern
             setTextColor(MUTED)
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 22f)
             setPadding(dp(20), 0, 0, dp(10))

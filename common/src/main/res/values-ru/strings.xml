@@ -77,7 +77,7 @@
     <string name="status_attaching_ncm">Подключение сети NCM/AirPlay</string>
     <string name="status_failed">Ошибка: %1$s</string>
     <string name="msg_car_hotspot_off">Точка доступа автомобиля «%1$s» выключена. Включите её в настройках автомобиля перед подключением.</string>
-    <string name="home_public_preview">ОТКРЫТАЯ ПРЕДВАРИТЕЛЬНАЯ ВЕРСИЯ  ·\u0020\u0020</string>
+    <string name="home_public_preview">ОТКРЫТАЯ ПРЕДВАРИТЕЛЬНАЯ ВЕРСИЯ  ·\u0020%1$s</string>
     <string name="choose_iphone_prefix">Выбрать iPhone ·\u0020</string>
     <string name="audio_saved_value">Сохранено: %1$d</string>
     <string name="about_public_preview_prefix">Предварительная версия ·\u0020</string>
@@ -369,6 +369,7 @@
     <string name="token_optional">Токен (необязательно)</string>
     <string name="transport_error_reconnecting">Ошибка передачи; переподключение</string>
     <string name="turn_on_bluetooth">Включить Bluetooth</string>
+    <string name="turn_on_bluetooth_in_the_head_unit_s_settings_to_connect">Включите Bluetooth в настройках головного устройства для подключения.</string>
     <string name="turn_on_wi_fi_in_the_head_unit_s_settings_to_connect">Включите Wi-Fi в настройках головного устройства для подключения.</string>
     <string name="turn_the_car_s_wi_fi_switch_on_allow_location_nearby_devic">Включите переключатель Wi-Fi автомобиля. Разрешите местоположение/«Рядом находящиеся устройства» при запросе и включите местоположение, когда Android попросит. Если воспроизведение подтормаживает, попробуйте встроенную точку доступа на 5 ГГц.</string>
     <string name="usage_access_enabled">Доступ к использованию: включён</string>
@@ -740,6 +741,8 @@
     <string name="backup_page_hint">Отсканируйте код камерой телефона, чтобы открыть страницу в его браузере. Экспорт сохраняет файл настроек, импорт загружает его.</string>
     <string name="backup_other_addresses">Если код не открывается, попробуйте изменить IP-адрес в браузере на %1$s.</string>
     <string name="backup_no_network">Нет доступной сети Wi-Fi. Сначала включите точку доступа автомобиля или подключите телефон к Wi-Fi автомобиля.</string>
+    <string name="backup_type_address">Нет камеры? Откройте %1$s в браузере и введите код %2$s.</string>
+    <string name="backup_code_entry_closed">Введено слишком много неверных кодов, код больше не действует. Закройте эту страницу и откройте её снова, чтобы получить новый. QR-код по-прежнему работает.</string>
     <string name="backup_summary">Импортировано настроек: %1$d, пропущено: %2$d.</string>
     <string name="backup_import_invalid">Этот файл не является резервной копией настроек DiPlay.</string>
     <string name="settings_background_update_checks">Проверять обновления в фоне</string>
@@ -838,4 +841,25 @@
     <string name="bluetooth_connections_not_real">Bluetooth Android на этом головном устройстве сообщает о подключении, но до iPhone ничего не доходит: «успешно» подключается даже несуществующая служба. Bluetooth здесь обслуживает собственный модуль производителя, недоступный приложениям, поэтому беспроводной CarPlay на этом головном устройстве работать не может. Попробуйте подключение по USB.</string>
     <string name="settings_fce_cluster_guidance">Подсказки на приборной панели FCE (экспериментально)</string>
     <string name="settings_fce_cluster_guidance_description">Показывает стрелки CarPlay и расстояние до следующего манёвра в навигационном виде приборной панели на головных устройствах FCE, записывая данные в сервис автомобиля. Проверено только на одном автомобиле; отключите, если панель ведёт себя необычно.</string>
+    <string name="settings_cluster_music">Музыка на приборной панели (экспериментально)</string>
+    <string name="settings_cluster_music_description">Показывает квадратную обложку поверх карты. Выберите временную обложку (8 секунд) или постоянную; название и исполнитель всегда появляются поверх неё на 8 секунд при смене песни. Положение и размер применяются сразу. Нужны проекция и данные iPhone.</string>
+    <string name="settings_cluster_music_mode">Видимость обложки</string>
+    <string name="settings_cluster_music_temporary">Временно · 8 секунд</string>
+    <string name="settings_cluster_music_permanent">Постоянно</string>
+    <string name="settings_cluster_music_horizontal">Музыка · положение по горизонтали</string>
+    <string name="settings_cluster_music_vertical">Музыка · положение по вертикали</string>
+    <string name="settings_cluster_music_size">Музыка · размер</string>
+    <string name="settings_cluster_music_unknown">Неизвестный исполнитель</string>
+    <string name="connection_help_reset_wifi">Предыдущее соединение Wi-Fi Direct может мешать подключению. Нажмите ниже «Сбросить Wi-Fi CarPlay» и подключитесь снова.</string>
+    <string name="connection_help_bluetooth_unusable">Bluetooth этого устройства не может передавать данные на iPhone. Беспроводной CarPlay здесь не работает. Используйте USB-кабель для данных.</string>
+    <string name="connection_help_hotspot">Убедитесь, что точка доступа автомобиля включена, а имя и пароль совпадают с настройками DiPlay. Если возможно, выберите 5 ГГц и повторите попытку.</string>
+    <string name="connection_help_iphone_wifi">Включите Wi-Fi и Bluetooth. Подключите iPhone к точке доступа автомобиля и включите автоподключение. Повторите попытку; при сбое сохраните отчёт.</string>
+    <string name="connection_help_permissions">Разрешите DiPlay доступ к USB, устройствам поблизости или геолокации на головном устройстве, если требуется, и повторите попытку.</string>
+    <string name="connection_help_usb">Используйте USB-порт и кабель с передачей данных. Разблокируйте iPhone, подтвердите доверие и CarPlay и повторите попытку.</string>
+    <string name="connection_help_bluetooth">Разблокируйте iPhone, включите Bluetooth и Wi-Fi, выполните сопряжение с устройством. Держите iPhone рядом и повторите попытку.</string>
+    <string name="connection_help_general">Повторите подключение. Если ошибка повторится, вернитесь в DiPlay и сохраните отчёт в разделе «Настройки → Диагностика».</string>
+    <string name="connection_help_wifi_direct">Не выключайте Wi-Fi и Bluetooth головного устройства, держите iPhone разблокированным рядом и повторите попытку. Если сбой повторяется, забудьте автомобиль на iPhone в разделе «Настройки → Основные → CarPlay» и подключитесь снова.</string>
+    <string name="connection_help_existing_wifi">Убедитесь, что головное устройство и iPhone подключены к одной сети Wi-Fi, а её имя и пароль совпадают с настройками DiPlay, и повторите попытку.</string>
+    <string name="settings_report_on_phone">Получить отчёт на телефоне</string>
+    <string name="settings_report_on_phone_hint">Отсканируйте код камерой телефона, чтобы открыть страницу в его браузере, и выберите «Скачать отчёт». Не закрывайте этот экран, пока загрузка не завершится.</string>
 </resources>

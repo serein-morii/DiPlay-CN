@@ -18,6 +18,12 @@ import com.shilapi.xcertplay.network.CarHotspotTethering.Result
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [29], manifest = Config.NONE)
 class CarHotspotTetheringTest {
+    @Test fun startFailuresNameTheUnderlyingCause() {
+        assertEquals("NoSuchFieldException: mService", CarHotspotTethering.describe(NoSuchFieldException("mService")))
+        assertEquals("InvocationTargetException caused by SecurityException: uid 10123",
+            CarHotspotTethering.describe(InvocationTargetException(SecurityException("uid 10123"))))
+    }
+
     @Test fun existingHotspotNeedsNoGrantOrStartCall() {
         assertEquals(Result.READY, enable(canWrite = false, state = { true }))
     }

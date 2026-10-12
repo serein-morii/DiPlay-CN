@@ -1,3 +1,9 @@
+# DiPlay CN 0.2.19-cn.1 — 2026-10-13
+
+- Merged the official `v0.2.19` release into the CN app; package ID remains `com.shihab.diplay.cn` and versionCode advances from 114 to 115. Preserved the CN updater, classification-based swipe menu, and DiLink 5 dashboard modes while retaining upstream connection/audio/diagnostic changes.
+- Reconciled the upstream Japanese locale with the CN Chinese fallback, translated CN-only strings into Japanese, and aligned the localized home version placeholder. Physical vehicle acceptance is still pending.
+- The exact repository CI command passed locally (250 tasks, 2026-10-13); `:mobile:lintRelease` also passed (74 tasks). The release workflow must still build and verify the signed APK, and physical vehicle acceptance remains pending.
+
 # DiPlay CN 0.2.18-cn.3 — 2026-10-12
 
 - The updater retains Gitee, GitHub and two GitHub mirrors as CN release channels. It keeps a SHA-256- and package-verified APK in persistent app-private `files/update/<tag>` and opens the system installer from that copy without another network download. When supported, it also exports the APK to `Downloads/DiPlay`.

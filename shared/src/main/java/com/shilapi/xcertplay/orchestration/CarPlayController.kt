@@ -62,6 +62,7 @@ import com.shilapi.xcertplay.network.WirelessStartupFailure
 import com.shilapi.xcertplay.network.WirelessStartupDiagnostics
 import com.shilapi.xcertplay.transport.BlockingDuplexByteStream
 import com.shilapi.xcertplay.transport.BluetoothLinkCheck
+import com.shilapi.xcertplay.transport.BluetoothRadioCheck
 import com.shilapi.xcertplay.transport.BluetoothRfcommDuplexStream
 import com.shilapi.xcertplay.transport.Ch341DeviceMatcher
 import com.shilapi.xcertplay.transport.Ch341I2cTransport
@@ -83,6 +84,7 @@ import com.shilapi.xcertplay.transport.forWirelessLink
 import com.shilapi.xcertplay.transport.I2cTransport
 import com.shilapi.xcertplay.transport.I2cTransportException
 import com.shilapi.xcertplay.transport.IphoneCarPlayConfiguration
+import com.shilapi.xcertplay.transport.IphoneUsbAdbGrant
 import com.shilapi.xcertplay.transport.IphoneUsbException
 import com.shilapi.xcertplay.transport.IphoneUsbHost
 import com.shilapi.xcertplay.transport.IphoneUsbMatcher
@@ -186,6 +188,7 @@ class CarPlayController(
     private val usbManager: UsbManager? = context.getSystemService(UsbManager::class.java)
     private val bluetoothAdapter =
         appContext.getSystemService(BluetoothManager::class.java)?.adapter
+            ?: BluetoothAdapter.getDefaultAdapter()
     private val iphoneHost by lazy {
         IphoneUsbHost(
             appContext,
@@ -211,6 +214,8 @@ class CarPlayController(
     private val availabilityPollGeneration = AtomicInteger(0)
     private var permissionPollGeneration = 0
     private var reenumerationAttempts = 0
+    private val usbAdbGrantAttempts = mutableSetOf<String>()
+    private val pendingUsbAdbGrants = mutableSetOf<String>()
     private var lastReportedStatus: CarPlayStatus? = null
     private var mfiResetLogged = false
 
@@ -1226,6 +1231,12 @@ class CarPlayController(
             firstTcpWatchdog = watchdog
             val mfi = mfiSession?.client
                 ?: throw IOException("MFi coprocessor client is unavailable")
+            // Wireless CarPlay begins over Bluetooth: a radio that is off is found before the Wi-Fi is changed.
+            BluetoothRadioCheck.blocker(
+                adapterPresent = bluetoothAdapter != null,
+                enabled = bluetoothAdapter?.isEnabled == true,
+                pausedByDiPlay = BydBluetoothSuspend.isSuspendedByUs(appContext),
+            )?.let { throw IOException(it) }
             val hotspotInfo = startWirelessHotspot(generation)
             if (isStaleWirelessRun(generation)) {
                 return
@@ -1305,9 +1316,9 @@ class CarPlayController(
             onStatus(CarPlayStatus.WaitingForPairedIphone)
 
             val adapter = bluetoothAdapter
-                ?: throw IOException("Bluetooth adapter is unavailable")
+                ?: throw IOException(BluetoothRadioCheck.NO_ADAPTER)
             val bluetoothRecoveryComplete = BydBluetoothSuspend.resumeAndWait(appContext, adapter)
-            if (!adapter.isEnabled) throw IOException("Bluetooth is not enabled")
+            if (!adapter.isEnabled) throw IOException(BluetoothRadioCheck.RADIO_OFF)
             if (!bluetoothRecoveryComplete) throw IOException("Bluetooth recovery did not complete before the handshake")
             val device = selectWirelessBluetoothDevice(adapter)
             val hostBluetoothMac = accessoryBluetoothMac(adapter)
@@ -1805,6 +1816,9 @@ class CarPlayController(
     private fun startIphone() {
         diagnosticRun.incrementAndGet()
         availabilityPollGeneration.incrementAndGet()
+        permissionPollGeneration++
+        usbAdbGrantAttempts.clear()
+        pendingUsbAdbGrants.clear()
         phase = Phase.IPHONE
         reenumerationAttempts = 0
         onStatus(CarPlayStatus.DiscoveringIphone)
@@ -1831,24 +1845,70 @@ class CarPlayController(
         mainHandler.post { doRequestIphonePermission(device) }
     }
 
-    private fun doRequestIphonePermission(device: UsbDevice) {
+    private fun doRequestIphonePermission(device: UsbDevice, allowAdbFallback: Boolean = true) {
         if (closed) return
+        if (usbAdbGrantKey(device) in pendingUsbAdbGrants) return
         try {
-            when (val request = iphoneHost.requestPermission(device)) {
+            when (val request = iphoneHost.requestPermission(device, allowAdbFallback)) {
                 is IphoneUsbHost.PermissionRequest.AlreadyGranted -> {
                     debugLog("wired iPhone USB permission already granted")
                     permissionGrant.set(false)
                     onIphonePermission(IphoneUsbHost.PermissionResult.Granted(request.device))
                 }
                 is IphoneUsbHost.PermissionRequest.Requested -> {
-                    debugLog("wired iPhone USB permission requested")
+                    debugLog(
+                        "wired iPhone USB permission requested " +
+                            "afterMissingUiAdbFailure=${request.afterMissingUiAdbFailure}",
+                    )
                     permissionGrant.set(false)
                     onStatus(CarPlayStatus.RequestingIphonePermission)
-                    pollIphonePermission(device)
+                    pollIphonePermission(device, request.afterMissingUiAdbFailure)
+                }
+                is IphoneUsbHost.PermissionRequest.AdbRequired -> {
+                    debugLog("wired iPhone USB permission route=ADB; system permission UI unavailable")
+                    permissionGrant.set(false)
+                    permissionPollGeneration++
+                    onStatus(CarPlayStatus.RequestingIphonePermission)
+                    attemptIphoneUsbAdbGrant(request.device)
                 }
             }
         } catch (error: Throwable) {
             fail(error)
+        }
+    }
+
+    private fun usbAdbGrantKey(device: UsbDevice): String =
+        "$phase:$reenumerationAttempts:${device.deviceName}:${device.deviceId}"
+
+    private fun attemptIphoneUsbAdbGrant(device: UsbDevice) {
+        val key = usbAdbGrantKey(device)
+        if (!usbAdbGrantAttempts.add(key)) {
+            doRequestIphonePermission(device, allowAdbFallback = false)
+            return
+        }
+        pendingUsbAdbGrants.add(key)
+        val grantPhase = phase
+        val grantGeneration = permissionPollGeneration
+        connectionDiagnostic(
+            "USB permission ADB grant starting phase=$phase reenumerationAttempts=$reenumerationAttempts",
+        )
+        executor.execute {
+            val result = runCatching { IphoneUsbAdbGrant.grant(appContext, device) }
+                .getOrElse { IphoneUsbAdbGrant.Result(IphoneUsbAdbGrant.Code.ERROR) }
+            connectionDiagnostic(
+                "USB permission ADB grant result=${result.code} attached=${result.attached} " +
+                    "granted=${result.granted}",
+            )
+            mainHandler.post {
+                if (closed || phase != grantPhase || permissionPollGeneration != grantGeneration) return@post
+                // A stale grant must not clear the same key owned by a newer reconnect generation.
+                pendingUsbAdbGrants.remove(key)
+                if (requireUsbManager().hasPermission(device)) {
+                    onIphonePermission(IphoneUsbHost.PermissionResult.Granted(device))
+                } else {
+                    doRequestIphonePermission(device, allowAdbFallback = false)
+                }
+            }
         }
     }
 
@@ -1862,22 +1922,27 @@ class CarPlayController(
                 when (phase) {
                     Phase.REENUMERATION, Phase.IPHONE -> {
                         val configuration = IphoneCarPlayConfiguration.find(result.device)
+                        val carPlayMode = configuration?.let(IphoneCarPlayConfiguration::isCarPlayMode) == true
+                        val action = WiredConfigurationAction.choose(
+                            found = configuration != null,
+                            carPlayMode = carPlayMode,
+                            transitionsTried = reenumerationAttempts,
+                            maximumTransitions = MAXIMUM_REENUMERATION_ATTEMPTS,
+                        )
                         connectionDiagnostic(
                             "USB configuration ready=${configuration != null} " +
                                 "configurationId=${configuration?.id ?: "none"} " +
                                 "reenumerationAttempts=$reenumerationAttempts " +
-                                "action=${when {
-                                    configuration != null -> "reuse-descriptors"
-                                    reenumerationAttempts < MAXIMUM_REENUMERATION_ATTEMPTS -> "request-transition"
-                                    else -> "reject-missing-configuration"
-                                }}",
+                                "action=${action.diagnostic}",
                         )
-                        if (configuration != null) {
-                            openDataPaths(result.device)
-                        } else if (reenumerationAttempts < MAXIMUM_REENUMERATION_ATTEMPTS) {
-                            beginReenumeration(result.device)
-                        } else {
-                            fail(
+                        when (action) {
+                            WiredConfigurationAction.USE,
+                            WiredConfigurationAction.USE_WITHOUT_APPLE_ETHERNET -> openDataPaths(result.device)
+                            WiredConfigurationAction.REQUEST_TRANSITION -> beginReenumeration(
+                                result.device,
+                                WiredConfigurationAction.fallbackAfterRejection(configuration != null, carPlayMode),
+                            )
+                            WiredConfigurationAction.REJECT -> fail(
                                 IphoneUsbException.Protocol(
                                     "iPhone did not expose a complete CarPlay USB configuration",
                                 ),
@@ -1895,8 +1960,10 @@ class CarPlayController(
     }
 
     /** Some Android builds grant the dialog without delivering the permission broadcast. */
-    private fun pollIphonePermission(device: UsbDevice) {
+    private fun pollIphonePermission(device: UsbDevice, afterMissingUiAdbFailure: Boolean = false) {
         val generation = ++permissionPollGeneration
+        // A custom OEM permission page may still be visible even when the standard AOSP component
+        // is absent. Preserve the full user-response window after the ADB fallback fails.
         val deadlineNanos = System.nanoTime() + PERMISSION_POLL_TIMEOUT_MILLIS * 1_000_000L
         val check = object : Runnable {
             override fun run() {
@@ -1909,7 +1976,12 @@ class CarPlayController(
                     if (permissionGrant.compareAndSet(false, true)) {
                         onStatus(
                             CarPlayStatus.Failed(
-                                "iPhone USB permission was not granted; tap Reconnect iPhone to retry",
+                                if (afterMissingUiAdbFailure) {
+                                    "The head unit's standard USB authorization page is unavailable, and neither " +
+                                        "approved ADB nor its system permission request granted iPhone access"
+                                } else {
+                                    "iPhone USB permission was not granted; tap Reconnect iPhone to retry"
+                                },
                             ),
                         )
                     }
@@ -1921,7 +1993,8 @@ class CarPlayController(
         mainHandler.postDelayed(check, PERMISSION_POLL_INTERVAL_MILLIS)
     }
 
-    private fun beginReenumeration(device: UsbDevice) {
+    /** [fallbackAfterRejection]: the iPhone already offers USBMUX and NCM, so try that if it refuses. */
+    private fun beginReenumeration(device: UsbDevice, fallbackAfterRejection: Boolean = false) {
         phase = Phase.REENUMERATION
         reenumerationAttempts += 1
         connectionDiagnostic("USB transition requested count=$reenumerationAttempts")
@@ -1930,7 +2003,17 @@ class CarPlayController(
             when (transition) {
                 IphoneUsbHost.TransitionResult.ReenumerationRequested ->
                     onStatus(CarPlayStatus.WaitingForReenumeration)
-                is IphoneUsbHost.TransitionResult.Failed -> fail(transition.error)
+                is IphoneUsbHost.TransitionResult.Failed -> if (fallbackAfterRejection) {
+                    connectionDiagnostic(
+                        "USB transition rejected; using the configuration without Apple Ethernet " +
+                            "error=${transition.error.message}",
+                    )
+                    mainHandler.post {
+                        if (!closed && phase == Phase.REENUMERATION) openDataPaths(device)
+                    }
+                } else {
+                    fail(transition.error)
+                }
             }
         }
     }

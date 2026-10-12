@@ -3,7 +3,9 @@
     <string name="contrib_audio_home_choice_summary">%1$s · %2$s</string>
     <string name="contrib_audio_home_media_channel_label">媒體音訊串流</string>
     <string name="contrib_audio_home_nav_channel_label">導航音訊串流</string>
-    <string name="contrib_audio_home_nav_channel_note">0 表示自動路由。1–20 用於選擇傳統音訊串流編號，包括車機支援的廠商擴充輸出。點選數值即可試聽。變更會在重新連接後生效。</string>
+    <string name="contrib_audio_home_nav_channel_note">0 表示自動路由。1–20 用於選擇傳統音訊串流編號，包括車機支援的廠商擴充輸出。點選數值即可試聽。變更會在重新連線後生效。</string>
     <string name="contrib_audio_home_toggle_audio_focus">音訊焦點</string>
-    <string name="contrib_audio_home_toggle_audio_focus_desc">CarPlay 媒體會向系統要求音訊焦點；導航播報不會降低音樂音量。若開啟後沒有聲音（部分車機的音訊焦點處理可能異常），請關閉此選項。變更會在重新連接後生效。</string>
+    <string name="contrib_audio_home_toggle_audio_focus_desc">CarPlay 媒體會向系統要求音訊焦點。若開啟後沒有聲音（部分車機的音訊焦點處理可能異常），請關閉此選項。變更會在重新連線後生效。</string>
+    <string name="audio_focus_auto_yield">暫時失去音訊焦點時將媒體靜音</string>
+    <string name="audio_focus_auto_yield_desc">啟用音訊焦點時，Android 音訊中斷（包括來電）會讓媒體靜音；焦點恢復後會繼續播放聲音。若車機無法恢復音訊焦點，請關閉此選項。變更會在重新連線後生效。</string>
 </resources>
