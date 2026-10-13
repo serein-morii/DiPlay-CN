@@ -233,19 +233,21 @@ class TurnCameraCapabilities(
         }
         val items = mutableListOf<ProbeItem>()
         try {
-            fun remainingMillis(): Long =
-                ((deadlineMono - monotonicClock()) / 1_000_000L).coerceAtLeast(0L)
+            // Nanosecond precision (Rework D1): flooring a positive sub-millisecond
+            // remainder to 0ms used to mark items expired while the report still compared
+            // against the true deadline — items claimed expiry with deadlineHit=false.
+            fun remainingNanos(): Long = deadlineMono - monotonicClock()
 
             fun item(key: String, probe: () -> Pair<Status, String>) {
-                if (cancelled || remainingMillis() <= 0L) {
+                if (cancelled || remainingNanos() <= 0L) {
                     items += ProbeItem(key, Status.SKIPPED, if (cancelled) "cancelled" else "deadline reached")
                     return
                 }
                 val future = executor.submit(Callable { probe() })
                 var result: ProbeItem? = null
                 while (result == null) {
-                    val slice = minOf(remainingMillis(), CANCEL_POLL_MILLIS)
-                    if (slice <= 0L) {
+                    val sliceNanos = minOf(remainingNanos(), CANCEL_POLL_MILLIS * 1_000_000L)
+                    if (sliceNanos <= 0L) {
                         future.cancel(true)
                         result = ProbeItem(
                             key, Status.ERROR,
@@ -254,7 +256,7 @@ class TurnCameraCapabilities(
                         continue
                     }
                     result = try {
-                        val (status, detail) = future.get(slice, TimeUnit.MILLISECONDS)
+                        val (status, detail) = future.get(sliceNanos, TimeUnit.NANOSECONDS)
                         ProbeItem(key, status, redact(detail))
                     } catch (_: TimeoutException) {
                         if (cancelled) {

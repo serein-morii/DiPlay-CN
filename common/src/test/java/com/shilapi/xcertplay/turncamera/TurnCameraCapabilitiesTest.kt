@@ -73,10 +73,24 @@ class TurnCameraCapabilitiesTest {
         assertThrows(IllegalArgumentException::class.java) { runner.run(listOf("service", "call", "camera", "3")) }
     }
 
+    /**
+     * A stale interrupt flag on the caller thread (leaked by an unrelated earlier test in
+     * this JVM) makes every future.get throw InterruptedException at once: items report
+     * "cancelled" and run() returns in milliseconds. All deadline/blocking tests clear it.
+     */
+    private fun clearStaleCallerInterrupt() {
+        if (Thread.interrupted()) {
+            println("cleared a stale caller interrupt flag before a blocking probe test")
+        }
+    }
+
     @Test fun permanentlyBlockingItemStillReturnsAtTheDeadline() {
+        clearStaleCallerInterrupt()
         val release = CountDownLatch(1)
+        val entered = java.util.concurrent.atomic.AtomicBoolean(false)
         val probe = TurnCameraCapabilities(
             shellRunner = {
+                entered.set(true) // evidence that the blocking step really runs
                 release.await() // never returns until the test releases it
                 okServiceList()
             },
@@ -90,6 +104,137 @@ class TurnCameraCapabilitiesTest {
         val elapsedMs = (System.nanoTime() - started) / 1_000_000L
         release.countDown()
         assertTrue("run must return near the deadline, took ${elapsedMs}ms", elapsedMs < 5_000L)
+        assertTrue("the run must actually spend its deadline blocked", elapsedMs >= 250L)
+        assertTrue("the blocking shell step must have been entered", entered.get())
+        assertTrue(report.deadlineHit)
+        val services = report.items.first { it.key == "camera_services" }
+        assertEquals(TurnCameraCapabilities.Status.ERROR, services.status)
+        assertTrue(services.detail.contains("not interruptible"))
+    }
+
+    // ---- Rework D1: sub-millisecond budgets must stay live until the true deadline ----
+
+    /** Freezes the clock like Codex's repro: first read 0, every later read 500_000ns. */
+    @Test fun subMillisecondEntryBudgetIsLiveUntilTheTrueDeadline() {
+        clearStaleCallerInterrupt()
+        val reads = java.util.concurrent.atomic.AtomicInteger(0)
+        val probe = TurnCameraCapabilities(
+            shellRunner = { okServiceList() },
+            systemProperty = { null },
+            wallClock = { 0L },
+            monotonicClock = { if (reads.incrementAndGet() == 1) 0L else 500_000L },
+            deadlineMillis = 1L, // deadlineMono = 1_000_000ns; remaining stays 500_000ns
+        )
+        val report = probe.run(context)
+        // With a positive (sub-ms) remaining budget nothing may claim expiry…
+        assertTrue(
+            "a positive sub-millisecond budget must not be floored to expiry",
+            report.items.none { it.detail == "deadline reached" || it.detail.contains("exceeded") },
+        )
+        // …and an expiry claim would require deadlineHit (consistency invariant).
+        assertTrue(report.items.none { it.status == TurnCameraCapabilities.Status.SKIPPED } || report.deadlineHit)
+    }
+
+    /** Exactly-zero remaining at entry is genuinely expired and must be reported as such. */
+    @Test fun exactlyExpiredEntryIsSkippedConsistently() {
+        clearStaleCallerInterrupt()
+        val reads = java.util.concurrent.atomic.AtomicInteger(0)
+        val probe = TurnCameraCapabilities(
+            shellRunner = { okServiceList() },
+            systemProperty = { null },
+            wallClock = { 0L },
+            monotonicClock = { if (reads.incrementAndGet() == 1) 0L else 1_000_000L },
+            deadlineMillis = 1L,
+        )
+        val report = probe.run(context)
+        assertEquals(TurnCameraCapabilities.Status.SKIPPED, report.items.first().status)
+        assertEquals("deadline reached", report.items.first().detail)
+        assertTrue("an expiry claim requires deadlineHit", report.deadlineHit)
+    }
+
+    /**
+     * In-flight sub-millisecond budget: after submission the wait loop must keep waiting in
+     * nanosecond slices until the clock truly crosses the deadline — then (and only then)
+     * report ERROR "exceeded" together with deadlineHit=true. A slow-advancing clock
+     * guarantees the loop passes through the (0, 1ms) window the old flooring code
+     * collapsed to an immediate, inconsistent expiry.
+     */
+    @Test fun inFlightBudgetExpiresOnlyAtTheTrueDeadline() {
+        clearStaleCallerInterrupt()
+        val release = CountDownLatch(1)
+        val clock = java.util.concurrent.atomic.AtomicLong(0L)
+        val probe = TurnCameraCapabilities(
+            shellRunner = {
+                release.await() // blocked for the whole run
+                okServiceList()
+            },
+            systemProperty = { null },
+            wallClock = { 0L },
+            monotonicClock = { clock.getAndAdd(20_000L) }, // +20µs per read, deadline 2ms
+            deadlineMillis = 2L,
+        )
+        val report = probe.run(context)
+        release.countDown()
+        val services = report.items.first { it.key == "camera_services" }
+        assertEquals(
+            "the blocked item must expire, not be skipped at entry",
+            TurnCameraCapabilities.Status.ERROR,
+            services.status,
+        )
+        assertTrue(services.detail.contains("exceeded"))
+        assertTrue("expiry must coincide with the true deadline", report.deadlineHit)
+        // The consistency invariant across the whole report.
+        assertTrue(
+            report.items.none { it.detail == "deadline reached" || it.detail.contains("exceeded") } || report.deadlineHit,
+        )
+    }
+
+    // ---- Rework D2: interrupt hygiene regression without scheduling assumptions ----
+
+    @Test fun staleCallerInterruptIsClearedAndCannotFakeCancellation() {
+        // Red part — only scheduling-free semantics of the interrupted-caller path:
+        // the run cannot block to spend its deadline, items are "cancelled", and the
+        // report is not deadline-hit. (Whether a worker briefly entered the lambda is a
+        // race we deliberately do NOT assert.)
+        Thread.currentThread().interrupt()
+        val release = CountDownLatch(1)
+        val probe = TurnCameraCapabilities(
+            shellRunner = { release.await(); okServiceList() },
+            systemProperty = { null },
+            wallClock = { 0L },
+            monotonicClock = System::nanoTime,
+            deadlineMillis = 300L,
+        )
+        val started = System.nanoTime()
+        val interruptedReport = probe.run(context)
+        val elapsedMs = (System.nanoTime() - started) / 1_000_000L
+        release.countDown()
+        assertTrue("interrupted caller returns without spending the deadline", elapsedMs < 250L)
+        assertTrue(!interruptedReport.deadlineHit)
+        assertEquals(
+            TurnCameraCapabilities.Status.SKIPPED,
+            interruptedReport.items.first { it.key == "camera_services" }.status,
+        )
+        // Green part — actually re-inject the flag, prove the helper clears it, then run
+        // the same probe with full-strength deadline assertions.
+        Thread.currentThread().interrupt()
+        clearStaleCallerInterrupt()
+        assertTrue("the hygiene helper must clear a present interrupt flag", !Thread.currentThread().isInterrupted)
+        val release2 = CountDownLatch(1)
+        val entered = java.util.concurrent.atomic.AtomicBoolean(false)
+        val healthy = TurnCameraCapabilities(
+            shellRunner = { entered.set(true); release2.await(); okServiceList() },
+            systemProperty = { null },
+            wallClock = { 0L },
+            monotonicClock = System::nanoTime,
+            deadlineMillis = 300L,
+        )
+        val started2 = System.nanoTime()
+        val report = healthy.run(context)
+        val elapsed2 = (System.nanoTime() - started2) / 1_000_000L
+        release2.countDown()
+        assertTrue(elapsed2 >= 250L)
+        assertTrue(entered.get())
         assertTrue(report.deadlineHit)
         val services = report.items.first { it.key == "camera_services" }
         assertEquals(TurnCameraCapabilities.Status.ERROR, services.status)
@@ -97,6 +242,7 @@ class TurnCameraCapabilitiesTest {
     }
 
     @Test fun cancellationStopsRemainingItemsQuickly() {
+        clearStaleCallerInterrupt()
         val release = CountDownLatch(1)
         val probe = TurnCameraCapabilities(
             shellRunner = {
@@ -272,6 +418,7 @@ class TurnCameraCapabilitiesTest {
     // ---- Rework S4: a stuck non-interruptible call cannot breed workers ----
 
     @Test fun stuckNonInterruptibleCallsAreBoundedAcrossRuns() {
+        clearStaleCallerInterrupt()
         // Drain any worker left over from earlier tests before measuring the budget.
         var drain = 0
         while (TurnCameraCapabilities.activeProbeWorkers() > 0 && drain < 300) {
@@ -351,6 +498,7 @@ class TurnCameraCapabilitiesTest {
     }
 
     @Test fun deadlineExpiringBeforeTheFirstItemDoesNotLeak() {
+        clearStaleCallerInterrupt()
         val probe = TurnCameraCapabilities(
             shellRunner = { okServiceList() },
             systemProperty = { null },
@@ -443,6 +591,7 @@ class TurnCameraCapabilitiesTest {
     }
 
     @Test fun clockThrowingBeforeTheExecutorReleasesItsReservation() {
+        clearStaleCallerInterrupt()
         // Rework T2/V1: a clock throwing between the reservation and the executor creation
         // used to leak the slot permanently (no worker existed to release it).
         var drain = 0
