@@ -122,6 +122,7 @@ internal enum class SettingsSection {
     BYD_NAVIGATION,
     PERMISSIONS_AND_HELP,
     LANGUAGE,
+    TURN_CAMERA,
 }
 
 internal object SettingsInformationArchitecture {
@@ -154,6 +155,7 @@ internal object SettingsInformationArchitecture {
             SettingsSection.ADVANCED_MEDIA,
             SettingsSection.NAVIGATION_WHEEL,
             SettingsSection.AMBIENT_LIGHTING,
+            SettingsSection.TURN_CAMERA,
         ),
     )
 }
@@ -549,6 +551,9 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
 
     override fun onDestroy() {
         settingsSearchPopup?.dismiss()
+        activeTurnCameraProbe?.cancel()
+        activeTurnCameraProbe = null
+        turnCameraProbeRun++
         appearanceObserverRemoval?.invoke()
         appearanceObserverRemoval = null
         handler.removeCallbacks(appearancePoll)
@@ -1735,13 +1740,35 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
             exportButton = button(if (exportInProgress) getString(R.string.saving_report) else getString(R.string.save_diagnostic_report), false) {
                 saveReportToDownloads()
             }.apply { isEnabled = !exportInProgress }
-            card.addView(exportButton, matchButton(10, 60))
-            card.addView(button(getString(R.string.choose_save_location), false) { chooseReportDestination() }, matchButton(10, 60))
-            card.addView(button(getString(R.string.settings_report_on_phone), false) { openBackup(SettingsCategory.DIAGNOSTICS) }, matchButton(10, 60))
+            card.addView(exportButton, matchButton(SETTINGS_BUTTON_GAP_DP, 60))
+            card.addView(button(getString(R.string.choose_save_location), false) { chooseReportDestination() }, matchButton(SETTINGS_BUTTON_GAP_DP, 60))
+            card.addView(button(getString(R.string.settings_report_on_phone), false) { openBackup(SettingsCategory.DIAGNOSTICS) }, matchButton(SETTINGS_BUTTON_GAP_DP, 60))
             val destination = getString(R.string.reports_save_to_downloads_diplay)
             card.addView(label(destination + getString(R.string.nothing_is_sent_automatically_protocol_payloads_and_creden), 14, MUTED).apply { setPadding(0, dp(12), 0, 0) })
             toggle(card, getString(R.string.settings_fps_counter), getString(R.string.settings_fps_counter_description),
                 AirPlayPersistence.loadFpsCounter(this)) { AirPlayPersistence.saveFpsCounter(this, it) }
+            turnCameraProbeButton = button(
+                getString(
+                    when {
+                        turnCameraProbeRunning && activeTurnCameraProbe != null ->
+                            R.string.settings_turn_camera_probe_cancel
+                        turnCameraProbeRunning -> R.string.settings_turn_camera_probe_running
+                        else -> R.string.settings_turn_camera_probe
+                    }
+                ),
+                false,
+            ) {
+                // While a probe runs, the same button cancels it (Rework S4 user cancel).
+                if (turnCameraProbeRunning) activeTurnCameraProbe?.cancel() else runTurnCameraProbe()
+            }.apply {
+                // The shared button height fits one line; long localized labels ellipsize
+                // instead of painting outside the pill (Rework T3 control-bounds rule).
+                maxLines = 1
+                isSingleLine = true
+                ellipsize = android.text.TextUtils.TruncateAt.END
+                isEnabled = !(turnCameraProbeRunning && activeTurnCameraProbe == null)
+            }
+            card.addView(turnCameraProbeButton, matchButton(SETTINGS_BUTTON_GAP_DP, 60))
         }
         filteredSection(content, SettingsSection.AUTOMATIC_CONNECTION,
             getString(R.string.automatic_connection), R.drawable.ic_dp_automation) { card ->
@@ -2066,6 +2093,21 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
             card.addView(button(ambientConfigurationLabel(AmbientMusicSettings.load(this)), false) {
                 showAmbientConfiguration()
             }, matchButton(0, 60))
+        }
+        // Turn side camera (phase A): status + blocked enable only; no streaming exists yet,
+        // so the switch stays off and disabled instead of promising an unavailable feature.
+        filteredSection(content, SettingsSection.TURN_CAMERA,
+            getString(R.string.settings_turn_camera), R.drawable.ic_dp_advanced) { card ->
+            card.addView(label(getString(R.string.settings_turn_camera_status), 14, MUTED))
+            val lastProbe = com.shilapi.xcertplay.turncamera.TurnCameraSettings.lastProbe(this)
+            val status = if (lastProbe == null) getString(R.string.settings_turn_camera_status_unprobed)
+            else getString(R.string.settings_turn_camera_status_hints) + " · " +
+                SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(Date(lastProbe.atMillis)) +
+                " · " + lastProbe.summary
+            card.addView(label(status, 16, TEXT).apply { setPadding(0, dp(NOTE_LINE_GAP_DP), 0, 0) })
+            toggle(card, getString(R.string.settings_turn_camera_enable),
+                getString(R.string.settings_turn_camera_enable_blocked),
+                false, enabled = false) { }
         }
         filteredSection(content, SettingsSection.LOCATION,
             getString(R.string.location), R.drawable.ic_dp_navigation) { card ->
@@ -5559,8 +5601,89 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
         }
     }
 
+    /** Read-only turn camera probe (phase A): user-triggered, deadline-bounded, nothing auto-sent. */
+    internal var turnCameraProbeFactory: (Context) -> com.shilapi.xcertplay.turncamera.TurnCameraCapabilities =
+        { com.shilapi.xcertplay.turncamera.TurnCameraCapabilities() }
+    private var turnCameraProbeButton: Button? = null
+    private var turnCameraProbeRunning = false
+    /** Bumped per run and on destroy: a late result from an older run is discarded (Rework R5). */
+    private var turnCameraProbeRun = 0L
+    private var activeTurnCameraProbe: com.shilapi.xcertplay.turncamera.TurnCameraCapabilities? = null
+
+    private fun runTurnCameraProbe() {
+        if (turnCameraProbeRunning) return
+        turnCameraProbeRunning = true
+        val run = ++turnCameraProbeRun
+        turnCameraProbeButton?.apply {
+            // While the probe runs it is cancellable, so the button stays enabled as Cancel.
+            isEnabled = true
+            text = getString(R.string.settings_turn_camera_probe_cancel)
+        }
+        val appContext = applicationContext
+        val probe = turnCameraProbeFactory(appContext)
+        activeTurnCameraProbe = probe
+        Thread {
+            val report = runCatching { probe.run(appContext) }
+            runOnUiThread {
+                if (run != turnCameraProbeRun) return@runOnUiThread // stale run: discard silently
+                turnCameraProbeRunning = false
+                activeTurnCameraProbe = null
+                if (isFinishing || isDestroyed) return@runOnUiThread
+                turnCameraProbeButton?.apply {
+                    isEnabled = true
+                    text = getString(R.string.settings_turn_camera_probe)
+                }
+                report.onSuccess { result ->
+                    when {
+                        // Delivery-time cancellation gate (Rework V1): the user may cancel
+                        // after run() returned but before this delivery runs; the snapshot
+                        // in result.cancelled cannot see that, so consult the live probe.
+                        // Every delivery — success, busy or failure — stays silent then.
+                        probe.isCancelled() -> Unit
+                        // The process-wide worker budget is exhausted: no dialog, no overwrite.
+                        result.isBusy -> toast(getString(R.string.settings_turn_camera_probe_busy))
+                        // User cancelled before the snapshot: keep the last real summary.
+                        result.cancelled -> Unit
+                        else -> {
+                            com.shilapi.xcertplay.turncamera.TurnCameraSettings.saveLastProbe(
+                                appContext,
+                                com.shilapi.xcertplay.turncamera.TurnCameraSettings.LastProbe(
+                                    result.startedAtWallMillis, result.summaryLine(),
+                                ),
+                            )
+                            showTurnCameraProbeReport(result.toReportText())
+                            render()
+                        }
+                    }
+                }.onFailure {
+                    if (!probe.isCancelled()) toast(getString(R.string.settings_turn_camera_probe_failed))
+                }
+            }
+        }.apply { isDaemon = true }.start()
+    }
+
+    private fun showTurnCameraProbeReport(report: String) {
+        val body = column().apply {
+            setPadding(dp(SETTINGS_DIALOG_PADDING_DP), dp(SETTINGS_DIALOG_GAP_DP), dp(SETTINGS_DIALOG_PADDING_DP), dp(SETTINGS_DIALOG_GAP_DP))
+        }
+        body.addView(label(report, 13, TEXT).apply {
+            typeface = Typeface.MONOSPACE
+            setTextIsSelectable(true)
+        })
+        appDialogBuilder().setTitle(getString(R.string.settings_turn_camera_probe_title))
+            .setView(ScrollView(appDialogContext()).apply { addView(body) })
+            .setPositiveButton(getString(R.string.settings_turn_camera_probe_copy)) { _, _ ->
+                val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                clipboard.setPrimaryClip(android.content.ClipData.newPlainText(
+                    getString(R.string.settings_turn_camera_probe_title), report))
+            }
+            .setNegativeButton(getString(R.string.close), null).show()
+    }
+
     private fun showDiagnosticReport(report: String) {
-        val body = column().apply { setPadding(dp(24), dp(12), dp(24), dp(12)) }
+        val body = column().apply {
+            setPadding(dp(SETTINGS_DIALOG_PADDING_DP), dp(SETTINGS_DIALOG_GAP_DP), dp(SETTINGS_DIALOG_PADDING_DP), dp(SETTINGS_DIALOG_GAP_DP))
+        }
         body.addView(label(getString(R.string.diagnostic_report_copy_hint), 14, MUTED))
         body.addView(label(report, 13, TEXT).apply {
             typeface = Typeface.MONOSPACE
@@ -6306,6 +6429,9 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
         private const val NOTE_LINE_GAP_DP = 4
         private const val NOTE_ATTACH_GAP_DP = 6
         private const val SETTINGS_BLOCK_GAP_DP = 16
+        private const val SETTINGS_BUTTON_GAP_DP = 10
+        private const val SETTINGS_DIALOG_PADDING_DP = 24
+        private const val SETTINGS_DIALOG_GAP_DP = 12
         private const val UPDATE_PROGRESS_BAR_HEIGHT_DP = 4
         private const val UPDATE_PROGRESS_BAR_INSET_DP = 16
         private const val UPDATE_PROGRESS_BAR_BOTTOM_DP = 7
