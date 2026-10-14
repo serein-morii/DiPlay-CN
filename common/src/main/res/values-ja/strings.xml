@@ -370,7 +370,6 @@
     <string name="settings_navigation">ナビゲーション</string>
     <string name="settings_vehicle">車両</string>
     <string name="settings_advanced">詳細設定</string>
-    <string name="settings_more">その他</string>
     <string name="settings_swipe_advanced">詳細設定（実験的機能）</string>
     <string name="settings_advanced_subtitle">上級者向けの実験的機能と車種固有の設定</string>
     <string name="settings_advanced_caution_title">変更時は注意してください</string>
