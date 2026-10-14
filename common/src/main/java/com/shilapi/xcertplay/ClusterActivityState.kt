@@ -56,6 +56,8 @@ internal class ClusterActivityState {
         const val SCENARIO = "com.byd.sr.cluster.ClusterActivity"
         const val SIMPLE = "com.byd.cluster.SimpleClusterDynastyActivity"
         fun accepted(pkg: String?, name: String?): Boolean = when (pkg) {
+            // DiLink 5.0 reports the cluster map under launchermap; some Han units also
+            // surface the same class names from the automap package itself.
             "com.byd.launchermap", "com.byd.automap" -> name == FULL_MAP || name == MINI_MAP
             "com.byd.sr" -> name == SCENARIO
             "com.byd.cluster" -> name == SIMPLE

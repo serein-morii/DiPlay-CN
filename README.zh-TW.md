@@ -1,12 +1,12 @@
-# DiPlay
+# DiPlay CN
 
 [English](README.md) · [简体中文](README.zh-CN.md) · [繁體中文](README.zh-TW.md)
 
-為相容的比亞迪 Android 車機提供有線與無線 CarPlay，採用熟悉的 DiAuto 介面。DiPlay 是獨立應用程式，正式版套件名稱為 `com.shihab.diplay`。
+為相容的比亞迪 Android 車機提供有線與無線 CarPlay，採用熟悉的 DiAuto 介面。此 CN 社群版本的套件名稱為 `com.shihab.diplay.cn`，可與官方 DiPlay 並存。
 
 > 專案以比亞迪汽車為主要支援對象。其他品牌可能可以執行，但不在一般支援範圍內；特定韌體的個別整合不代表整個品牌受到支援。
 
-[下載與繁體中文網站](https://shihabal3amri.github.io/DiPlay/zh-Hant/) · [0.2.20 版本](https://github.com/shihabal3amri/DiPlay/releases/tag/v0.2.20) · [回報問題](https://github.com/shihabal3amri/DiPlay/issues/new/choose)
+[下載 CN 版本](https://github.com/serein-morii/DiPlay-CN/releases/latest) · [Gitee 國內下載](https://gitee.com/oneeyear/DiPlay-CN/releases/latest) · [回報 CN 問題](https://github.com/serein-morii/DiPlay-CN/issues/new)
 
 ![DiPlay 主畫面](site/assets/home.png)
 
@@ -66,7 +66,7 @@ Wi-Fi Direct 在 Android 7.1–9 使用依賴韌體的舊版路徑，無法驗�
 
 ## 回報問題
 
-重現問題後，開啟 **設定 → 診斷 → 儲存診斷報告**，記錄故障時間並檢查 TXT 內容，再附到[相關問題](https://github.com/shihabal3amri/DiPlay/issues)或[新增問題](https://github.com/shihabal3amri/DiPlay/issues/new/choose)。請提供車型／車機、Android／DiLink／完整韌體版本、iPhone／iOS、連線方式、相關設定與重現步驟。不要公開熱點密碼或認證檔案。詳見[診斷回報步驟](docs/SETTINGS.zh-TW.md#匯出診斷報告與回報問題)。
+重現問題後，開啟 **設定 → 診斷 → 儲存診斷報告**，記錄故障時間並檢查 TXT 內容，再附到[相關 CN 問題](https://github.com/serein-morii/DiPlay-CN/issues)或[新增問題](https://github.com/serein-morii/DiPlay-CN/issues/new)。請提供車型／車機、Android／DiLink／完整韌體版本、iPhone／iOS、連線方式、相關設定與重現步驟。不要公開熱點密碼或認證檔案。詳見[診斷回報步驟](docs/SETTINGS.zh-TW.md#匯出診斷報告與回報問題)。
 
 ## 原始碼與授權
 

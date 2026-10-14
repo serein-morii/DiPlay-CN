@@ -22,6 +22,8 @@
     <!-- The centre card also follows whichever launcher is the default home. -->
     <queries>
         <package android:name="com.byd.carsettings" />
+        <!-- Read-only visibility for the turn camera probe's OEM AVM presence hint. -->
+        <package android:name="com.byd.avm" />
         <intent>
             <action android:name="android.intent.action.VIEW" />
             <data android:scheme="content" android:mimeType="application/vnd.android.package-archive" />
@@ -35,7 +37,7 @@
             <data android:mimeType="*/*" />
         </intent>
     </queries>
-    <application>
+    <application android:supportsRtl="true">
         <provider
             android:name="com.shilapi.xcertplay.CrashRecordInstaller"
             android:authorities="${applicationId}.crash-record"
@@ -166,7 +168,6 @@
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>
         </receiver>
-
         <service
             android:name="com.shilapi.xcertplay.UsbAutoConfirmService"
             android:exported="true"

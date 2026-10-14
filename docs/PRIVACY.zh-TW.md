@@ -12,7 +12,7 @@ DiPlay 使用本機認證，透過 USB／Wi-Fi 直接連線 iPhone，不需要�
 
 匯出由你主動操作。報告包含應用程式／裝置版本、顯示設定與協商、連線階段、Wi-Fi 頻段／頻道／狀態及解碼器恢復事件。開啟選用的方向盤按鍵服務時，報告也會列出該服務最近收到的實體按鍵（按鍵碼、掃描碼，以及 DiPlay 如何處理）；會輸入文字的按鍵只計數、不列出，也不記錄輸入裝置名稱。匯出器會過濾協定內容、含憑證的紀錄及常見識別資訊，但無法保證辨識所有廠商特有字串。公開分享前請自行檢查；GitHub 問題是公開的。
 
-Android 9 以下儲存到 `Download/DiPlay` 時會要求儲存權限。若未允許、下載儲存空間不可用或檔案選擇器失效，會使用主要外部儲存的 `Android/data/<package>/files/diagnostic-reports/`；此備援不需要儲存權限。正式套件是 `com.shihab.diplay`，debug 套件是 `com.shihab.diplay.hudtest`。
+Android 9 以下儲存到 `Download/DiPlay` 時會要求儲存權限。若未允許、下載儲存空間不可用或檔案選擇器失效，會使用主要外部儲存的 `Android/data/<package>/files/diagnostic-reports/`；此備援不需要儲存權限。CN 正式套件是 `com.shihab.diplay.cn`；請以實際 APK 的套件名稱辨識 debug 建置。
 
 若外部儲存也不可用，報告會存入應用程式私有空間。各備援位置保留最新八份匯出，解除安裝時會移除。確認訊息會顯示實際 TXT 路徑；較新 Android 的檔案管理器可能限制 `Android/data` 存取，可改用 DiPlay 的檢視或分享功能。
 

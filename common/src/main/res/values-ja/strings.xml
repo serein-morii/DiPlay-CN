@@ -85,7 +85,7 @@
     <string name="home_public_preview">公開プレビュー\u0020·\u0020%1$s</string>
     <string name="choose_iphone_prefix">iPhoneを選択 ·\u0020</string>
     <string name="audio_saved_value">保存済み：%1$d</string>
-    <string name="about_public_preview_prefix">公開プレビュー\u0020·\u0020%1$s</string>
+    <string name="about_public_preview_prefix">公開プレビュー\u0020·\u0020</string>
     <string name="msg_car_hotspot_connect">DiPlayは車載ホットスポット「%1$s」を使って接続します。車の設定でオンにしてから接続してください。</string>
     <string name="edit_saved_hotspot_prefix">保存済みのホットスポットを編集 ·\u0020</string>
     <string name="cluster_adb_multi_device">ADBに複数の端末が表示される場合は、adb -s &lt;car-device-ID&gt; shell appops set %1$s GET_USAGE_STATS allow を実行してください。端末IDは adb devices で確認できます。</string>
@@ -848,7 +848,7 @@
     <string name="update_checking">確認しています…</string>
     <string name="update_up_to_date">最新版です</string>
     <string name="update_download">更新をダウンロード</string>
-    <string name="update_downloading">ダウンロード中 · %1$d%%</string>
+    <string name="update_downloading">更新をダウンロード中…</string>
     <string name="update_verifying">検証しています…</string>
     <string name="update_install">%1$sをインストール</string>
     <string name="update_failed">更新に失敗しました</string>
@@ -941,6 +941,19 @@
     <string name="settings_cluster_music_vertical">音楽カード · 上下位置</string>
     <string name="settings_cluster_music_size">音楽カード · サイズ</string>
     <string name="settings_cluster_music_unknown">不明なアーティスト</string>
+    <string name="settings_turn_camera">ターン側面カメラ（実験的機能）</string>
+    <string name="settings_turn_camera_status">互換性</string>
+    <string name="settings_turn_camera_status_unprobed">未実行です。まず「診断」で読み取り専用プローブを実行してください。</string>
+    <string name="settings_turn_camera_status_hints">プローブ完了：読み取り専用の手がかりのみ。この車では未検証です</string>
+    <string name="settings_turn_camera_enable">ターン側面カメラを有効にする</string>
+    <string name="settings_turn_camera_enable_blocked">このビルドでは利用できません。まずこの車両のヘッドユニットでファームウェア調査、停車時のキャリブレーション、実車検証が必要です。</string>
+    <string name="settings_turn_camera_probe">ターンカメラプローブを実行（読み取り専用）</string>
+    <string name="settings_turn_camera_probe_running">調査中…</string>
+    <string name="settings_turn_camera_probe_cancel">プローブを中止</string>
+    <string name="settings_turn_camera_probe_busy">前回のプローブがまだ終了していません。しばらくしてからもう一度お試しください。</string>
+    <string name="settings_turn_camera_probe_title">ターンカメラプローブ報告</string>
+    <string name="settings_turn_camera_probe_copy">コピー</string>
+    <string name="settings_turn_camera_probe_failed">プローブに失敗しました。もう一度お試しください。</string>
     <string name="connection_help_reset_wifi">以前のWi-Fi Direct接続が残っている可能性があります。下の「CarPlay Wi-Fiをリセット」を選び、再接続してください。</string>
     <string name="connection_help_bluetooth_unusable">この車載端末のBluetoothはiPhoneとデータ通信できません。ワイヤレスCarPlayは利用できないため、データ通信対応のUSBケーブルで接続してください。</string>
     <string name="connection_help_hotspot">車載端末のテザリングがオンで、名前とパスワードがDiPlayの設定と一致するか確認してください。可能なら5 GHzにして再試行してください。</string>

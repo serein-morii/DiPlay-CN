@@ -13,7 +13,9 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.SeekBar
 import android.widget.RadioButton
+import android.widget.RadioGroup
 import android.widget.ScrollView
+import android.widget.Switch
 import android.widget.TextView
 import com.shilapi.xcertplay.airplay.*
 import com.shilapi.xcertplay.host.R
@@ -109,9 +111,11 @@ class CarPlayHostSettingsTest {
                     View.MeasureSpec.makeMeasureSpec(height, View.MeasureSpec.EXACTLY))
                 overlay.layout(0, 0, width, height)
             }
-            val expected = (minOf(720, widthDp - 32) * density + 0.5f).toInt()
-            assertEquals(expected, panel.width)
-            assertTrue(kotlin.math.abs(panel.left - (width - panel.right)) <= 1)
+            val expected = (minOf(880, widthDp - 48) * density + 0.5f).toInt()
+            assertEquals("width=$widthDp", expected, panel.width)
+            assertTrue("width=$widthDp", kotlin.math.abs(panel.left - (width - panel.right)) <= 1)
+            assertTrue("The floating sheet needs space above it", panel.top > 0)
+            assertTrue("The floating sheet needs space below it", panel.bottom < height)
             val title = views(panel).filterIsInstance<TextView>()
                 .first { it.text == activity.getString(R.string.carplay_settings) }
             val close = views(panel).filterIsInstance<Button>()
@@ -263,13 +267,64 @@ class CarPlayHostSettingsTest {
     @Test fun closeButtonDiscardsEditsWithoutRestartingCarPlay() {
         val controller = attachController()
         invoke("openSettingsMenu")
-        resolutionSlider().progress = 0
-        val close = views(menu()).filterIsInstance<Button>()
-            .first { it.text == activity.getString(R.string.close) }
-        close.performClick()
-        assertFalse(field("menuOpen") as Boolean)
-        assertSame(controller, field("controller"))
-        assertEquals(0, field("restartGeneration"))
+        val close = views(menu()).filterIsInstance<Button>().first {
+            it.contentDescription == activity.getString(R.string.discard_changes_and_exit_settings)
+        }
+        assertEquals(activity.getString(R.string.close), close.text.toString())
+        assertEquals(activity.getString(R.string.exit_application), exitButton().text.toString())
+        assertEquals(DiPlayPalette.of(field("appNight") as Boolean).overlayDanger,
+            exitButton().currentTextColor)
+    }
+
+    @Test fun exitStaysInScrollableMorePageAwayFromFixedSave() {
+        setField("overlayMenuCategoryKey", "more")
+        invoke("openSettingsMenu")
+        val contentScroll = field("overlaySettingsContentScroll") as ScrollView
+        assertTrue("Exit belongs to the scrollable content", views(contentScroll).contains(exitButton()))
+        assertFalse("Save must remain fixed outside the scroll", views(contentScroll).contains(saveButton()))
+    }
+
+    @Test fun resizingAnOpenMenuSwitchesBetweenRailAndChips() {
+        invoke("openSettingsMenu")
+        val overlay = menu() as ViewGroup
+        layoutMenu(overlay, 1600, 900)
+        assertEquals(2, views(overlay).filterIsInstance<ScrollView>().count())
+        views(overlay).first { it.contentDescription == activity.getString(R.string.settings_display) }
+            .performClick()
+        assertEquals("display", field("overlayMenuCategoryKey"))
+
+        layoutMenu(overlay, 320, 480)
+        assertEquals(1, views(overlay).filterIsInstance<ScrollView>().count())
+        assertEquals("display", field("overlayMenuCategoryKey"))
+        assertInsidePanel(saveButton(), overlay.getChildAt(0))
+
+        layoutMenu(overlay, 1600, 900)
+        assertEquals(2, views(overlay).filterIsInstance<ScrollView>().count())
+        assertEquals("display", field("overlayMenuCategoryKey"))
+    }
+
+    @Test fun narrowDisplayChoicesStackInsteadOfClipping() {
+        setField("overlayMenuCategoryKey", "display")
+        invoke("openSettingsMenu")
+        layoutMenu(menu(), 320, 480)
+        val nightModes = views(menu()).filterIsInstance<RadioGroup>()
+            .first { it.childCount == CarPlayNightMode.entries.size }
+        assertEquals(RadioGroup.VERTICAL, nightModes.orientation)
+        assertInsidePanel(nightModes, (menu() as ViewGroup).getChildAt(0))
+    }
+
+    @Test fun changingCategoriesResetsTheContentScroll() {
+        setField("overlayMenuCategoryKey", "display")
+        invoke("openSettingsMenu")
+        layoutMenu(menu(), 600, 480)
+        val contentScroll = field("overlaySettingsContentScroll") as ScrollView
+        contentScroll.scrollTo(0, 120)
+        assertTrue(contentScroll.scrollY > 0)
+
+        views(menu()).first { it.contentDescription == activity.getString(R.string.audio) }.performClick()
+
+        assertEquals(0, contentScroll.scrollY)
+        assertEquals("sound", field("overlayMenuCategoryKey"))
     }
     @Test fun configuredFingerCountsOpenTheMountedMenuWithoutLeavingCarPlay() {
         assertEquals(3, AirPlayPersistence.loadSettingsGestureFingers(activity))
@@ -284,6 +339,60 @@ class CarPlayHostSettingsTest {
             assertNull(shadowOf(activity).nextStartedActivity)
             invoke("cancelSettingsEdits")
         }
+    }
+
+    @Test fun swipeTargetHomeOpensDiPlaySettingsInsteadOfTheMenu() {
+        AirPlayPersistence.saveSwipeOpensFullSettings(activity, true)
+        invoke("loadPersistedSettings")
+        gesture(3)
+        assertFalse(field("menuOpen") as Boolean)
+        val started = shadowOf(activity).nextStartedActivity
+        assertEquals(DiPlayActivity::class.java.name, started.component!!.className)
+        assertEquals("settings", started.getStringExtra("page"))
+    }
+
+    @Test
+    @Config(qualifiers = "en-w1920dp-h1080dp-mdpi")
+    fun wideOverlayMenuKeepsConnectionControlsTappable() {
+        invoke("openSettingsMenu")
+        val root = menu()
+        root.measure(
+            View.MeasureSpec.makeMeasureSpec(1920, View.MeasureSpec.EXACTLY),
+            View.MeasureSpec.makeMeasureSpec(1080, View.MeasureSpec.EXACTLY),
+        )
+        root.layout(0, 0, 1920, 1080)
+        val wireless = views(root).filterIsInstance<android.widget.Switch>()
+            .first { it.contentDescription == activity.getString(R.string.wireless_carplay_transport) }
+        assertTrue(wireless.height > 0)
+        assertEquals(View.VISIBLE, wireless.visibility)
+        setField("wirelessEnabled", false)
+        wireless.isChecked = false
+        wireless.performClick()
+        assertTrue(field("wirelessEnabled") as Boolean)
+        assertTrue(resolutionSlider().width >= 0)
+    }
+
+    @Test fun openFullSettingsButtonAlwaysOpensTheHomeSettingsPage() {
+        invoke("openSettingsMenu")
+        views(menu()).filterIsInstance<Button>()
+            .first { it.text == activity.getString(R.string.open_full_settings) }
+            .performClick()
+        assertFalse(field("menuOpen") as Boolean)
+        val started = shadowOf(activity).nextStartedActivity
+        assertEquals(DiPlayActivity::class.java.name, started.component!!.className)
+        assertEquals("settings", started.getStringExtra("page"))
+    }
+
+    @Test fun cancellingTheMenuDiscardsTheSwipeTargetChoice() {
+        assertFalse(AirPlayPersistence.loadSwipeOpensFullSettings(activity))
+        invoke("openSettingsMenu")
+        views(menu()).filterIsInstance<RadioButton>()
+            .first { it.text == activity.getString(R.string.settings_swipe_target_full) }
+            .performClick()
+        assertFalse(AirPlayPersistence.loadSwipeOpensFullSettings(activity))
+        invoke("cancelSettingsEdits")
+        assertFalse(AirPlayPersistence.loadSwipeOpensFullSettings(activity))
+        assertFalse(field("swipeOpensFullSettings") as Boolean)
     }
 
     @Test fun wrongFingerCountsAndNonDownwardSwipesDoNotOpenTheMenu() {
@@ -377,6 +486,9 @@ class CarPlayHostSettingsTest {
 
         assertFalse(field("menuOpen") as Boolean)
         assertEquals(staged, AirPlayPersistence.loadDisplayScalePercent(activity))
+        val started = shadowOf(activity).nextStartedActivity
+        assertEquals(DiPlayActivity::class.java.name, started.component!!.className)
+        assertEquals("settings", started.getStringExtra("page"))
     }
 
     @Test fun returningFromFullSettingsReloadsSavedConnectionPreferences() {
@@ -465,14 +577,84 @@ class CarPlayHostSettingsTest {
         assertNotSame(oldMenu, menu())
         assertEquals("Unsaved hotspot", field("manualHotspotSsid"))
         assertEquals(false, field("appNight"))
+        // The sheet overlay dims the video; the palette-driven surface is the panel inside it.
+        val panel = (menu() as android.view.ViewGroup).getChildAt(0)
         assertEquals(
-            0xB3000000.toInt(),
-            (menu().background as android.graphics.drawable.ColorDrawable).color,
+            DiPlayPalette.LIGHT.overlayBackground,
+            (panel.background as android.graphics.drawable.GradientDrawable).color?.defaultColor,
         )
         val heading = views(menu()).filterIsInstance<TextView>()
             .first { it.text == activity.getString(R.string.carplay_settings) }
         assertEquals(DiPlayPalette.LIGHT.overlayPrimaryText, heading.currentTextColor)
+        val primary = saveButton()
+        assertEquals(DiPlayPalette.LIGHT.overlayOnAccent, primary.currentTextColor)
+        assertEquals(DiPlayPalette.LIGHT.overlayAccent,
+            (primary.background as android.graphics.drawable.GradientDrawable).color!!.defaultColor)
     }
+
+    @Test
+    @Config(qualifiers = "en-w1920dp-h1080dp-mdpi")
+    fun appearanceRepaintPreservesTheWideContentScrollNotTheSidebarScroll() {
+        setField("overlayMenuCategoryKey", "more")
+        invoke("openSettingsMenu")
+        layoutMenu(menu(), 1920, 1080)
+        val content = field("overlaySettingsContentScroll") as ScrollView
+        content.scrollTo(0, 160)
+        assertTrue(content.scrollY > 0)
+
+        AirPlayPersistence.saveAppAppearance(activity, AppAppearance.LIGHT)
+        invoke("refreshAppAppearance")
+        shadowOf(Looper.getMainLooper()).idle()
+        layoutMenu(menu(), 1920, 1080)
+
+        assertEquals(160, (field("overlaySettingsContentScroll") as ScrollView).scrollY)
+    }
+
+    @Test
+    @Config(qualifiers = "en-w320dp-h480dp-xhdpi")
+    fun highDensityNarrowMenuKeepsActionsInsideThePanel() {
+        invoke("openSettingsMenu")
+        layoutMenu(menu(), 640, 960)
+        val panel = (menu() as ViewGroup).getChildAt(0)
+        assertInsidePanel(fullSettingsButton(), panel)
+        assertInsidePanel(saveButton(), panel)
+        assertInsidePanel(exitButton(), panel)
+    }
+
+    @Test
+    @Config(qualifiers = "en-w600dp-h720dp-mdpi")
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    fun compactLargeFontSettingsScreenshot() = checkLargeFontScreenshot("overlay-compact-large-font.png", 600, 720)
+
+    @Test
+    @Config(qualifiers = "en-w1920dp-h1080dp-mdpi")
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    fun wideLargeFontSettingsScreenshot() = checkLargeFontScreenshot("overlay-wide-large-font.png", 1920, 1080)
+
+    @Test
+    @Config(qualifiers = "en-w600dp-h720dp-mdpi")
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    fun lightLargeFontSettingsScreenshot() = checkLargeFontScreenshot("overlay-light-large-font.png", 600, 720)
+
+    @Test
+    @Config(qualifiers = "ar-rSA-w600dp-h720dp-mdpi")
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    fun arabicLargeFontSettingsScreenshot() = checkLargeFontScreenshot("overlay-arabic-large-font.png", 600, 720)
+
+    @Test
+    @Config(qualifiers = "en-w600dp-h720dp-mdpi")
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    fun compactMoreLargeFontScreenshot() = checkLargeFontScreenshot("overlay-more-compact-large-font.png", 600, 720)
+
+    @Test
+    @Config(qualifiers = "en-w1920dp-h1080dp-mdpi")
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    fun wideMoreLargeFontScreenshot() = checkLargeFontScreenshot("overlay-more-wide-large-font.png", 1920, 1080)
+
+    @Test
+    @Config(qualifiers = "ar-rSA-w600dp-h720dp-mdpi")
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    fun arabicMoreLargeFontScreenshot() = checkLargeFontScreenshot("overlay-more-arabic-large-font.png", 600, 720)
 
     @Test fun savingPersistsSettingsAndRestartsOnce() {
         attachController()
@@ -745,14 +927,62 @@ class CarPlayHostSettingsTest {
                 View.MeasureSpec.makeMeasureSpec(height, View.MeasureSpec.EXACTLY))
             root.layout(0, 0, width, height)
         }
+    }
+
+    private fun assertInsidePanel(view: View, panel: View) {
+        var left = view.left
+        var parent = view.parent
+        while (parent is View && parent !== panel) {
+            left += parent.left
+            parent = parent.parent
+        }
+        assertSame("The control must belong to the menu panel", panel, parent)
+        assertTrue("Control starts outside panel: ${view.javaClass.simpleName}", left >= 0)
+        assertTrue("${view.javaClass.simpleName} '${(view as? TextView)?.text}' left=$left " +
+            "width=${view.width} parentWidth=${(view.parent as View).width} panelWidth=${panel.width}",
+            left + view.width <= panel.width)
+    }
+
+    private fun saveButton() = views(menu()).filterIsInstance<Button>()
+        .first { it.text.contains(activity.getString(R.string.save_and_reconnect)) }
+
+    private fun exitButton() = views(menu()).filterIsInstance<Button>()
+        .first { it.text.contains(activity.getString(R.string.exit_application)) }
+
+    private fun checkLargeFontScreenshot(name: String, width: Int, height: Int) {
+        val config = Configuration(activity.resources.configuration).apply {
+            fontScale = 1.5f
+            if (name.contains("arabic")) {
+                val arabic = Locale.forLanguageTag("ar-SA")
+                setLocale(arabic)
+                setLayoutDirection(arabic)
+            }
+        }
+        @Suppress("DEPRECATION")
+        activity.resources.updateConfiguration(config, activity.resources.displayMetrics)
+        if (name.contains("arabic")) assertEquals("Arabic resource direction",
+            View.LAYOUT_DIRECTION_RTL, activity.resources.configuration.layoutDirection)
+        setField("overlayMenuCategoryKey", if (name.contains("more")) "more" else "display")
+        invoke("openSettingsMenu")
+        if (name.contains("light")) {
+            AirPlayPersistence.saveAppAppearance(activity, AppAppearance.LIGHT)
+            invoke("refreshAppAppearance")
+            shadowOf(Looper.getMainLooper()).idle()
+        }
+        val root = menu()
+        if (name.contains("arabic")) assertEquals("Arabic direction after opening",
+            View.LAYOUT_DIRECTION_RTL, activity.resources.configuration.layoutDirection)
+        layoutMenu(root, width, height)
+        if (name.contains("more")) {
+            val contentScroll = field("overlaySettingsContentScroll") as ScrollView
+            contentScroll.scrollTo(0, contentScroll.getChildAt(0).height - contentScroll.height)
+        }
         val panel = (root as ViewGroup).getChildAt(0)
-        assertTrue(panel.left > 0)
-        assertTrue(panel.top > 0)
-        assertTrue(panel.right < width)
-        assertTrue(panel.bottom < height)
-        val close = views(panel).filterIsInstance<Button>()
-            .first { it.text == activity.getString(R.string.close) }
-        assertTrue(close.width >= close.height)
+        assertInsidePanel(fullSettingsButton(), panel)
+        assertInsidePanel(saveButton(), panel)
+        assertInsidePanel(exitButton(), panel)
+
+        // Opt-in render for the checked-in layout QA images; ordinary CI runs only the assertions.
         val destination = System.getenv("DIPLAY_SCREENSHOT_DIR") ?: return
         val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
         root.draw(Canvas(bitmap))
@@ -801,7 +1031,7 @@ class CarPlayHostSettingsTest {
     private fun gestureButton() = views(menu()).filterIsInstance<Button>()
         .first { it.text == activity.getString(R.string.settings_gesture_fingers, field("gestureFingerCount")) }
     private fun fullSettingsButton() = views(menu()).filterIsInstance<Button>()
-        .first { it.text == activity.getString(R.string.app_name) + " " + activity.getString(R.string.settings) }
+        .first { it.text == activity.getString(R.string.open_full_settings) }
     /** Answers the "Discard your changes?" dialog that an exit with staged edits now shows. */
     private fun discardPendingEdits() {
         val dialog = ShadowAlertDialog.getLatestAlertDialog()

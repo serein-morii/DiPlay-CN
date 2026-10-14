@@ -1,0 +1,122 @@
+name: Release Chinese APK
+
+on:
+  push:
+    tags:
+      - 'v*-cn.*'
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+    env:
+      OFFICIAL_APK_URL: https://github.com/shihabal3amri/DiPlay/releases/download/v0.2.14/DiPlay-0.2.14.apk
+      OFFICIAL_APK_SHA256: 62b31f79db32bc7c85013ae830460b697a5952fad571ed0030b97341dde0b2e3
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Reject credential files in public source
+        run: python3 scripts/check_public_tree.py
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools platforms;android-37.0 build-tools;36.0.0 ndk;28.2.13676358
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Provision runtime identity from official v0.2.14 APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          apk="$RUNNER_TEMP/DiPlay-0.2.14.apk"
+          assets="$RUNNER_TEMP/auth-assets"
+          curl -fsSL -o "$apk" "$OFFICIAL_APK_URL"
+          python3 scripts/extract_official_identity.py "$apk" "$assets" "$OFFICIAL_APK_SHA256"
+          echo "DIPLAY_AUTH_ASSETS_DIR=$assets" >> "$GITHUB_ENV"
+      - name: The release notes must use the version placeholder
+        run: grep -q '{{VERSION}}' docs/GITHUB_RELEASE.md
+      - name: The tag and versionCode must be upgradeable
+        run: |
+          python3 -m unittest discover -s scripts -p 'test_check_release_version.py'
+          python3 scripts/check_release_version.py "$GITHUB_REF_NAME"
+      - name: Test and build standalone release APK
+        run: |
+          if ! ./gradlew :shared:testDebugUnitTest :common:testDebugUnitTest :mobile:lintRelease :mobile:assembleStandaloneRelease --stacktrace > gradle.log 2>&1; then
+            grep -nE 'FAILED|tests completed|^e: |^error: ' gradle.log | tail -60 || true
+            grep -R -n '<failure' common/build/test-results/testDebugUnitTest shared/build/test-results/testDebugUnitTest --include='*.xml' | head -30 || true
+            tail -60 gradle.log
+            exit 1
+          fi
+      - name: Save release diagnostics on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-failure-diagnostics
+          path: |
+            gradle.log
+            common/build/test-results/testDebugUnitTest/
+            shared/build/test-results/testDebugUnitTest/
+            mobile/build/reports/lint-results-release.html
+          if-no-files-found: ignore
+      - name: Verify identity is inside the APK and not in git
+        run: |
+          set -euo pipefail
+          python3 scripts/check_public_tree.py
+          python3 scripts/verify_apk_identity.py mobile/build/outputs/apk/release/mobile-release.apk
+      - name: Prepare release files
+        shell: bash
+        run: |
+          set -euo pipefail
+          apk="DiPlay-cn-${GITHUB_REF_NAME}.apk"
+          cp mobile/build/outputs/apk/release/mobile-release.apk "$apk"
+          sha256sum "$apk" > "$apk.sha256"
+          cp docs/GITHUB_RELEASE.md release-notes.md
+          sed -i "s/{{VERSION}}/${GITHUB_REF_NAME#v}/g" release-notes.md
+      - name: Save files for the Gitee mirror job
+        uses: actions/upload-artifact@v4
+        with:
+          name: gitee-release-files
+          path: |
+            DiPlay-cn-${{ github.ref_name }}.apk
+            DiPlay-cn-${{ github.ref_name }}.apk.sha256
+            release-notes.md
+          if-no-files-found: error
+          retention-days: 7
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          apk="DiPlay-cn-${GITHUB_REF_NAME}.apk"
+          gh release delete "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --yes || true
+          gh release create "$GITHUB_REF_NAME" \
+            "$apk#DiPlay CN" \
+            "$apk.sha256#SHA-256" \
+            --repo "$GITHUB_REPOSITORY" \
+            --verify-tag \
+            --title "DiPlay CN ${GITHUB_REF_NAME#v}" \
+            --notes-file release-notes.md
+  sync_gitee:
+    name: Mirror verified APK to Gitee
+    needs: release
+    runs-on: macos-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: gitee-release-files
+      - name: Sync APK to Gitee
+        env:
+          GITEE_TOKEN: ${{ secrets.GITEE_TOKEN }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        shell: bash
+        run: bash scripts/sync_gitee_release.sh

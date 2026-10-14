@@ -61,16 +61,16 @@ class SettingsWidgetsTest {
         }
     }
 
-    @Test fun overlayKeepsTheExistingGreenControlsAndLabelMetrics() {
+    @Test fun overlayKeepsTheExistingBlueControlsAndLabelMetrics() {
         val row = ConnectionSettingsSection.createWirelessCarPlayRow(context, true, onChanged = {})
         val label = (row.rowView as ViewGroup).getChildAt(0) as TextView
         assertEquals(20f, label.textSize / context.resources.displayMetrics.scaledDensity, 0.01f)
         assertFalse(label.includeFontPadding)
-        assertEquals(Color.rgb(170, 180, 190), label.currentTextColor)
-        assertEquals(Color.rgb(127, 205, 154), row.switch.thumbTintList!!.getColorForState(
+        assertEquals(Color.rgb(144, 163, 188), label.currentTextColor)
+        assertEquals(Color.rgb(39, 136, 251), row.switch.thumbTintList!!.getColorForState(
             intArrayOf(android.R.attr.state_enabled, android.R.attr.state_checked), 0))
         val heading = SettingsWidgets.createCategoryHeader(context, "Heading")
-        assertEquals(Color.rgb(127, 205, 154), heading.currentTextColor)
+        assertEquals(Color.rgb(39, 136, 251), heading.currentTextColor)
         assertFalse(heading.includeFontPadding)
     }
 

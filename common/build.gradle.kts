@@ -13,6 +13,10 @@ android {
         minSdk = 25
     }
 
+    sourceSets {
+        getByName("main").assets.srcDir(rootProject.file("docs"))
+    }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
@@ -24,8 +28,9 @@ android {
 
     testOptions {
         unitTests.isIncludeAndroidResources = true
-        // The UI suite covers several SDKs and locale-specific resource sandboxes.
-        unitTests.all { it.maxHeapSize = "1g" }
+        // The UI suite covers several SDKs and locale-specific resource sandboxes; the
+        // sandboxes accumulate inside one worker, so a full run needs more than 1g.
+        unitTests.all { it.maxHeapSize = "2g" }
     }
 }
 

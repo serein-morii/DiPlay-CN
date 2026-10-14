@@ -62,7 +62,7 @@
 2. 開啟 **設定 → 診斷 → 儲存診斷報告**。
 3. Android 10 以上通常存至 `Download/DiPlay`；Android 7.1–9 會要求儲存權限。也可以使用 **選擇儲存位置**。
 4. 若公共儲存空間或檔案選擇器不可用，應用程式使用專用外部或私有目錄；確認訊息會顯示實際路徑。使用 **檢視報告**／**分享診斷報告**；沒有分享應用程式時，可在報告檢視中選取並複製文字。
-5. 檢查 TXT，移除不適合公開的資訊，再附到[相關 GitHub 問題](https://github.com/shihabal3amri/DiPlay/issues)或[建立新問題](https://github.com/shihabal3amri/DiPlay/issues/new/choose)。
+5. 檢查 TXT，移除不適合公開的資訊，再附到[相關 CN 問題](https://github.com/serein-morii/DiPlay-CN/issues)或[建立新問題](https://github.com/serein-morii/DiPlay-CN/issues/new)。
 
 請附上車型與車機型號、完整韌體／Android／DiLink、iPhone／iOS、DiPlay 版本、連線方式（USB／車載熱點／Wi-Fi Direct／同一區域網路）、相關設定、重現步驟、預期與實際結果，以及故障時間。
 

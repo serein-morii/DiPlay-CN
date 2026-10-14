@@ -50,7 +50,7 @@ class ClusterSettingsConsentTest {
         activity.setup().visible()
         ReflectionHelpers.setField(screen, "setupError", null)
         ReflectionHelpers.setField(screen, "page", "settings")
-        ReflectionHelpers.setField(screen, "settingsCategory", SettingsCategory.ADVANCED)
+        ReflectionHelpers.setField(screen, "settingsCategory", SettingsCategory.NAVIGATION)
         AirPlayPersistence.saveWirelessEnabled(screen, false)
         session = mock(CarPlayController::class.java)
         CarPlayBackgroundSession.store(session, mock(AndroidMediaSink::class.java), 800, 480,

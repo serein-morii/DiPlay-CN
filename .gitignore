@@ -27,6 +27,8 @@ Thumbs.db
 # Local beta credentials and release signing (never commit)
 .private/
 *.jks
+# The CN build's stable signing key; see scripts/check_public_tree.py
+!signing/diplay-cn.jks
 *.keystore
 release-signing.properties
 

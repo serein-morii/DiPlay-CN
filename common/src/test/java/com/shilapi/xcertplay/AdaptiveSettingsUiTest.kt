@@ -671,7 +671,7 @@ class AdaptiveSettingsUiTest {
             .performClick()
 
         assertTrue(texts(screen).any { it.text == screen.getString(R.string.settings_advanced_caution_title) })
-        assertTrue(texts(screen).any { it.text == screen.getString(R.string.carplay_map_on_instrument_cluster_experimental) })
+        assertFalse(texts(screen).any { it.text == screen.getString(R.string.carplay_map_on_instrument_cluster_experimental) })
         assertTrue(texts(screen).any { it.text == screen.getString(R.string.advanced_vehicle_data) })
         assertFalse(texts(screen).any { it.text == screen.getString(R.string.automatic_connection) })
         assertFalse(texts(screen).any { it.text == screen.getString(R.string.display_and_performance) })
@@ -702,6 +702,7 @@ class AdaptiveSettingsUiTest {
 
         val display = visibleIn(R.string.settings_display)
         val audio = visibleIn(R.string.audio)
+        val navigation = visibleIn(R.string.settings_navigation)
         val vehicle = visibleIn(R.string.settings_vehicle)
         val advanced = visibleIn(R.string.settings_advanced)
         val connection = visibleIn(R.string.connection)
@@ -720,6 +721,7 @@ class AdaptiveSettingsUiTest {
             assertFalse(text(it), text(it) in audio)
         }
         assertTrue(text(R.string.right_hand_drive) in vehicle)
+        assertTrue(text(R.string.settings_launcher_returns_to_carplay) in vehicle)
         assertTrue(text(R.string.car_button_in_carplay) in vehicle)
         assertTrue(text(R.string.wheel_siri_key) in vehicle)
         assertTrue(text(R.string.settings_wheel_keys) in vehicle)
@@ -731,6 +733,14 @@ class AdaptiveSettingsUiTest {
         assertFalse(text(R.string.settings_ambient_title) in vehicle)
         assertFalse(text(R.string.settings_ambient_title) in display)
         assertTrue(text(R.string.side_panel) in advanced)
+        assertTrue(text(R.string.carplay_map_on_instrument_cluster_experimental) in navigation)
+        assertFalse(text(R.string.carplay_map_on_instrument_cluster_experimental) in advanced)
+        // Phase A turn camera card: Advanced holds the blocked switch, Diagnostics holds the probe.
+        assertTrue(text(R.string.settings_turn_camera) in advanced)
+        assertTrue(text(R.string.settings_turn_camera_enable) in advanced)
+        assertFalse(text(R.string.settings_turn_camera) in navigation)
+        assertFalse(text(R.string.settings_turn_camera) in display)
+        assertFalse(text(R.string.settings_turn_camera) in vehicle)
         assertTrue(display.any { it.startsWith(text(R.string.settings_app_appearance)) })
         assertFalse(audio.any { it.startsWith(text(R.string.settings_app_appearance)) })
         assertFalse(vehicle.any { it.startsWith(text(R.string.settings_app_appearance)) })
@@ -1086,8 +1096,17 @@ class AdaptiveSettingsUiTest {
         ReflectionHelpers.callInstanceMethod<Unit>(screen, "openSettingsCategory",
             ReflectionHelpers.ClassParameter(SettingsCategory::class.java, SettingsCategory.OVERVIEW))
         open(R.string.about)
+        assertEquals("settings", ReflectionHelpers.getField<String>(screen, "page"))
         assertEquals(SettingsCategory.ABOUT, ReflectionHelpers.getField<SettingsCategory>(screen, "settingsCategory"))
         assertTrue(texts(screen).any { it.text == screen.getString(R.string.carplay_at_home_in_your_car) })
+        val expanded = ReflectionHelpers.callInstanceMethod<Boolean>(screen, "isExpandedSettingsLayout")
+        if (expanded) {
+            val rail = ReflectionHelpers.getField<ScrollView>(screen, "settingsRailScroll")
+            assertTrue(descendants(rail).any {
+                it.isSelected && it.contentDescription == screen.getString(
+                    R.string.settings_open_category, screen.getString(R.string.about))
+            })
+        }
         screen.onBackPressedDispatcher.onBackPressed()
         if (expanded) {
             assertEquals("home", ReflectionHelpers.getField<String>(screen, "page"))

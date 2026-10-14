@@ -4,7 +4,7 @@
 
 ## 安裝前準備
 
-1. 停車後，從[官方 0.2.20 版本](https://github.com/shihabal3amri/DiPlay/releases/tag/v0.2.20)下載 APK。此版本需要 Android 7.1 以上（API 25+）；Android 7.1–8.1 尚待實車驗證。
+1. 停車後，從[DiPlay CN 發布頁](https://github.com/serein-morii/DiPlay-CN/releases/latest)或 [Gitee 國內下載頁](https://gitee.com/oneeyear/DiPlay-CN/releases/latest)下載 APK。此版本需要 Android 7.1 以上（API 25+）；Android 7.1–8.1 尚待實車驗證。
 2. 依車機支援的方式安裝在 **Android 車機**，不要安裝在 iPhone。安裝 APK 的限制由車機韌體決定。
 3. 更新既有安裝時，使用相同應用程式套件／版本類型與相符的簽章。這樣才能保留設定和配對資料；不同簽章無法直接覆蓋安裝。解除安裝會移除應用程式私有資料。
 4. 開啟 DiPlay，依使用功能授予藍牙／附近的裝置、Wi-Fi／位置資訊及麥克風權限；通知權限用於連線控制。較舊 Android 的無線連線需要位置權限。

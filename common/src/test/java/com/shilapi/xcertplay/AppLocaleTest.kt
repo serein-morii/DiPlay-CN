@@ -134,4 +134,25 @@ class AppLocaleTest {
             assertEquals(tag, "應用程式語言", systemContext.getString(R.string.language_app_language))
         }
     }
+
+    @Test fun firstLaunchKeepsASupportedSystemLanguage() {
+        AppLocale.wrap(context)
+        assertTrue(manager.applicationLocales.isEmpty)
+        assertEquals(AppLocale.SYSTEM, AppLocale.preference(context))
+    }
+
+    @Test @Config(sdk = [28], qualifiers = "it")
+    fun firstLaunchOnUnsupportedLanguageDefaultsToSimplifiedChinese() {
+        AppLocale.wrap(context)
+        val wrapped = AppLocale.wrap(context)
+        assertEquals(Locale.SIMPLIFIED_CHINESE.language, wrapped.resources.configuration.locales[0].language)
+    }
+
+    @Test @Config(sdk = [28], qualifiers = "ja")
+    fun firstLaunchKeepsJapaneseNowThatItIsSupported() {
+        val wrapped = AppLocale.wrap(context)
+        assertEquals(AppLocale.SYSTEM, AppLocale.preference(context))
+        assertEquals("ja", wrapped.resources.configuration.locales[0].language)
+        assertEquals("アプリの言語", wrapped.getString(R.string.language_app_language))
+    }
 }

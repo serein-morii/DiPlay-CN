@@ -1,0 +1,33 @@
+name: Release cleanup
+
+# Deletes the releases listed in scripts/release_cleanup.txt (one tag per
+# line). The file is emptied after use; an empty file is a no-op.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Delete listed releases
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          [ -f scripts/release_cleanup.txt ] || exit 0
+          deleted=0
+          while read -r tag; do
+            [ -z "$tag" ] && continue
+            if gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+              gh release delete "$tag" --repo "$GITHUB_REPOSITORY" --yes
+              echo "deleted release $tag"
+              deleted=$((deleted+1))
+            fi
+          done < scripts/release_cleanup.txt
+          echo "removed $deleted release(s)"

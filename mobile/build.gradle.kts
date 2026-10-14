@@ -14,11 +14,11 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.shihab.diplay"
+        applicationId = "com.shihab.diplay.cn"
         minSdk = 25
         targetSdk = 37
-        versionCode = 39
-        versionName = "0.2.20"
+        versionCode = 117
+        versionName = "0.2.20-cn.1"
 
     }
 
@@ -27,20 +27,25 @@ android {
 
     signingConfigs {
         create("release") {
-            storeFile = file(
-                providers.environmentVariable("ANDROID_KEYSTORE_PATH")
-                    .getOrElse("missing-release-keystore.jks"),
-            )
-            storePassword = providers.environmentVariable("ANDROID_KEYSTORE_PASSWORD").getOrElse("")
-            keyAlias = providers.environmentVariable("ANDROID_KEY_ALIAS").getOrElse("")
-            keyPassword = providers.environmentVariable("ANDROID_KEY_PASSWORD").getOrElse("")
+            val storePath = providers.environmentVariable("ANDROID_KEYSTORE_PATH").orNull
+            if (storePath != null) {
+                storeFile = file(storePath)
+                storePassword = providers.environmentVariable("ANDROID_KEYSTORE_PASSWORD").getOrElse("")
+                keyAlias = providers.environmentVariable("ANDROID_KEY_ALIAS").getOrElse("")
+                keyPassword = providers.environmentVariable("ANDROID_KEY_PASSWORD").getOrElse("")
+            } else {
+                // PUBLIC legacy CN key retained only for in-place update compatibility.
+                // It cannot authenticate the publisher of an APK; see SECURITY.md.
+                storeFile = rootProject.file("signing/diplay-cn.jks")
+                storePassword = "diplay-cn"
+                keyAlias = "diplaycn"
+                keyPassword = "diplay-cn"
+            }
         }
     }
 
     buildTypes {
         debug {
-            applicationIdSuffix = ".hudtest"
-            versionNameSuffix = "-hud-test"
         }
         release {
             optimization {
@@ -117,4 +122,9 @@ tasks.register("assembleStandaloneDebug") {
     group = "build"
     description = "Build a standalone car-test APK with explicitly provisioned authentication."
     dependsOn(verifyStandaloneAuthentication, "assembleDebug")
+}
+tasks.register("assembleStandaloneRelease") {
+    group = "build"
+    description = "Build a standalone release APK with explicitly provisioned authentication."
+    dependsOn(verifyStandaloneAuthentication, "assembleRelease")
 }

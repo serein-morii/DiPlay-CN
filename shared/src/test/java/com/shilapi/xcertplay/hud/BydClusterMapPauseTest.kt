@@ -21,6 +21,7 @@ class BydClusterMapPauseTest {
     fun tearDown() {
         release.countDown()
         BydClusterMapPause.streamControl = null
+        BydClusterMapPause.onNaviMode = null
         BydClusterMapPause.clusterMapShown = false
         BydClusterMapPause.onNaviMode = null
     }

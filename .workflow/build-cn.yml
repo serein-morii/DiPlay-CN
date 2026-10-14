@@ -1,0 +1,26 @@
+version: '1.0'
+name: build-cn-release
+displayName: Build CN Release on Gitee
+# Builds the APK natively on a Gitee runner so the ~24MB attach to the Gitee release stays
+# in-network (cross-border uploads from GitHub runners and the Mac truncate). Triggered by a
+# push to main (builds the tag queued in scripts/gitee_attach_tag.txt) or a pushed v*-cn.*
+# tag. Everything heavy lives in scripts/build_cn_release.sh; needs the GITEE_TOKEN
+# pipeline variable for the attach API.
+triggers:
+  push:
+    branches:
+      prefix:
+        - main
+    tags:
+      prefix:
+        - v*-cn.
+stages:
+  - name: build-and-attach
+    displayName: Build and attach APK
+    steps:
+      - step: build@gradle
+        name: build-cn
+        displayName: Build CN APK and attach
+        jdkVersion: 17
+        commands:
+          - bash scripts/build_cn_release.sh

@@ -26,7 +26,7 @@ object BydStarterBridge {
     private var lastNotice: String? = null
 
     @Synchronized fun initialize(context: Context) {
-        if (context.packageName !in setOf("com.andrerinas.headunitrevived.bydhudtest", "com.shihab.diplay.hudtest") || started) return
+        if (context.packageName !in setOf("com.andrerinas.headunitrevived.bydhudtest", "com.shihab.diplay.hudtest", "com.shihab.diplay.cn") || started) return
         val saved = context.getSharedPreferences("hud_starter", Context.MODE_PRIVATE).getString("token", null)
         token = decodeToken(saved)
         started = true
@@ -36,7 +36,7 @@ object BydStarterBridge {
     }
 
     @Synchronized fun configure(context: Context, secret: String) {
-        check(context.packageName in setOf("com.andrerinas.headunitrevived.bydhudtest", "com.shihab.diplay.hudtest"))
+        check(context.packageName in setOf("com.andrerinas.headunitrevived.bydhudtest", "com.shihab.diplay.hudtest", "com.shihab.diplay.cn"))
         val parsed = requireNotNull(decodeToken(secret)) { "Invalid starter token" }
         context.getSharedPreferences("hud_starter", Context.MODE_PRIVATE).edit().putString("token", secret).apply()
         initialize(context)
