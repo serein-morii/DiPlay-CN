@@ -91,7 +91,6 @@
     <string name="settings_mfi_address_hint">位址必須以 http\:// 或 https\:// 開頭。權杖為選用項目，將以 Authorization bearer token 傳送。</string>
     <string name="a_familiar_drive">熟悉的駕駛體驗。</string>
     <string name="a_previous_wi_fi_direct_connection_is_still_running_reset">先前的 Wi-Fi Direct 連線仍在執行。請重設後再連線。</string>
-    <string name="settings_more">更多</string>
     <string name="about">關於</string>
     <string name="about_diplay">關於 DiPlay</string>
     <string name="active">已啟用</string>

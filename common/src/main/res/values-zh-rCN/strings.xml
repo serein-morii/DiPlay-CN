@@ -92,7 +92,6 @@
     <string name="settings_mfi_address_hint">地址必须以 http:// 或 https:// 开头。令牌为可选项，将作为 Authorization bearer token 发送。</string>
     <string name="a_familiar_drive">熟悉的驾乘体验。</string>
     <string name="a_previous_wi_fi_direct_connection_is_still_running_reset">之前的 Wi-Fi Direct 连接仍在运行。请重置后再连接。</string>
-    <string name="settings_more">更多</string>
     <string name="about">关于</string>
     <string name="about_diplay">关于 DiPlay</string>
     <string name="active">已启用</string>
