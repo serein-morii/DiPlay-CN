@@ -14,6 +14,7 @@ import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
+import java.util.concurrent.atomic.AtomicReference
 
 /** Opt-in experimental runtime, hosted ONLY inside an existing, confirmed DiPlay
  * cluster route. Default-off; no screen routing, permission grants, OEM launch, or car writes.
@@ -28,8 +29,7 @@ internal class ExperimentalTurnCameraHost private constructor(
     private val main = Handler(Looper.getMainLooper())
     private val running = AtomicBoolean(true)
     val isRunning: Boolean get() = running.get()
-    private val permit = AtomicBoolean(false)
-    private val readingAt = AtomicLong(Long.MIN_VALUE)
+    private val latest = AtomicReference<BydExperimentalTurnSignalSource.Reading?>(null)
     private val pollDone = AtomicBoolean(false)
     private val vendorDone = AtomicBoolean(false)
     private val admissionReleased = AtomicBoolean(false)
@@ -43,12 +43,13 @@ internal class ExperimentalTurnCameraHost private constructor(
         override fun terminated() { vendorDone.set(true); releaseAdmission() }
     }
     private val backend = QueuedSideCameraBackend<Surface>(profile.routes, layer, worker,
-        post = { main.post(it) }, allowed = ::allowed, elapsed = SystemClock::elapsedRealtime,
+        post = { main.post(it) }, allowed = ::allowedFor, elapsed = SystemClock::elapsedRealtime,
         nanos = System::nanoTime, openVendor = { route, surface, guard ->
             VendorAvmCameraDriver().open(route.id, surface, route.channel, guard)
         })
     private val coordinator = TurnCameraCoordinator(backend, layer, { main.post(it) },
-        generations.incrementAndGet(), SystemClock::elapsedRealtime)
+        generations.incrementAndGet(), SystemClock::elapsedRealtime,
+        mayShow = { side -> allowedFor(side) && hostVisible() && layer.isAttachedToWindow && layer.clearOfPriorityOverlays() })
     private val prefs = context.getSharedPreferences(TurnCameraExperimentSettings.PREFS, 0)
     private val calibrationPrefs = context.getSharedPreferences("diplay_turn_camera_calibration", 0)
     private val changed = SharedPreferences.OnSharedPreferenceChangeListener { _, _ -> main.post { close() } }
@@ -70,11 +71,7 @@ internal class ExperimentalTurnCameraHost private constructor(
                     if (stamp == null || stamp != TurnCameraSettings.firmwareKey()) break
                     val reading = source.read()
                     val now = SystemClock.elapsedRealtime()
-                    val good = reading.native == NativeCameraState.IDLE &&
-                        reading.signal.state in listOf(TurnSignalState.LEFT, TurnSignalState.RIGHT) &&
-                        now - reading.signal.atMillis in 0..500
-                    readingAt.set(reading.signal.atMillis)
-                    permit.set(good)
+                    latest.set(reading)
                     main.post {
                         if (running.get() && hostVisible() && layer.clearOfPriorityOverlays()) {
                             if (now - reading.signal.atMillis in 0..500 &&
@@ -89,7 +86,7 @@ internal class ExperimentalTurnCameraHost private constructor(
         } catch (_: Exception) {
             Log.w("DiPlay-TurnCamera", "experimental read-only source unavailable; hiding")
         } finally {
-            permit.set(false)
+            latest.set(null)
             pollDone.set(true)
             main.post { close() }
             releaseAdmission()
@@ -110,7 +107,7 @@ internal class ExperimentalTurnCameraHost private constructor(
         main.post(watchdog)
         poll.start()
         } catch (failure: Throwable) {
-            running.set(false); permit.set(false)
+            running.set(false); latest.set(null)
             main.removeCallbacks(watchdog)
             prefs.unregisterOnSharedPreferenceChangeListener(changed)
             calibrationPrefs.unregisterOnSharedPreferenceChangeListener(changed)
@@ -119,12 +116,22 @@ internal class ExperimentalTurnCameraHost private constructor(
             throw failure
         }
     }
-    private fun allowed(): Boolean = running.get() && !faulted.get() && permit.get() &&
-        SystemClock.elapsedRealtime() - readingAt.get() in 0..500
+    private fun allowedFor(side: TurnCameraSide): Boolean = allowed(side)
+    private fun allowed(side: TurnCameraSide? = null): Boolean {
+        val reading = latest.get() ?: return false
+        val signal = reading.signal
+        return running.get() && !faulted.get() && reading.native == NativeCameraState.IDLE &&
+            SystemClock.elapsedRealtime() - signal.atMillis in 0..500 &&
+            when (side) {
+                TurnCameraSide.LEFT -> signal.state == TurnSignalState.LEFT
+                TurnCameraSide.RIGHT -> signal.state == TurnSignalState.RIGHT
+                null -> signal.state in listOf(TurnSignalState.LEFT, TurnSignalState.RIGHT)
+            }
+    }
 
     override fun close() {
         if (!running.getAndSet(false)) return
-        permit.set(false)
+        latest.set(null)
         main.removeCallbacks(watchdog)
         prefs.unregisterOnSharedPreferenceChangeListener(changed)
         calibrationPrefs.unregisterOnSharedPreferenceChangeListener(changed)

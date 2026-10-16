@@ -24,6 +24,7 @@ class QueuedSideCameraBackendTest {
     private class Fixture {
         val port = Port(); val worker = Queue(); val ui = Queue()
         var allowed = true; var opens = 0; var closes = 0; var closeThrows = false
+        var permittedSide: TurnCameraSide? = null
         var firsts = 0; var frames = 0; var errors = 0
         val lease = CameraLease(1, 1)
         val callback = object : SideCameraBackend.Callback {
@@ -38,7 +39,7 @@ class QueuedSideCameraBackendTest {
         }
         val route = TurnCameraRoute(7, 0, 640, 480, TurnCameraCalibration(), TurnCameraFrameTimebase.ELAPSED_REALTIME_NANOS)
         val backend = QueuedSideCameraBackend(mapOf(TurnCameraSide.LEFT to route, TurnCameraSide.RIGHT to route.copy(id = 8)),
-            port, worker, { ui.execute(it) }, { allowed }, { 1000 }, { 1_000_000_000 }) { _, _, guard -> factory(guard) }
+            port, worker, { ui.execute(it) }, { allowed && (permittedSide == null || permittedSide == it) }, { 1000 }, { 1_000_000_000 }) { _, _, guard -> factory(guard) }
         fun open() { backend.open(lease, TurnCameraSide.LEFT, callback); port.ready(Any()) }
         fun drain() { worker.drain(); ui.drain(); worker.drain(); ui.drain() }
     }
@@ -58,6 +59,14 @@ class QueuedSideCameraBackendTest {
         val f = Fixture(); f.open(); f.backend.close(f.lease)
         assertEquals(listOf("prepare", "hide"), f.port.events)
         f.drain(); assertEquals(0, f.opens); assertEquals("dispose:true", f.port.events.last())
+    }
+    @Test fun aDifferentActiveSideCannotAuthorizeAnOldQueuedOpen() {
+        val f = Fixture(); f.permittedSide = TurnCameraSide.LEFT; f.open()
+        f.permittedSide = TurnCameraSide.RIGHT
+        f.drain()
+        assertEquals(0, f.opens)
+        assertEquals(1, f.errors)
+        assertEquals("dispose:true", f.port.events.last())
     }
     @Test fun rapidSideChangesCannotAllocateMoreSurfacesWhileCloseIsPending() {
         val f = Fixture(); f.open(); f.drain(); f.backend.close(f.lease)

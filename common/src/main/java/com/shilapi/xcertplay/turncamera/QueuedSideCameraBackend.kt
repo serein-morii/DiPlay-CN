@@ -28,14 +28,14 @@ internal class QueuedSideCameraBackend<S : Any>(
     private val port: TurnCameraSurfacePort<S>,
     private val worker: Executor,
     private val post: (() -> Unit) -> Unit,
-    private val allowed: () -> Boolean,
+    private val allowed: (TurnCameraSide) -> Boolean,
     private val elapsed: () -> Long,
     private val nanos: () -> Long,
     private val openVendor: (TurnCameraRoute, S, () -> Boolean) -> AutoCloseable,
 ) : SideCameraBackend {
     override val leftConfigured get() = routes.containsKey(TurnCameraSide.LEFT)
     override val rightConfigured get() = routes.containsKey(TurnCameraSide.RIGHT)
-    private class Request(val lease: CameraLease, val callback: SideCameraBackend.Callback, val route: TurnCameraRoute) {
+    private class Request(val lease: CameraLease, val side: TurnCameraSide, val callback: SideCameraBackend.Callback, val route: TurnCameraRoute) {
         val live = AtomicBoolean(true)
         var submitted = false // UI-owner only
         var ready = false
@@ -50,11 +50,11 @@ internal class QueuedSideCameraBackend<S : Any>(
 
     override fun open(lease: CameraLease, side: TurnCameraSide, callback: SideCameraBackend.Callback) {
         val route = routes[side]
-        if (closed || quarantined || active != null || route == null || !allowed()) {
+        if (closed || quarantined || active != null || route == null || !allowed(side)) {
             callback.onOpenFailed(lease, "experimental route unavailable or still releasing")
             return
         }
-        val r = Request(lease, callback, route)
+        val r = Request(lease, side, callback, route)
         active = r
         try {
             port.prepare(lease, route, ready = { surface ->
@@ -63,8 +63,8 @@ internal class QueuedSideCameraBackend<S : Any>(
                     try {
                         worker.execute {
                             try {
-                                if (r.live.get() && allowed()) {
-                                    r.session = openVendor(route, surface) { r.live.get() && allowed() }
+                                if (r.live.get() && allowed(r.side)) {
+                                    r.session = openVendor(route, surface) { r.live.get() && allowed(r.side) }
                                     post { if (active === r && r.live.get()) r.ready = true }
                                 } else post { if (active === r && r.live.get()) fail(r, "permission revoked") }
                             } catch (_: Throwable) {
@@ -84,7 +84,7 @@ internal class QueuedSideCameraBackend<S : Any>(
                     }
                 }
             }, frame = { timestamp ->
-                if (active === r && r.live.get() && r.ready && allowed()) {
+                if (active === r && r.live.get() && r.ready && allowed(r.side)) {
                     r.frameClock.frameMillis(timestamp, elapsed(), nanos())?.let { at ->
                         if (r.first) { r.first = false; callback.onFirstFrame(lease, at) }
                         else callback.onFrame(lease, at)

@@ -10,7 +10,7 @@ permissions:
 
 concurrency:
   group: experimental-turn-camera-${{ github.ref }}
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   verify_and_package:

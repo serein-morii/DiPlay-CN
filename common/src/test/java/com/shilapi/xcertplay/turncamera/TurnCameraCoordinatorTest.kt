@@ -21,10 +21,11 @@ class TurnCameraCoordinatorTest {
         val queue = ArrayDeque<() -> Unit>()
         val backend = Backend()
         val shown = mutableListOf<TurnCameraSide>()
+        var permit = true
         val coordinator = TurnCameraCoordinator(backend, object : TurnCameraPresenter {
             override fun show(side: TurnCameraSide, lease: CameraLease) { shown += side; backend.events += "show:$side" }
             override fun hide(reason: TurnCameraPolicy.Reason) { backend.events += "hide:$reason" }
-        }, { queue.addLast(it) }, 99, { now })
+        }, { queue.addLast(it) }, 99, { now }, { permit })
         init { coordinator.start() }
         fun sample(state: TurnSignalState, native: NativeCameraState = NativeCameraState.IDLE) =
             coordinator.reading(TurnSignalSample(state, TurnSignalSemantics.LATCHED_LEVER, now), native)
@@ -62,6 +63,16 @@ class TurnCameraCoordinatorTest {
         f.coordinator.close(); f.drain()
         f.sample(TurnSignalState.RIGHT); f.coordinator.tick()
         assertTrue(f.shown.isEmpty()); assertEquals(1, f.backend.opens.size)
+    }
+    @Test fun takeoverBeforeQueuedFirstFrameCannotRevealPixelsBeforeNextPollDelivery() {
+        val f = Fixture(); f.sample(TurnSignalState.LEFT)
+        val lease = f.backend.opens.single().second
+        f.backend.callbacks.getValue(lease).onFirstFrame(lease, f.now)
+        f.permit = false // Worker has observed takeover; its UI reading is not delivered yet.
+        f.drain()
+        assertTrue(f.shown.isEmpty())
+        assertTrue(f.backend.events.contains("close"))
+        f.coordinator.close()
     }
     @Test fun synchronousFirstFrameIsEnqueuedInsteadOfBeingDroppedInsidePolicyOutput() {
         val queue = ArrayDeque<() -> Unit>(); var showed = false
