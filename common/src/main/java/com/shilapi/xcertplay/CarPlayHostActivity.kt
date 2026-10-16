@@ -1016,6 +1016,7 @@ class CarPlayHostActivity : ComponentActivity() {
         super.onResume()
         WheelKeyService.restoreIfNeeded(this)
         hostAppearanceResumed = true
+        ClusterActivityOutput.setTurnCameraHostForeground(this, true)
         updateCallPopupGuard()
         val savedNightMode = AirPlayPersistence.loadCarPlayNightMode(this)
         val savedThreshold = AirPlayPersistence.loadAmbientLightThreshold(this)
@@ -1034,6 +1035,9 @@ class CarPlayHostActivity : ComponentActivity() {
         nightModeController.resume(systemNight)
         AppAppearanceRuntime.publishHost(this, darkMode)
         refreshAppAppearance()
+        (clusterLayers.values + listOfNotNull(clusterPresentation)).distinct().forEach {
+            it.setTurnCameraExperimentActive(true)
+        }
         if (!menuOpen) {
             displayScalePercent = AirPlayPersistence.loadDisplayScalePercent(this)
             displayScaleTenths = CarPlayDisplayScale.sanitize((displayScalePercent + 5) / 10)
@@ -1165,6 +1169,7 @@ class CarPlayHostActivity : ComponentActivity() {
         }
         if (AdbClusterRouter.enabled(this)) {
             ClusterActivityOutput.bind(this, taskId) { onClusterSurface(it) }
+            ClusterActivityOutput.setTurnCameraHostForeground(this, hostAppearanceResumed)
             ClusterActivityOutput.setStreamActive(SCREEN_TYPE_ALT in activeScreenStreamTypes)
             applyClusterTurnOverlay()
             if (ClusterActivityOutput.hasConfirmedRoute() ||
@@ -1198,6 +1203,7 @@ class CarPlayHostActivity : ComponentActivity() {
         }
         try {
             presentation.show()
+            presentation.setTurnCameraExperimentActive(hostAppearanceResumed)
             clusterPresentation = presentation
             updateClusterMapShown()
             presentation.setStreamActive(SCREEN_TYPE_ALT in activeScreenStreamTypes)
@@ -1267,6 +1273,7 @@ class CarPlayHostActivity : ComponentActivity() {
                 clusterPresentation = presentation
                 clusterLayers[fullMap] = presentation
                 presentation.show()
+                presentation.setTurnCameraExperimentActive(hostAppearanceResumed)
                 appendLog("Cluster map: retained layer display=${display.displayId} fullMap=$fullMap")
                 target = presentation
             } catch (error: RuntimeException) {
@@ -1574,6 +1581,10 @@ class CarPlayHostActivity : ComponentActivity() {
     }
 
     override fun onPause() {
+        ClusterActivityOutput.setTurnCameraHostForeground(this, false)
+        (clusterLayers.values + listOfNotNull(clusterPresentation)).distinct().forEach {
+            it.setTurnCameraExperimentActive(false)
+        }
         hostAppearanceResumed = false
         updateCallPopupGuard()
         AppAppearanceRuntime.clearHost(this)

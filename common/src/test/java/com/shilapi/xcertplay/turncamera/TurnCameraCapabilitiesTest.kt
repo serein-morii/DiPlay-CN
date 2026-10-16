@@ -27,6 +27,28 @@ import org.robolectric.annotation.Config
 class TurnCameraCapabilitiesTest {
     private val context get() = RuntimeEnvironment.getApplication()
 
+    @Test fun cameraMetadataIncludesStaticOrientationAndRangesWithoutInferringPhysicalSides() {
+        val manager = context.getSystemService(android.content.Context.CAMERA_SERVICE) as android.hardware.camera2.CameraManager
+        val c = org.robolectric.shadows.ShadowCameraCharacteristics.newCameraCharacteristics()
+        val metadata = org.robolectric.Shadows.shadowOf(c)
+        metadata.set(android.hardware.camera2.CameraCharacteristics.LENS_FACING, android.hardware.camera2.CameraCharacteristics.LENS_FACING_BACK)
+        metadata.set(android.hardware.camera2.CameraCharacteristics.SENSOR_ORIENTATION, 90)
+        metadata.set(android.hardware.camera2.CameraCharacteristics.SENSOR_INFO_PIXEL_ARRAY_SIZE, android.util.Size(1920, 1080))
+        metadata.set(android.hardware.camera2.CameraCharacteristics.SCALER_AVAILABLE_MAX_DIGITAL_ZOOM, 4f)
+        metadata.set(android.hardware.camera2.CameraCharacteristics.CONTROL_AE_AVAILABLE_TARGET_FPS_RANGES, arrayOf(android.util.Range(15, 30)))
+        metadata.set(android.hardware.camera2.CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES, intArrayOf())
+        org.robolectric.Shadows.shadowOf(manager).addCamera("external/0", c)
+        val report = TurnCameraCapabilities(shellRunner = { okServiceList() }, systemProperty = { null }).run(context)
+        val detail = report.items.first { it.key == "camera2_ids" }.detail
+        assertTrue(detail.contains("external/0=back"))
+        assertTrue(detail.contains("sensor-orientation=90"))
+        assertTrue(detail.contains("1920x1080"))
+        assertTrue(detail.contains("max-digital-zoom=4.0"))
+        assertTrue(detail.contains("15-30"))
+        assertTrue(detail.contains("not measured FPS"))
+        assertTrue(detail.contains("not a camera count or side identity"))
+    }
+
     private fun okServiceList(): TurnCameraCapabilities.ShellOutcome =
         TurnCameraCapabilities.ShellOutcome(
             exitCode = 0,
@@ -344,6 +366,44 @@ class TurnCameraCapabilitiesTest {
         val (status, detail) = TurnCameraCapabilities.parseServiceList(outcome)
         assertEquals(TurnCameraCapabilities.Status.OK, status)
         assertEquals("qcarcam_ext", detail)
+    }
+
+    @Test fun binderInstanceSlashIsValidButMalformedAndDuplicateListingsStayUnconfirmed() {
+        val base = okServiceList()
+        val valid = base.copy(stdout = "Found 2 services:\n0\tandroid.hardware.camera.provider/default: [vendor.ICamera]\n1\tactivity: []\n")
+        assertEquals(TurnCameraCapabilities.Status.OK, TurnCameraCapabilities.parseServiceList(valid).first)
+        assertEquals("android.hardware.camera.provider/default", TurnCameraCapabilities.parseServiceList(valid).second)
+        val noise = valid.copy(stdout = valid.stdout + "camera permission denied\n")
+        assertEquals(TurnCameraCapabilities.Status.UNCONFIRMED, TurnCameraCapabilities.parseServiceList(noise).first)
+        val duplicate = base.copy(stdout = "Found 2 services:\n0\tcamera: []\n1\tcamera: []\n")
+        assertEquals(TurnCameraCapabilities.Status.UNCONFIRMED, TurnCameraCapabilities.parseServiceList(duplicate).first)
+        val overflow = base.copy(stdout = "Found 99999999999999999999 services:\n")
+        assertEquals(TurnCameraCapabilities.Status.UNCONFIRMED, TurnCameraCapabilities.parseServiceList(overflow).first)
+    }
+
+    class CandidateGetters {
+        fun getTurnLightState(): Int = error("must never be invoked")
+        fun getTurnLightFlashState(): Int = error("must never be invoked")
+        fun getDoubleFlashLightState(): String = error("wrong signature must not count")
+    }
+
+    @Test fun getterSignaturesAreMetadataOnlyAndNeverGrantSupport() {
+        val (status, detail) = TurnCameraCapabilities.inspectTurnGetterMetadata(CandidateGetters::class.java)
+        assertEquals(TurnCameraCapabilities.Status.UNCONFIRMED, status)
+        assertTrue(detail.contains("getTurnLightState,getTurnLightFlashState"))
+        assertFalse(detail.contains("getDoubleFlashLightState"))
+        assertTrue(detail.contains("never invoked"))
+    }
+
+    class NeverInitializeCandidate {
+        companion object { init { error("candidate static initializer must not run during metadata inspection") } }
+        fun getTurnLightState(): Int = error("must not invoke getter")
+    }
+
+    @Test fun metadataInspectionDoesNotRunTheCandidateStaticInitializer() {
+        val type = Class.forName(NeverInitializeCandidate::class.java.name, false, NeverInitializeCandidate::class.java.classLoader)
+        assertEquals(TurnCameraCapabilities.Status.UNCONFIRMED, TurnCameraCapabilities.inspectTurnGetterMetadata(type).first)
+        assertThrows(ExceptionInInitializerError::class.java) { Class.forName(type.name, true, type.classLoader) }
     }
 
     @Test fun timeoutAndStartFailureAreErrorsNotAbsence() {

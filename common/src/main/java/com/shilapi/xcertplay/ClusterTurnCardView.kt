@@ -25,7 +25,17 @@ import com.shilapi.xcertplay.hud.ClusterTurnGuidance
      * Maneuver glyphs are Material Symbols (Apache 2.0), tinted white; the roundabout
  * exit number sits in a small badge on the glyph.
  */
-internal class ClusterTurnCardView(context: Context) : View(context) {
+internal class ClusterTurnCardView(context: Context) : View(context), ClusterOverlayBounds {
+    override fun occupiedBounds(): RectF? {
+        if (guidance == null || width <= 0 || height <= 0) return null
+        val area = ClusterTurnCardOverlay.card(width, height, xPercent, yPercent, sizePercent)
+        return RectF(area.left.toFloat(), area.top.toFloat(), (area.left + area.width).toFloat(), (area.top + area.height).toFloat())
+    }
+
+    private fun invalidateMusic() {
+        val siblings = parent as? android.view.ViewGroup ?: return
+        for (index in 0 until siblings.childCount) (siblings.getChildAt(index) as? ClusterMusicView)?.invalidate()
+    }
     private var guidance: ClusterTurnGuidance? = null
     private var night = false
     private var xPercent = ClusterTurnCardOverlay.DEFAULT_X_PERCENT
@@ -66,6 +76,7 @@ internal class ClusterTurnCardView(context: Context) : View(context) {
         this.xPercent = xPercent
         this.yPercent = yPercent
         this.sizePercent = sizePercent
+        invalidateMusic()
         invalidate()
     }
 
@@ -114,6 +125,7 @@ internal class ClusterTurnCardView(context: Context) : View(context) {
     }
 
     fun setGuidance(next: ClusterTurnGuidance?) {
+        invalidateMusic()
         if (guidance == next) {
             visibility = if (next == null) GONE else VISIBLE
             return

@@ -21,7 +21,17 @@ internal class ClusterSpeedometerView(
     private val observeSpeed: ((Int?) -> Unit) -> (() -> Unit) = { changed ->
         com.shilapi.xcertplay.hud.BydClusterSpeedReader.observe(context, changed)
     },
-) : View(context) {
+) : View(context), ClusterOverlayBounds {
+    override fun occupiedBounds(): RectF? {
+        if (speedKmh == null || width <= 0 || height <= 0) return null
+        val area = ClusterSpeedometerOverlay.rect(width, height, xPercent, yPercent, sizePercent)
+        return RectF(area.left.toFloat(), area.top.toFloat(), (area.left + area.width).toFloat(), (area.top + area.height).toFloat())
+    }
+
+    private fun invalidateMusic() {
+        val siblings = parent as? android.view.ViewGroup ?: return
+        for (index in 0 until siblings.childCount) (siblings.getChildAt(index) as? ClusterMusicView)?.invalidate()
+    }
 
     private var speedKmh: Int? = null
     private var stopObservingSettings: (() -> Unit)? = null
@@ -106,6 +116,7 @@ internal class ClusterSpeedometerView(
         this.xPercent = xPercent
         this.yPercent = yPercent
         this.sizePercent = sizePercent
+        invalidateMusic()
         invalidate()
     }
 
@@ -123,6 +134,7 @@ internal class ClusterSpeedometerView(
         if (next == speedKmh) return
 
         speedKmh = next
+        invalidateMusic()
         visibility = if (next == null) GONE else VISIBLE
         if (next != null) bringToFront()
         invalidate()

@@ -81,6 +81,18 @@ internal class ClusterMusicView(context: Context) : View(context) {
         val left = (width * ClusterMusicSettings.x(context) / 100f - side / 2).coerceIn(0f, width - side)
         val top = (height * ClusterMusicSettings.y(context) / 100f - side / 2).coerceIn(0f, height - side)
         val rect = RectF(left, top, left + side, top + side)
+        // Navigation and the speed readout win over decorative artwork. Adaptive
+        // layouts can offset the music view, so compare in parent coordinates.
+        // An obstruction never restarts the track/caption expiry timer.
+        val siblings = parent as? android.view.ViewGroup
+        if (siblings != null && (0 until siblings.childCount).any { index ->
+                val view = siblings.getChildAt(index)
+                val reserved = (view as? ClusterOverlayBounds)?.occupiedBounds()
+                if (reserved == null || view.visibility != VISIBLE) false else {
+                    reserved.offset(view.left.toFloat() - this.left, view.top.toFloat() - this.top)
+                    RectF.intersects(rect, reserved)
+                }
+            }) return
         // Match the speedometer's palette and corner radius relative to tile height.
         val radius = side * .22f
         paint.shader = null

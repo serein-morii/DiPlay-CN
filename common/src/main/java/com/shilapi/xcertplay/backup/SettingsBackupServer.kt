@@ -41,6 +41,9 @@ class SettingsBackupServer(
     private val report: (() -> ByteArray)? = null,
     /** The page that asks for the typed code, or null when the address cannot be typed. */
     private val codePage: ByteArray? = null,
+    /** When supplied, imports require a prior read-only preview of the same bytes. */
+    private val preview: ((ByteArray) -> SettingsImportOutcome)? = null,
+    private val monotonicClock: () -> Long = System::nanoTime,
 ) {
     private var server: ServerSocket? = null
     private var thread: Thread? = null
@@ -51,6 +54,8 @@ class SettingsBackupServer(
     private var code: String = ""
     @Volatile private var wrongCodes = 0
     @Volatile private var closed = true
+    private var previewDigest: ByteArray? = null
+    private var previewAtNanos = 0L
     /** Where the typed code leads on the page, for example "#report". */
     @Volatile var landing = ""
     /** False once too many wrong codes were typed. The link in the QR code keeps working. */
@@ -90,6 +95,7 @@ class SettingsBackupServer(
         // Not String.format: in some locales it writes other digits than the ones a keyboard types.
         code = SecureRandom().nextInt(CODE_SPACE).toString().padStart(CODE_DIGITS, '0')
         wrongCodes = 0
+        previewDigest = null
         server = bound
         connections = ThreadPoolExecutor(0, MAX_CONNECTIONS, 30L, TimeUnit.SECONDS, SynchronousQueue()) { task ->
             Thread(task, "settings-backup-connection").apply { isDaemon = true }
@@ -101,6 +107,7 @@ class SettingsBackupServer(
 
     fun stop() {
         closed = true
+        previewDigest = null
         runCatching { server?.close() }
         server = null
         thread = null
@@ -223,7 +230,30 @@ class SettingsBackupServer(
                 ),
                 report(),
             )
+            route == "preview" && request.method == "POST" && preview != null -> {
+                previewDigest = null
+                val outcome = preview(request.body)
+                val confirmation = if (outcome.invalid) "" else {
+                    previewDigest = digest(request.body)
+                    previewAtNanos = monotonicClock()
+                    previewDigest!!.joinToString("") { "%02x".format(it) }
+                }
+                Triple(200, jsonHeaders(),
+                    "{\"applied\":${outcome.applied},\"skipped\":${outcome.skipped},\"invalid\":${outcome.invalid},\"confirmation\":\"$confirmation\"}"
+                        .toByteArray(Charsets.UTF_8))
+            }
             route == "import" && request.method == "POST" -> {
+                if (preview != null) {
+                    val expected = previewDigest
+                    val confirmed = request.headers["x-diplay-preview"]
+                    val supplied = digest(request.body)
+                    if (expected == null || monotonicClock() - previewAtNanos >= TimeUnit.MINUTES.toNanos(5) ||
+                        !MessageDigest.isEqual(expected, supplied) ||
+                        confirmed != supplied.joinToString("") { "%02x".format(it) }) {
+                        return Triple(409, jsonHeaders(), "{\"invalid\":true}".toByteArray())
+                    }
+                    previewDigest = null // one-shot: replay requires another explicit preview
+                }
                 val outcome = import(request.body)
                 onImported?.invoke(outcome)
                 Triple(
@@ -236,6 +266,9 @@ class SettingsBackupServer(
             else -> notFound()
         }
     }
+
+    private fun jsonHeaders() = mapOf("Content-Type" to "application/json", "Cache-Control" to "no-store")
+    private fun digest(document: ByteArray) = MessageDigest.getInstance("SHA-256").digest(document)
 
     /**
      * A typed code is short enough to guess, so only a few wrong ones are allowed. After that no code

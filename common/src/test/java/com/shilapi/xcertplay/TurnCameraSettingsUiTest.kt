@@ -32,7 +32,7 @@ import org.robolectric.annotation.GraphicsMode
 import org.robolectric.shadows.ShadowAlertDialog
 
 /**
- * Phase A settings surface: the Advanced card stays honest (blocked switch + status) and
+ * Settings surface: the experimental Advanced card is default-off and consent/config gated; the
  * the Diagnostics entry runs the injected probe with late-result and cancellation gating.
  * Every activity is driven through a full controller lifecycle and every render pass is
  * followed by control-bounds checks, so the screenshots are backed by assertions rather
@@ -45,9 +45,13 @@ class TurnCameraSettingsUiTest {
     private val context get() = RuntimeEnvironment.getApplication()
 
     @Before fun clear() {
+        context.getSharedPreferences("diplay_turn_camera_experiment", 0).edit().clear().commit()
+        context.getSharedPreferences("diplay_turn_camera_calibration", 0).edit().clear().commit()
         context.getSharedPreferences("diplay", 0).edit()
             .remove("turn_camera_last_probe_at")
             .remove("turn_camera_last_probe_summary")
+            .remove("turn_camera_last_probe_report")
+            .remove("turn_camera_probe_firmware")
             .commit()
     }
 
@@ -104,19 +108,37 @@ class TurnCameraSettingsUiTest {
         }
     }
 
-    @Test fun advancedCardShowsBlockedSwitchAndUnprobedStatus() {
+    @Test fun advancedCardShowsDefaultOffExperimentalSwitchAndUnprobedStatus() {
         val controller = openSettingsController()
         val screen = controller.get()
         openCategory(screen, R.string.settings_advanced)
         val enableSwitch = descendants(screen.window.decorView)
             .filterIsInstance<Switch>()
-            .first { it.contentDescription == screen.getString(R.string.settings_turn_camera_enable) }
-        assertFalse("phase A must not offer a working switch", enableSwitch.isEnabled)
+            .first { it.contentDescription == screen.getString(R.string.settings_turn_camera_experiment_enable) }
+        assertTrue("experimental consent entry must be accessible", enableSwitch.isEnabled)
         assertFalse(enableSwitch.isChecked)
         assertTrue(
             descendants(screen.window.decorView).filterIsInstance<TextView>()
                 .any { it.text.toString().contains(screen.getString(R.string.settings_turn_camera_status_unprobed)) },
         )
+        controller.pause().stop().destroy()
+    }
+
+    @Test fun experimentalEnableRequiresConfirmationAndCannotArmAnIncompleteProfile() {
+        val controller = openSettingsController()
+        val screen = controller.get()
+        openCategory(screen, R.string.settings_advanced)
+        descendants(screen.window.decorView).filterIsInstance<Switch>()
+            .first { it.contentDescription == screen.getString(R.string.settings_turn_camera_experiment_enable) }.performClick()
+        val dialog = ShadowAlertDialog.getLatestAlertDialog()
+        assertTrue(dialog.isShowing)
+        assertFalse(com.shilapi.xcertplay.turncamera.TurnCameraExperimentSettings.enabled(context))
+        dialog.getButton(android.app.AlertDialog.BUTTON_POSITIVE).performClick()
+        shadowOf(Looper.getMainLooper()).idle() // AlertDialog dispatches its button callback through a Handler.
+        assertFalse(com.shilapi.xcertplay.turncamera.TurnCameraExperimentSettings.enabled(context))
+        val current = descendants(screen.window.decorView).filterIsInstance<Switch>()
+            .first { it.contentDescription == screen.getString(R.string.settings_turn_camera_experiment_enable) }
+        assertFalse(current.isChecked)
         controller.pause().stop().destroy()
     }
 
@@ -227,6 +249,7 @@ class TurnCameraSettingsUiTest {
         val incomingFlags = context.applicationInfo.flags
         try {
             for (case in listOf(
+                Case("es-w360dp-h960dp", 360, false, "es-360"),
                 Case("es-w600dp-h960dp", 600, false, "es-600"),
                 Case("es-w1280dp-h960dp", 1280, true, "es-1280"),
                 Case("ar-w600dp-h960dp", 600, false, "ar-600"),
@@ -248,6 +271,10 @@ class TurnCameraSettingsUiTest {
                 )
                 // Advanced: card close-up with bounds checks on every new control.
                 run {
+                    TurnCameraSettings.saveReport(context, TurnCameraCapabilities.Report(
+                        1_720_000_000_000L, 10L, false, false,
+                        listOf(TurnCameraCapabilities.ProbeItem("camera2_ids", TurnCameraCapabilities.Status.UNCONFIRMED, "simulated; no camera opened")),
+                    ))
                     val controller = openSettingsController()
                     try {
                         val screen = controller.get()
@@ -257,12 +284,17 @@ class TurnCameraSettingsUiTest {
                         layoutRoot(screen)
                         assertRenderedRailMatches(screen, case.expanded, case.suffix)
                         val enableSwitch = descendants(screen.window.decorView).filterIsInstance<Switch>()
-                            .first { it.contentDescription == screen.getString(R.string.settings_turn_camera_enable) }
+                            .first { it.contentDescription == screen.getString(R.string.settings_turn_camera_experiment_enable) }
                         var card: View = enableSwitch
                         while (card.parent is ViewGroup && card.parent.parent is ViewGroup &&
                             card.parent.parent !is ScrollView
                         ) card = card.parent as View
                         assertControlsFitWithin(card as ViewGroup, case.suffix)
+                        descendants(card).filterIsInstance<android.widget.Button>().forEach { button ->
+                            val textLayout = button.layout ?: return@forEach
+                            assertTrue("${case.suffix}: camera control text must not be vertically clipped",
+                                textLayout.height <= button.height - button.paddingTop - button.paddingBottom)
+                        }
                         write(card, "turn-camera-card-${case.suffix}")
                         write(screen.window.decorView, "turn-camera-advanced-${case.suffix}")
                     } finally {
@@ -435,10 +467,11 @@ class TurnCameraSettingsUiTest {
             "the probe button row must use the shared button gap constant",
             source.contains("matchButton(SETTINGS_BUTTON_GAP_DP, 60)"),
         )
-        assertTrue(
-            "both report dialogs must share the named dialog padding constants",
-            2 == Regex("setPadding\\(dp\\(SETTINGS_DIALOG_PADDING_DP\\), dp\\(SETTINGS_DIALOG_GAP_DP\\)").findAll(source).count(),
-        )
+        for (name in listOf("showTurnCameraProbeReport", "showTurnCameraExperimentConfiguration", "showTurnCameraCalibration")) {
+            val body = source.substringAfter("private fun $name(").substringBefore("\n    private fun ")
+            assertTrue("$name must use shared dialog padding and gap constants",
+                body.contains("setPadding(dp(SETTINGS_DIALOG_PADDING_DP), dp(SETTINGS_DIALOG_GAP_DP)"))
+        }
         assertTrue(
             "the turn camera status note must use the named note gap constant",
             source.contains("setPadding(0, dp(NOTE_LINE_GAP_DP), 0, 0)"),
