@@ -113,6 +113,16 @@ var key = lang in L ? lang
   : lang.indexOf("ar") === 0 ? "ar"
   : lang.indexOf("ja") === 0 ? "ja" : "en";
 var t = L[key];
+var previewCopy = {
+  en: ["Choose file and preview", "Restore %1 settings and skip %2? Settings may take effect at the next CarPlay connection. No reconnect will be started automatically."],
+  zh: ["选择文件并预览", "将恢复 %1 项设置，跳过 %2 项。部分设置在下次 CarPlay 连接时生效，不会自动重连。确认恢复？"],
+  "zh-TW": ["選擇檔案並預覽", "將還原 %1 項設定，略過 %2 項。部分設定於下次 CarPlay 連線時生效，不會自動重新連線。確認還原？"],
+  es: ["Elegir archivo y previsualizar", "¿Restaurar %1 ajustes y omitir %2? Algunos se aplicarán en la próxima conexión CarPlay. No se reconectará automáticamente."],
+  ru: ["Выбрать файл для просмотра", "Восстановить %1 настроек и пропустить %2? Часть настроек вступит в силу при следующем подключении CarPlay. Автоматического переподключения не будет."],
+  uk: ["Вибрати файл для перегляду", "Відновити %1 налаштувань і пропустити %2? Частина змін діятиме після наступного підключення CarPlay. Автоматичного перепідключення не буде."],
+  ar: ["اختيار ملف للمعاينة", "استعادة %1 من الإعدادات وتجاهل %2؟ قد تسري بعض الإعدادات عند اتصال CarPlay التالي. لن تبدأ إعادة الاتصال تلقائيًا."],
+  ja: ["ファイルを選んでプレビュー", "%1 件の設定を復元し、%2 件をスキップしますか？一部の設定は次回の CarPlay 接続時に反映されます。自動的に再接続することはありません。"]
+}[key];
 var $ = function(id) { return document.getElementById(id); };
 document.title = t.title;
 document.documentElement.lang = key;
@@ -123,7 +133,7 @@ $("exportText").textContent = t.exportText;
 $("exportBtn").textContent = t.export;
 $("importTitle").textContent = t.importTitle;
 $("importText").textContent = t.importText;
-$("importBtn").textContent = t.open;
+$("importBtn").textContent = previewCopy[0];
 $("reportTitle").textContent = t.reportTitle;
 $("reportText").textContent = t.reportText;
 $("reportBtn").textContent = t.report;
@@ -132,19 +142,34 @@ $("importBtn").addEventListener("click", function() { $("file").click(); });
 $("file").addEventListener("change", function() {
   var file = this.files[0];
   if (!file) return;
+  if (file.size > 512 * 1024) {
+    $("result").className = "err"; $("result").textContent = t.invalid; $("file").value = ""; return;
+  }
   $("result").className = "";
   $("result").textContent = t.picking;
   $("importBtn").disabled = true;
   var reader = new FileReader();
   reader.onload = function() {
-    fetch("import", {method: "POST", headers: {"Content-Type": "application/json"}, body: reader.result})
+    var document = reader.result;
+    fetch("preview", {method: "POST", headers: {"Content-Type": "application/json"}, body: document})
       .then(function(r) { if (!r.ok) throw 0; return r.json(); })
       .then(function(j) {
+        if (j.invalid) return j;
+        if (!window.confirm(previewCopy[1].replace("%1", j.applied).replace("%2", j.skipped))) return null;
+        return fetch("import", {method: "POST", headers: {"Content-Type": "application/json", "X-DiPlay-Preview": j.confirmation}, body: document})
+          .then(function(r) { if (!r.ok) throw 0; return r.json(); });
+      })
+      .then(function(j) {
+        if (!j) { $("result").textContent = ""; return; }
         if (j.invalid) { $("result").className = "err"; $("result").textContent = t.invalid; }
         else $("result").textContent = t.done.replace("%1", j.applied).replace("%2", j.skipped);
       })
       .catch(function() { $("result").className = "err"; $("result").textContent = t.fail; })
       .finally(function() { $("importBtn").disabled = false; $("file").value = ""; });
+  };
+  reader.onerror = function() {
+    $("result").className = "err"; $("result").textContent = t.fail;
+    $("importBtn").disabled = false; $("file").value = "";
   };
   reader.readAsText(file);
 });

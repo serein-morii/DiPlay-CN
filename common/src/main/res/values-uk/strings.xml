@@ -975,4 +975,37 @@
 
     <string name="settings_hotspot_interface">Інтерфейс точки доступу (необов’язково)</string>
     <string name="settings_hotspot_interface_description">Лише для головних пристроїв, які тримають точку доступу на мережевому інтерфейсі, що Android не вважає точкою доступу Wi-Fi, наприклад eth0.3 на деяких пристроях Geely, Lynk &amp; Co та інших Qualcomm. Залиште порожнім для автоматичного пошуку.</string>
+    <string name="settings_turn_camera_saved_report">Переглянути збережений звіт сумісності</string>
+    <string name="settings_turn_camera_report_stale">Прошивка змінилася або не розпізнана. Це старий звіт; повторіть перевірку без змін. Відеопотік досі недоступний.</string>
+    <string name="settings_turn_camera_calibration">Калібрування камер</string>
+    <string name="settings_turn_camera_simulation">Лише імітація</string>
+    <string name="settings_turn_camera_calibration_notice">Імітація 16:9, не живе відео. Ліві та праві налаштування зберігаються на пристрої; ID не перевірені, порожнє поле — не призначено. Збереження не відкриває камеру, не змінює автомобіль і не перепідключає CarPlay. Дані Camera2: Діагностика → звіт.</string>
+    <string name="settings_turn_camera_side">Фізичний бік</string>
+    <string name="settings_turn_camera_left">Лівий</string>
+    <string name="settings_turn_camera_right">Правий</string>
+    <string name="settings_turn_camera_source">Механізм</string>
+    <string name="settings_turn_camera_id">ID камери (вручну, не перевірений)</string>
+    <string name="settings_turn_camera_id_invalid">Невірний ID. Vendor AVM потребує невід’ємного 32-бітного цілого ID або порожнього поля.</string>
+    <string name="settings_turn_camera_window_x">Вікно: положення по горизонталі</string>
+    <string name="settings_turn_camera_window_y">Вікно: положення по вертикалі</string>
+    <string name="settings_turn_camera_window_width">Ширина вікна</string>
+    <string name="settings_turn_camera_window_height">Висота вікна</string>
+    <string name="settings_turn_camera_image_x">Зображення: зсув по горизонталі</string>
+    <string name="settings_turn_camera_image_y">Зображення: зсув по вертикалі</string>
+    <string name="settings_turn_camera_zoom">Масштаб зображення</string>
+    <string name="settings_turn_camera_rotation">Поворот за годинниковою стрілкою</string>
+    <string name="settings_turn_camera_mirror_x">Віддзеркалити горизонтально</string>
+    <string name="settings_turn_camera_mirror_y">Віддзеркалити вертикально</string>
+    <string name="settings_turn_camera_fit">Масштабування</string>
+    <string name="settings_turn_camera_fit_inside">Умістити повністю</string>
+    <string name="settings_turn_camera_fill">Заповнити з обрізанням</string>
+    <string name="settings_turn_camera_reset">Скинути цей бік</string>
+    <string name="settings_turn_camera_experiment_enable">Камера повороту на панелі (експериментально)</string>
+    <string name="settings_turn_camera_experiment_config">Профіль сигналів і відео (експериментально)</string>
+    <string name="settings_turn_camera_experiment_description">Лівий поворот → ліва камера, правий → права. Потрібні ручні налаштування камер, сигналів, зайнятості OEM та наявний маршрут карти на панель. Лише з активним вікном проєкції; застосовується після повернення без перепідключення CarPlay. Типово вимкнено.</string>
+    <string name="settings_turn_camera_experiment_warning">Експериментально, на цьому авто не перевірено. Налаштовуйте й тестуйте лише на стоянці. Невірні ID, коди або зайнятість можуть заважати задньому виду/360. Невідомі та застарілі дані приховують відео. Не покладайтеся на нього під час водіння. Підтвердьте прошивку, семантику важеля, безпечну область, годинник кадрів і співіснування OEM. Параметри авто не записуються.</string>
+    <string name="settings_turn_camera_experiment_confirm">Увімкнути експеримент</string>
+    <string name="settings_turn_camera_experiment_invalid">Неповний/невірний профіль, камери не призначені або прошивка невідома. Залишається вимкненим.</string>
+    <string name="settings_turn_camera_experiment_help">JSON для конкретної прошивки; null — невідомо, не нуль. Укажіть коди повороту/аварійки/заднього ходу, int getter OEM 360 без аргументів (android.hardware.bydauto.*), значення вільно/зайнято, канали та розміри. Після перевірки годинника джерела оберіть timestampTimebase: ELAPSED_REALTIME_NANOS або MONOTONIC_NANOS. safeArea — частки [ліворуч, згори, праворуч, знизу] в області карти панелі. Обидва прапорці true лише після перевірки. Невідома зайнятість забороняє відео. Збереження вимикає експеримент.</string>
+    <string name="settings_turn_camera_experiment_saved">Чернетку збережено, експеримент вимкнено. Перевірте та ввімкніть явно.</string>
 </resources>

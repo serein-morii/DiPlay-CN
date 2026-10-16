@@ -6,6 +6,8 @@ plugins {
 // Optional local-only input. CI and ordinary source builds contain no accessory identity.
 val localAuthenticationAssets = providers.environmentVariable("DIPLAY_AUTH_ASSETS_DIR")
     .orNull?.let { file(it).canonicalFile }
+val experimentalTurnCameraBuild = providers.environmentVariable("DIPLAY_EXPERIMENTAL_TURN_CAMERA")
+    .map { it == "true" }.getOrElse(false)
 
 android {
     namespace = "com.shilapi.xcertplay"
@@ -18,7 +20,7 @@ android {
         minSdk = 25
         targetSdk = 37
         versionCode = 118
-        versionName = "0.2.21-cn.1"
+        versionName = if (experimentalTurnCameraBuild) "0.2.21-cn.1-experimental.2" else "0.2.21-cn.1"
 
     }
 

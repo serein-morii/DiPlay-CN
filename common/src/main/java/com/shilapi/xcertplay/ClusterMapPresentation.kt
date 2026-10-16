@@ -47,6 +47,10 @@ internal class ClusterMapPresentation(
     private var turnCardView: ClusterTurnCardView? = null
     private var videoView: View? = null
     private var streamActive = false
+    private var cameraRoot: FrameLayout? = null
+    private var cameraViewport: (() -> android.graphics.RectF)? = null
+    private var cameraExperiment: com.shilapi.xcertplay.turncamera.ExperimentalTurnCameraAttachment? = null
+    private var cameraHostActive = false
     var outputSurface: Surface? = null
         private set
     var mapVisible = true
@@ -139,6 +143,12 @@ internal class ClusterMapPresentation(
         root.addView(turnCardView, FrameLayout.LayoutParams(-1, -1))
         root.addView(ClusterMusicView(context), FrameLayout.LayoutParams(videoParams))
         root.addView(ClusterSpeedometerView(context), FrameLayout.LayoutParams(-1, -1))
+        cameraRoot = root
+        cameraViewport = {
+            val view = videoView
+            if (view == null) android.graphics.RectF() else
+                android.graphics.RectF(view.left.toFloat(), view.top.toFloat(), view.right.toFloat(), view.bottom.toFloat())
+        }
         // Start with the placeholder visible; SurfaceView would otherwise cover the light
         // backdrop with an empty black surface before the first stream notification.
         // SurfaceView ignores fractional alpha before API 34. Keep its decoder surface
@@ -159,6 +169,7 @@ internal class ClusterMapPresentation(
         if (streamActive == active) return
         // Update before cancelling: a cancelled fade must not hide the newly restored label.
         streamActive = active
+        refreshCameraExperiment()
         val video = videoView
         val label = waitingLabel
         video?.animate()?.cancel()
@@ -175,6 +186,7 @@ internal class ClusterMapPresentation(
     /** Window alpha hides the pixels without destroying the TextureView/decoder surface. */
     fun setMapVisible(visible: Boolean) {
         mapVisible = visible
+        refreshCameraExperiment()
         window?.let { window ->
             val alpha = if (visible) 1f else 0f
             if (window.attributes.alpha != alpha) window.attributes = window.attributes.apply { this.alpha = alpha }
@@ -199,6 +211,27 @@ internal class ClusterMapPresentation(
 
     fun setTurnCardGuidance(guidance: ClusterTurnGuidance?) {
         turnCardView?.setGuidance(guidance)
+    }
+
+    fun setTurnCameraExperimentActive(active: Boolean) {
+        cameraHostActive = active
+        // Reload the explicit profile when returning from Settings, including OFF.
+        cameraExperiment?.close(); cameraExperiment = null
+        refreshCameraExperiment()
+    }
+    private fun refreshCameraExperiment() {
+        if (!cameraHostActive || !mapVisible || !streamActive || !isShowing) {
+            cameraExperiment?.close(); cameraExperiment = null
+            return
+        }
+        val root = cameraRoot ?: return
+        val viewport = cameraViewport ?: return
+        if (cameraExperiment == null) cameraExperiment = com.shilapi.xcertplay.turncamera.ExperimentalTurnCameraAttachment(
+            context, root, viewport, { cameraHostActive && mapVisible && streamActive && isShowing && display.isValid })
+    }
+    override fun onStop() {
+        setTurnCameraExperimentActive(false)
+        super.onStop()
     }
 
     companion object {

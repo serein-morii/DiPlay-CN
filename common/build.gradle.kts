@@ -14,7 +14,11 @@ android {
     }
 
     sourceSets {
-        getByName("main").assets.srcDir(rootProject.file("docs"))
+        getByName("main").assets.directories.add(rootProject.file("docs").absolutePath)
+    }
+    androidResources {
+        // Agent handoffs/research are not user-facing help or distribution assets.
+        ignoreAssetsPatterns.addAll(listOf("ZCODE*", "TURN_CAMERA_EXPERIMENT_CONTINUATION.md", "REFERENCE_*"))
     }
 
     compileOptions {

@@ -735,9 +735,11 @@ class AdaptiveSettingsUiTest {
         assertTrue(text(R.string.side_panel) in advanced)
         assertTrue(text(R.string.carplay_map_on_instrument_cluster_experimental) in navigation)
         assertFalse(text(R.string.carplay_map_on_instrument_cluster_experimental) in advanced)
-        // Phase A turn camera card: Advanced holds the blocked switch, Diagnostics holds the probe.
+        // Opt-in camera configuration stays in Advanced; the read-only probe stays in Diagnostics.
         assertTrue(text(R.string.settings_turn_camera) in advanced)
-        assertTrue(text(R.string.settings_turn_camera_enable) in advanced)
+        assertTrue(text(R.string.settings_turn_camera_experiment_enable) in advanced)
+        assertTrue(advanced.any { it.startsWith(text(R.string.settings_turn_camera_experiment_config)) })
+        assertTrue(advanced.any { it.startsWith(text(R.string.settings_turn_camera_calibration)) })
         assertFalse(text(R.string.settings_turn_camera) in navigation)
         assertFalse(text(R.string.settings_turn_camera) in display)
         assertFalse(text(R.string.settings_turn_camera) in vehicle)

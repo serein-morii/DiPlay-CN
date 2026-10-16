@@ -3,9 +3,9 @@ package com.shilapi.xcertplay.turncamera
 /**
  * Contracts for the turn side-camera feature (docs/CLUSTER_TURN_CAMERA_PLAN.md §4).
  *
- * Phase A ships only these interfaces plus fakes under test. The real camera, turn-signal
- * and cluster-surface implementations are phase B and stay gated behind real-vehicle
- * evidence; nothing here may open a camera or write to the vehicle.
+ * Default operation remains read-only. The experimental vendor/signal/cluster chain is
+ * separately opt-in, requires an explicit firmware-bound calibration and occupancy source,
+ * and is NOT a claim of real-vehicle verification. No implementation writes vehicle parameters.
  */
 
 /** Physical side of the car. Never flipped by locale, RTL layout or driving side. */
@@ -62,7 +62,7 @@ interface SideCameraBackend : AutoCloseable {
     /** Async open; the surface stays local to the backend, nothing crosses the network. */
     fun open(lease: CameraLease, side: TurnCameraSide, callback: Callback)
 
-    /** Async close; [callback] events for this lease must stop after close returns. */
+    /** Invalidate callbacks immediately; native cleanup may finish later on its owner worker. */
     fun close(lease: CameraLease)
 
     interface Callback {

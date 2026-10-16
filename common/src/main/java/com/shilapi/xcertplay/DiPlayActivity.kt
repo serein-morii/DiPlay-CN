@@ -89,6 +89,11 @@ import com.shilapi.xcertplay.settings.SettingsWidgets
 import com.shilapi.xcertplay.setup.DiLinkGeneration
 import com.shilapi.xcertplay.setup.SetupGuide
 import com.shilapi.xcertplay.transport.EvChargingConnectors
+import com.shilapi.xcertplay.turncamera.TurnCameraCalibration
+import com.shilapi.xcertplay.turncamera.TurnCameraCalibrationPanel
+import com.shilapi.xcertplay.turncamera.TurnCameraCalibrationStore
+import com.shilapi.xcertplay.turncamera.TurnCameraSide
+import com.shilapi.xcertplay.turncamera.TurnCameraExperimentSettings
 import com.shilapi.xcertplay.update.BackgroundUpdateScheduler
 import com.shilapi.xcertplay.update.UpdateApkCache
 import com.shilapi.xcertplay.update.UpdateApkExport
@@ -2181,20 +2186,49 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
                 AmbientMusicSettings.save(this, AmbientMusicSettings.load(this).copy(carRhythmFeed = on))
             }
         }
-        // Turn side camera (phase A): status + blocked enable only; no streaming exists yet,
-        // so the switch stays off and disabled instead of promising an unavailable feature.
+        // Experimental automatic side-camera chain: default off, explicit profile and consent.
         filteredSection(content, SettingsSection.TURN_CAMERA,
             getString(R.string.settings_turn_camera), R.drawable.ic_dp_advanced) { card ->
             card.addView(label(getString(R.string.settings_turn_camera_status), 14, MUTED))
             val lastProbe = com.shilapi.xcertplay.turncamera.TurnCameraSettings.lastProbe(this)
+            val savedReport = com.shilapi.xcertplay.turncamera.TurnCameraSettings.savedReport(this)
             val status = if (lastProbe == null) getString(R.string.settings_turn_camera_status_unprobed)
             else getString(R.string.settings_turn_camera_status_hints) + " · " +
                 SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(Date(lastProbe.atMillis)) +
                 " · " + lastProbe.summary
             card.addView(label(status, 16, TEXT).apply { setPadding(0, dp(NOTE_LINE_GAP_DP), 0, 0) })
-            toggle(card, getString(R.string.settings_turn_camera_enable),
-                getString(R.string.settings_turn_camera_enable_blocked),
-                false, enabled = false) { }
+            if (lastProbe != null && savedReport?.firmwareMatches != true) {
+                card.addView(label(getString(R.string.settings_turn_camera_report_stale), 14, WARNING))
+            }
+            if (savedReport != null) {
+                card.addView(button(getString(R.string.settings_turn_camera_saved_report), false) {
+                    showTurnCameraProbeReport(
+                        (if (savedReport.firmwareMatches) "" else getString(R.string.settings_turn_camera_report_stale) + "\n\n") +
+                            savedReport.text,
+                    )
+                }.apply { fitWrappedLabel = true }, matchButton(0, CONTROL_HEIGHT_DP))
+            }
+            card.addView(button("${getString(R.string.settings_turn_camera_calibration)} · ${getString(R.string.settings_turn_camera_simulation)}", false) {
+                showTurnCameraCalibration()
+            }.apply { fitWrappedLabel = true }, matchButton(0, CONTROL_HEIGHT_DP))
+            card.addView(button("${getString(R.string.settings_turn_camera_experiment_config)} · JSON", false) {
+                showTurnCameraExperimentConfiguration()
+            }.apply { fitWrappedLabel = true }, matchButton(0, CONTROL_HEIGHT_DP))
+            toggle(card, getString(R.string.settings_turn_camera_experiment_enable),
+                getString(R.string.settings_turn_camera_experiment_description),
+                TurnCameraExperimentSettings.enabled(this)) { enabled ->
+                if (!enabled) { TurnCameraExperimentSettings.setEnabled(this, false); render() }
+                else {
+                    appDialogBuilder().setTitle(R.string.settings_turn_camera_experiment_enable)
+                        .setMessage(R.string.settings_turn_camera_experiment_warning)
+                        .setPositiveButton(R.string.settings_turn_camera_experiment_confirm) { _, _ ->
+                            try { TurnCameraExperimentSettings.setEnabled(this, true) }
+                            catch (_: Exception) { toast(getString(R.string.settings_turn_camera_experiment_invalid)) }
+                            render()
+                        }.setNegativeButton(R.string.cancel) { _, _ -> render() }
+                        .setOnCancelListener { render() }.show()
+                }
+            }
         }
         filteredSection(content, SettingsSection.LOCATION,
             getString(R.string.location), R.drawable.ic_dp_navigation) { card ->
@@ -2644,6 +2678,7 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
                 import = { SettingsBackupCodec.import(this, it) },
                 report = { diagnosticReportText(applicationContext).toByteArray(Charsets.UTF_8) },
                 codePage = assets.open("settings-code.html").use { it.readBytes() },
+                preview = { SettingsBackupCodec.preview(this, it) },
             )
             created.onCodeEntryClosed = {
                 runOnUiThread {
@@ -6137,12 +6172,7 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
                         // User cancelled before the snapshot: keep the last real summary.
                         result.cancelled -> Unit
                         else -> {
-                            com.shilapi.xcertplay.turncamera.TurnCameraSettings.saveLastProbe(
-                                appContext,
-                                com.shilapi.xcertplay.turncamera.TurnCameraSettings.LastProbe(
-                                    result.startedAtWallMillis, result.summaryLine(),
-                                ),
-                            )
+                            com.shilapi.xcertplay.turncamera.TurnCameraSettings.saveReport(appContext, result)
                             showTurnCameraProbeReport(result.toReportText())
                             render()
                         }
@@ -6419,6 +6449,65 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
 
     private fun ambientBrightnessText(level: Int): String =
         if (level <= 0) getString(R.string.settings_ambient_minimum) else getString(R.string.settings_ambient_brightness_value, level)
+
+    private fun showTurnCameraExperimentConfiguration() {
+        val body = column().apply {
+            setPadding(dp(SETTINGS_DIALOG_PADDING_DP), dp(SETTINGS_DIALOG_GAP_DP),
+                dp(SETTINGS_DIALOG_PADDING_DP), dp(SETTINGS_DIALOG_GAP_DP))
+        }
+        body.addView(label(getString(R.string.settings_turn_camera_experiment_help), 14, MUTED))
+        val editor = EditText(this).apply {
+            setText(TurnCameraExperimentSettings.text(this@DiPlayActivity))
+            setTextColor(TEXT); textSize = 14f
+            typeface = Typeface.MONOSPACE
+            inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_FLAG_MULTI_LINE or
+                android.text.InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS
+            layoutDirection = View.LAYOUT_DIRECTION_LTR
+            contentDescription = getString(R.string.settings_turn_camera_experiment_config)
+            filters = arrayOf(android.text.InputFilter.LengthFilter(16_384))
+        }
+        body.addView(editor, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(SETTINGS_DIALOG_GAP_DP) })
+        val dialog = appDialogBuilder().setTitle(R.string.settings_turn_camera_experiment_config)
+            .setView(ScrollView(this).apply { addView(body) })
+            .setPositiveButton(R.string.save, null).setNegativeButton(R.string.cancel, null).create()
+        dialog.setOnShowListener {
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+                try {
+                    TurnCameraExperimentSettings.saveText(this, editor.text.toString())
+                    toast(getString(R.string.settings_turn_camera_experiment_saved))
+                    dialog.dismiss(); render()
+                } catch (_: Exception) { editor.error = getString(R.string.settings_turn_camera_experiment_invalid) }
+            }
+        }
+        dialog.show()
+    }
+
+    private fun showTurnCameraCalibration() {
+        val body = column().apply {
+            setPadding(dp(SETTINGS_DIALOG_PADDING_DP), dp(SETTINGS_DIALOG_GAP_DP),
+                dp(SETTINGS_DIALOG_PADDING_DP), dp(SETTINGS_DIALOG_GAP_DP))
+        }
+        val panel = TurnCameraCalibrationPanel(this,
+            TurnCameraSide.entries.associateWith { TurnCameraCalibrationStore.load(this, it) },
+            SETTINGS_DIALOG_GAP_DP, CONTROL_HEIGHT_DP,
+            label = { label(it, 16, TEXT) },
+            button = { title, click -> button(title, false, click) })
+        body.addView(panel)
+        val dialog = appDialogBuilder().setTitle(R.string.settings_turn_camera_calibration)
+            .setView(ScrollView(this).apply { addView(body) })
+            .setPositiveButton(R.string.save, null).setNegativeButton(R.string.cancel, null).create()
+        dialog.setOnShowListener {
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+                if (panel.profiles.values.any { !TurnCameraCalibration.validId(it.source, it.cameraId) }) {
+                    toast(getString(R.string.settings_turn_camera_id_invalid))
+                } else {
+                    TurnCameraCalibrationStore.save(this, panel.profiles)
+                    dialog.dismiss()
+                }
+            }
+        }
+        dialog.show()
+    }
 
     private fun showAmbientConfiguration() {
         var draft = AmbientMusicSettings.load(this)
@@ -6761,6 +6850,8 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
         private val accent: Int,
     ) : Button(context) {
         var action = false
+        /** Long experimental configuration labels must remain readable at large font sizes. */
+        var fitWrappedLabel = false
         var contentOffsetY = 0f
         var alignVisibleGlyphs = true
         private val glyphBounds = android.graphics.Rect()
@@ -6845,7 +6936,13 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
             val lp = child.layoutParams as? LinearLayout.LayoutParams ?: continue
             when {
                 child is Button -> {
-                    lp.height = dp(CONTROL_HEIGHT_DP); lp.topMargin = 0
+                    val wraps = child is SettingButton && child.fitWrappedLabel
+                    lp.height = if (wraps) ViewGroup.LayoutParams.WRAP_CONTENT else dp(CONTROL_HEIGHT_DP)
+                    if (wraps) {
+                        child.minHeight = dp(CONTROL_HEIGHT_DP)
+                        child.setPadding(child.paddingLeft, dp(NOTE_LINE_GAP_DP), child.paddingRight, dp(NOTE_LINE_GAP_DP))
+                    }
+                    lp.topMargin = 0
                     lp.bottomMargin = dp(if (isNote(next)) NOTE_ATTACH_GAP_DP else CONTROL_GAP_DP)
                 }
                 // Toggle rows carried their own vertical padding, which doubled the gap after a button.

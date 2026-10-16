@@ -1022,4 +1022,37 @@
 
     <string name="settings_hotspot_interface">热点网络接口（可选）</string>
     <string name="settings_hotspot_interface_description">仅用于把热点放在 Android 不认为是 Wi-Fi 热点的网络接口上的车机，例如部分吉利、领克及其它高通车机上的 eth0.3。留空则自动查找。</string>
+    <string name="settings_turn_camera_saved_report">查看已保存的兼容性报告</string>
+    <string name="settings_turn_camera_report_stale">固件已变化或无法匹配。此报告仅供历史参考，请重新运行只读探测。真实取流仍不可用。</string>
+    <string name="settings_turn_camera_calibration">摄像头调校</string>
+    <string name="settings_turn_camera_simulation">仅模拟</string>
+    <string name="settings_turn_camera_calibration_notice">16:9 模拟测试图，不是实拍画面。左右配置分别保存在本机；编号未验证，留空为未分配。保存不打开摄像头、不修改车辆参数、不重连 CarPlay。Camera2 参数：诊断 → 探测报告。</string>
+    <string name="settings_turn_camera_side">车辆物理侧</string>
+    <string name="settings_turn_camera_left">左侧</string>
+    <string name="settings_turn_camera_right">右侧</string>
+    <string name="settings_turn_camera_source">取流后端</string>
+    <string name="settings_turn_camera_id">摄像头编号（手动，未验证）</string>
+    <string name="settings_turn_camera_id_invalid">编号无效：厂商 AVM 需非负 32 位整数，也可留空。</string>
+    <string name="settings_turn_camera_window_x">窗口左右位置</string>
+    <string name="settings_turn_camera_window_y">窗口上下位置</string>
+    <string name="settings_turn_camera_window_width">窗口宽度</string>
+    <string name="settings_turn_camera_window_height">窗口高度</string>
+    <string name="settings_turn_camera_image_x">图像左右偏移</string>
+    <string name="settings_turn_camera_image_y">图像上下偏移</string>
+    <string name="settings_turn_camera_zoom">图像缩放</string>
+    <string name="settings_turn_camera_rotation">图像顺时针旋转</string>
+    <string name="settings_turn_camera_mirror_x">图像左右镜像</string>
+    <string name="settings_turn_camera_mirror_y">图像上下翻转</string>
+    <string name="settings_turn_camera_fit">图像适配</string>
+    <string name="settings_turn_camera_fit_inside">完整显示</string>
+    <string name="settings_turn_camera_fill">填满并裁剪</string>
+    <string name="settings_turn_camera_reset">重置当前侧</string>
+    <string name="settings_turn_camera_experiment_enable">转向影像联动仪表（实验性）</string>
+    <string name="settings_turn_camera_experiment_config">信号与取流配置（实验性）</string>
+    <string name="settings_turn_camera_experiment_description">左转显示左侧，右转显示右侧。需完整手动配置摄像头、转向编码和原车占用检测，并已启用仪表地图通道。仅投屏宿主在前台时运行，返回投屏生效，不重连 CarPlay。默认关闭。</string>
+    <string name="settings_turn_camera_experiment_warning">实验性功能，本车尚未验证。请仅在停车时配置和测试。错误的摄像头编号、信号编码或占用检测可能干扰倒车/360。未知或过期数据会隐藏画面，切勿依赖它驾驶。仅在确认本车固件、拨杆语义、仪表安全区域、画面时间戳来源及原车共存后启用。不修改车辆参数。</string>
+    <string name="settings_turn_camera_experiment_confirm">启用实验功能</string>
+    <string name="settings_turn_camera_experiment_invalid">配置不完整或无效、摄像头未分配，或无法确认固件。实验功能保持关闭。</string>
+    <string name="settings_turn_camera_experiment_help">本车固件专用 JSON 草稿；null 表示未知，不是 0。填写实际转向/双闪/倒车编码、原车 360 的零参数 int getter（android.hardware.bydauto.* 类）、空闲/占用值、摄像头通道及缓冲尺寸。确认画面时间戳来源后，timestampTimebase 填 ELAPSED_REALTIME_NANOS 或 MONOTONIC_NANOS。safeArea 为现有仪表地图区域内的 [左,上,右,下] 比例。两个确认项仅在验证后设为 true。无猜测默认值；占用未知时禁止取流。编辑保存会关闭实验功能。</string>
+    <string name="settings_turn_camera_experiment_saved">草稿已保存，实验功能已关闭；核对后需重新显式启用。</string>
 </resources>
