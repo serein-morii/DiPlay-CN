@@ -9,6 +9,7 @@ internal class TurnCameraCoordinator(
     private val post: (() -> Unit) -> Unit,
     generation: Long,
     clock: () -> Long,
+    private val mayShow: (TurnCameraSide) -> Boolean = { true },
 ) : AutoCloseable {
     private var closed = false
     private val policy: TurnCameraPolicy = TurnCameraPolicy(object : TurnCameraPolicy.Output {
@@ -19,7 +20,15 @@ internal class TurnCameraCoordinator(
             } else post { if (!closed) policy.onOpenFailed(lease, "side is not configured") }
         }
         override fun cancelRequest(lease: CameraLease, reason: TurnCameraPolicy.Reason) = backend.close(lease)
-        override fun show(side: TurnCameraSide, lease: CameraLease) = presenter.show(side, lease)
+        override fun show(side: TurnCameraSide, lease: CameraLease) {
+            // Recheck the producer's latest atomic state at the last pixel boundary.
+            // A frame queued before a worker reports takeover/side change is not consent.
+            if (runCatching { mayShow(side) }.getOrDefault(false)) presenter.show(side, lease)
+            else {
+                presenter.hide(TurnCameraPolicy.Reason.NATIVE_STATE_UNKNOWN)
+                post { if (!closed) policy.onNativeCamera(NativeCameraState.UNKNOWN) }
+            }
+        }
         override fun hide(reason: TurnCameraPolicy.Reason) = presenter.hide(reason)
     }, generation = generation, clock = clock)
 
