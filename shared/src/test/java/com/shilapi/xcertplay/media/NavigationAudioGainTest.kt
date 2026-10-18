@@ -31,30 +31,45 @@ class NavigationAudioGainTest {
         assertEquals(1f, NavigationAudioGain.linear(20), 0.0001f)
     }
 
-    @Test fun newNavigationOnlyTrackChangesGainAndResetReturnsUnity() {
+    @Test fun pcmIsScaledInPlaceAndZeroDecibelsLeavesItAlone() {
+        val pcm = pcm16(32767, -32768, 1000, -1000, 0)
+        NavigationAudioGain.scalePcm16(pcm, 0, pcm.size, -20)
+        assertArrayEquals(pcm16(3277, -3277, 100, -100, 0), pcm)
+        val untouched = pcm16(32767, -32768, 1234)
+        NavigationAudioGain.scalePcm16(untouched, 0, untouched.size, 0)
+        assertArrayEquals(pcm16(32767, -32768, 1234), untouched)
+        // Only the given range, and never half a sample.
+        val part = pcm16(20000, 20000, 20000) + byteArrayOf(0x7f)
+        NavigationAudioGain.scalePcm16(part, 2, 3, -6)
+        assertArrayEquals(pcm16(20000, 10024, 20000) + byteArrayOf(0x7f), part)
+    }
+
+    // #719: on a DiLink 3.0 every setVolume on the guidance track succeeded and the guidance stayed as loud.
+    @Test fun navigationGuidanceIsScaledAsWrittenAndNeverThroughTheTrack() {
         val sink = AndroidMediaSink(navigationAttenuationDb = -12)
         val format = AudioFormat(AudioCodecKind.LPCM, 48_000, 1, 96, "default")
-        val id = AudioStreamId(96, "default")
         val create = AndroidMediaSink::class.java.getDeclaredMethod("audioRenderer",
             AudioStreamId::class.java, AudioFormat::class.java).apply { isAccessible = true }
-        val renderer = create.invoke(sink, id, format)
+        val renderer = create.invoke(sink, AudioStreamId(96, "default"), format)
         val type = renderer.javaClass
         val track = track()
         try {
             type.getDeclaredField("mappedChannel").apply { isAccessible = true }.set(renderer, AudioChannel.NAVIGATION)
             type.getDeclaredField("track").apply { isAccessible = true }.set(renderer, track)
-            val apply = type.getDeclaredMethod("setNavigationAttenuationDb", Int::class.javaPrimitiveType)
-                .apply { isAccessible = true }
-            val flush = type.getDeclaredMethod("applyNavigationAttenuation").apply { isAccessible = true }
-            apply.invoke(renderer, -12)
-            // UI only publishes the setting; AudioTrack updates happen on the audio worker.
-            assertTrue(TrackGain.volumes[track].isNullOrEmpty())
-            flush.invoke(renderer)
-            assertEquals(listOf(NavigationAudioGain.linear(-12)), TrackGain.volumes[track])
+            val attenuate = type.getDeclaredMethod("attenuateNavigation", ByteArray::class.java,
+                Int::class.javaPrimitiveType, Int::class.javaPrimitiveType).apply { isAccessible = true }
+            type.getDeclaredMethod("setNavigationAttenuationDb", Int::class.javaPrimitiveType)
+                .apply { isAccessible = true }.invoke(renderer, -12)
+            val pcm = pcm16(10000, -10000)
+            attenuate.invoke(renderer, pcm, 0, pcm.size)
+            assertArrayEquals(pcm16(2512, -2512), pcm)
+            // A change applies to the next PCM written, on the audio worker.
             sink.setNavigationAttenuationDb(0)
-            assertEquals(listOf(NavigationAudioGain.linear(-12)), TrackGain.volumes[track])
-            flush.invoke(renderer)
-            assertEquals(listOf(NavigationAudioGain.linear(-12), 1f), TrackGain.volumes[track])
+            val next = pcm16(10000, -10000)
+            attenuate.invoke(renderer, next, 0, next.size)
+            assertArrayEquals(pcm16(10000, -10000), next)
+            type.getDeclaredMethod("applyNavigationAttenuation").apply { isAccessible = true }.invoke(renderer)
+            assertTrue(TrackGain.volumes[track].isNullOrEmpty())
         } finally {
             sink.close()
             track.release()
@@ -90,11 +105,13 @@ class NavigationAudioGainTest {
                 assertTrue(TrackGain.volumes[track].isNullOrEmpty())
                 type.getDeclaredMethod("applyNavigationAttenuation")
                     .apply { isAccessible = true }.invoke(renderer)
-                if (channel == AudioChannel.NAVIGATION) {
-                    assertEquals(listOf(0.1f), TrackGain.volumes[track])
-                } else {
-                    assertTrue("Unexpected change to $channel", TrackGain.volumes[track].isNullOrEmpty())
-                }
+                assertTrue("Unexpected track volume for $channel", TrackGain.volumes[track].isNullOrEmpty())
+                val pcm = pcm16(10000)
+                type.getDeclaredMethod("attenuateNavigation", ByteArray::class.java,
+                    Int::class.javaPrimitiveType, Int::class.javaPrimitiveType)
+                    .apply { isAccessible = true }.invoke(renderer, pcm, 0, pcm.size)
+                assertArrayEquals("Unexpected change to $channel",
+                    pcm16(if (channel == AudioChannel.NAVIGATION) 1000 else 10000), pcm)
             }
             assertEquals(streamBefore, manager.getStreamVolume(AudioManager.STREAM_MUSIC))
         } finally {
@@ -140,7 +157,7 @@ class NavigationAudioGainTest {
         }
     }
 
-    @Test fun rejectedGainIsThrottledAndReportedOnceThenRecoversWithoutChangingOtherAudio() {
+    @Test fun eachChangeIsReportedOnceWhenItReachesTheGuidance() {
         val reports = mutableListOf<String>()
         val sink = AndroidMediaSink(onAudioDiagnostic = reports::add)
         val format = AudioFormat(AudioCodecKind.LPCM, 48_000, 1, 96, "default")
@@ -148,39 +165,27 @@ class NavigationAudioGainTest {
             AudioStreamId::class.java, AudioFormat::class.java).apply { isAccessible = true }
         val renderer = create.invoke(sink, AudioStreamId(96, "default"), format)
         val type = renderer.javaClass
-        val track = track()
         val flush = type.getDeclaredMethod("applyNavigationAttenuation").apply { isAccessible = true }
-        val lastFailure = type.getDeclaredField("lastNavigationGainFailureNs").apply { isAccessible = true }
         try {
             type.getDeclaredField("mappedChannel").apply { isAccessible = true }
                 .set(renderer, AudioChannel.NAVIGATION)
-            type.getDeclaredField("track").apply { isAccessible = true }.set(renderer, track)
-            TrackGain.result = AudioTrack.ERROR_INVALID_OPERATION
+            repeat(10) { flush.invoke(renderer) }
+            assertTrue(reports.none { it.contains("navigation attenuation") })
             sink.setNavigationAttenuationDb(-6)
             repeat(100) { flush.invoke(renderer) }
-            assertEquals(1, TrackGain.volumes[track]?.size)
-            assertEquals(1, reports.count { it.contains("attenuation=-6dB applied=false") })
-            // Once the retry interval expires, retry the track without another report flood.
-            lastFailure.setLong(renderer, System.nanoTime() - TimeUnit.SECONDS.toNanos(2))
-            flush.invoke(renderer)
-            assertEquals(2, TrackGain.volumes[track]?.size)
-            assertEquals(1, reports.count { it.contains("attenuation=-6dB applied=false") })
-
-            TrackGain.result = AudioTrack.SUCCESS
-            lastFailure.setLong(renderer, System.nanoTime() - TimeUnit.SECONDS.toNanos(2))
-            flush.invoke(renderer)
-            assertEquals(3, TrackGain.volumes[track]?.size)
             assertEquals(1, reports.count { it.contains("attenuation=-6dB applied=true") })
-            flush.invoke(renderer)
-            assertEquals(3, TrackGain.volumes[track]?.size)
             sink.setNavigationAttenuationDb(0)
-            flush.invoke(renderer)
-            assertEquals(1f, TrackGain.volumes.getValue(track).last(), 0.0001f)
+            repeat(10) { flush.invoke(renderer) }
+            assertEquals(1, reports.count { it.contains("attenuation=0dB applied=true") })
         } finally {
-            TrackGain.result = AudioTrack.SUCCESS
             sink.close()
-            track.release()
-            TrackGain.volumes.clear()
+        }
+    }
+
+    private fun pcm16(vararg samples: Int): ByteArray = ByteArray(samples.size * 2).also { out ->
+        samples.forEachIndexed { index, sample ->
+            out[index * 2] = sample.toByte()
+            out[index * 2 + 1] = (sample shr 8).toByte()
         }
     }
 

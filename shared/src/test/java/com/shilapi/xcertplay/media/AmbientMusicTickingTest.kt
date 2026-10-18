@@ -30,6 +30,24 @@ class AmbientMusicTickingTest {
         }
     }
 
+    @Test fun theCarsOwnRhythmKeepsTheUpdateRunningWithoutLampControl() {
+        context.getSharedPreferences("ambient_music", Context.MODE_PRIVATE).edit().clear()
+            .putBoolean("carRhythm", true).commit()
+        val sink = AmbientMusicController.openSink(context)
+        try {
+            settle()
+            org.junit.Assert.assertNotNull(field("ticking"))
+            context.getSharedPreferences("ambient_music", Context.MODE_PRIVATE).edit().putBoolean("carRhythm", false).commit()
+            AmbientMusicController.settingsChanged(context)
+            settle()
+            assertNull(field("ticking"))
+        } finally {
+            AmbientMusicController.closeSink(sink)
+            context.getSharedPreferences("ambient_music", Context.MODE_PRIVATE).edit().clear().commit()
+            settle()
+        }
+    }
+
     private fun settle() {
         (field("executor") as ExecutorService).submit {}.get(2, TimeUnit.SECONDS)
     }

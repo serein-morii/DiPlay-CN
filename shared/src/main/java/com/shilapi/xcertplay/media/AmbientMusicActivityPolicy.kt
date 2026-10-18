@@ -16,6 +16,13 @@ enum class AmbientIdleBehavior {
     OFF,
 }
 
+/**
+ * Whether the car's own music rhythm should run: CarPlay's media track is open and playing, and the iPhone has not
+ * reported a pause ([phonePlaying] is null before it reports anything).
+ */
+internal fun carRhythmPlaying(rendererActive: Boolean, trackPlaying: Boolean?, phonePlaying: Boolean?): Boolean =
+    rendererActive && trackPlaying == true && phonePlaying != false
+
 internal object AmbientMusicActivityPolicy {
     /** Track changes and short pauses keep the lamps; the car's lighting returns only after this much silence. */
     const val RESTORE_AFTER_MILLIS = 15_000L

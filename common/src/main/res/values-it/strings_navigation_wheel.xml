@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_navigation_wheel_volume">Volume dal volante durante le indicazioni di navigazione (sperimentale)</string>
+    <string name="settings_navigation_wheel_volume_description">Durante le indicazioni vocali di CarPlay, i tasti del volume regolano lo stream audio di navigazione selezionato. Negli altri momenti seguono il comportamento della head unit. Richiede il permesso di accessibilità per i tasti del volante. Chiamate, zoom della mappa e joystick hanno la priorità. Testato localmente su una head unit Tang con piattaforma 21; l’integrazione upstream deve ancora essere provata in auto. L’instradamento automatico o dei contenuti multimediali non viene intercettato.</string>
+    <string name="settings_navigation_wheel_service_required">Consenti il Servizio di accessibilità per i tasti del volante nelle impostazioni di Android oppure usa il pulsante esistente per autorizzare ADB.</string>
+</resources>

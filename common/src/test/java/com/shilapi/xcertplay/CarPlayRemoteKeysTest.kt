@@ -12,6 +12,31 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [29], manifest = Config.NONE)
 class CarPlayRemoteKeysTest {
+    @Test fun tvAndCarReservedKeysAreNotEligibleForCustomPlayPauseMapping() {
+        // Fire TV, Google TV, Android TV, HID keyboards and gamepads all deliver these
+        // standard KeyEvents; preserve OS navigation and the existing MediaSession.
+        val reserved = listOf(
+            KeyEvent.KEYCODE_DPAD_UP, KeyEvent.KEYCODE_DPAD_DOWN,
+            KeyEvent.KEYCODE_DPAD_LEFT, KeyEvent.KEYCODE_DPAD_RIGHT,
+            KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER,
+            KeyEvent.KEYCODE_NUMPAD_ENTER, KeyEvent.KEYCODE_BACK, KeyEvent.KEYCODE_MENU,
+            KeyEvent.KEYCODE_BUTTON_SELECT, KeyEvent.KEYCODE_BUTTON_A, KeyEvent.KEYCODE_BUTTON_B,
+            KeyEvent.KEYCODE_HOME, KeyEvent.KEYCODE_APP_SWITCH, KeyEvent.KEYCODE_SETTINGS,
+            KeyEvent.KEYCODE_ASSIST, KeyEvent.KEYCODE_VOICE_ASSIST, KeyEvent.KEYCODE_SEARCH,
+            KeyEvent.KEYCODE_VOLUME_UP, KeyEvent.KEYCODE_VOLUME_DOWN, KeyEvent.KEYCODE_VOLUME_MUTE,
+            KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE, KeyEvent.KEYCODE_MEDIA_PLAY,
+            KeyEvent.KEYCODE_MEDIA_PAUSE, KeyEvent.KEYCODE_MEDIA_NEXT,
+            KeyEvent.KEYCODE_MEDIA_PREVIOUS, KeyEvent.KEYCODE_MEDIA_FAST_FORWARD,
+            KeyEvent.KEYCODE_MEDIA_REWIND, KeyEvent.KEYCODE_POWER,
+            com.shilapi.xcertplay.airplay.CarPlayMediaButton.KEYCODE_BYD_CARPLAY_VOICE,
+            com.shilapi.xcertplay.airplay.CarPlayMediaButton.KEYCODE_BYD_AUTO_MEDIA_PLAY_PAUSE,
+        )
+        for (code in reserved) {
+            assertTrue("existing remote control changed for keycode $code",
+                CarPlayRemoteKeys.isProtectedNavigationKey(code))
+        }
+        assertFalse(CarPlayRemoteKeys.isProtectedNavigationKey(KeyEvent.KEYCODE_F9))
+    }
     @Test
     fun unrelatedKeyIsNotConsumedWithoutController() {
         val event = KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_INFO)

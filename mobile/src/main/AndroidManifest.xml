@@ -18,6 +18,11 @@
             android:name="android.allow_multiple_resumed_activities"
             android:value="true" />
 
+        <!-- Based on the split-screen metadata declared by DiLink system apps. -->
+        <meta-data
+            android:name="BYD_SUPPORT_SPLIT_ACTIVITY"
+            android:value="1" />
+
         <receiver
             android:name="com.shilapi.xcertplay.BootReceiver"
             android:enabled="true"

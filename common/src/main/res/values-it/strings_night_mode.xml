@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="carplay_night_mode">Modalità giorno/notte di CarPlay</string>
+    <string name="settings_app_appearance">Aspetto dell’app</string>
+    <string name="settings_app_appearance_dark">Scuro</string>
+    <string name="settings_app_appearance_light">Chiaro</string>
+    <string name="settings_app_appearance_auto">Automatico</string>
+    <string name="settings_app_appearance_description">Automatico segue l’impostazione giorno/notte salvata di CarPlay; mentre CarPlay è aperto, segue il risultato in tempo reale. Chiaro e Scuro restano fissi e non richiedono una riconnessione.</string>
+    <string name="settings_switch_to_light_appearance">Passa all’aspetto chiaro</string>
+    <string name="settings_switch_to_dark_appearance">Passa all’aspetto scuro</string>
+    <string name="carplay_night_system">Segui il sistema Android</string>
+    <string name="carplay_night_ambient">Segui la luce ambientale</string>
+    <string name="carplay_night_day">Sempre giorno</string>
+    <string name="carplay_night_night">Sempre notte</string>
+    <string name="carplay_night_schedule">Pianificato</string>
+    <string name="carplay_night_start">Inizio notte</string>
+    <string name="carplay_night_end">Fine notte</string>
+    <string name="carplay_night_schedule_hint">Usa l’ora locale della head unit. Imposta orari di inizio e fine diversi; sono supportati intervalli che superano la mezzanotte.</string>
+    <string name="carplay_night_schedule_same_time">Gli orari di inizio e fine devono essere diversi.</string>
+    <string name="carplay_night_hint">Salva e torna a CarPlay per applicare.</string>
+    <string name="carplay_night_ambient_hint">Usa la soglia e il ritardo qui sotto. Senza un sensore di luce, segue Android.</string>
+    <string name="carplay_night_time_note">Quando l’aspetto è impostato su Automatico nelle impostazioni di CarPlay, CarPlay considera anche l’ora dell’iPhone. Anche se selezioni Sempre giorno, CarPlay potrebbe comunque apparire scuro di notte.</string>
+</resources>

@@ -47,6 +47,28 @@ If the phone reuses the same artwork reference, source app, artist, album and du
 
 The source implementation was exercised in the contributor's BYD CarPlay fork. This new upstream port has separate local/CI checks and has not been installed in a vehicle. No vehicle identifiers, phone records, raw in-car logs, OEM artwork files or third-party APKs are included.
 
+## The car's own music rhythm
+
+**Car's own music rhythm**, a switch in the same card, leaves the lamps to the car: while CarPlay music plays, the car's own ambient-light music rhythm runs with the colours and effects set in the car's ambient-light menu, where its music rhythm must be on. DiPlay does not set the lamps itself while the switch is on.
+
+How it works, as seen on a 2024 Tang (DiLink 5, Android 12):
+
+- **Where the rhythm lives.** It is in system_server (`com.android.server.audio.visualizer`). A music app calls BYD's `IAudioService.startAudioOutput(package, token)`. system_server then starts a Visualizer on the output mix (its log shows `initVisualizer: id = 0`) and sends colours to the lamp ECU (`ColorVisualizerEffect: send color N to ECU`) until `stopAudioOutput` or until the token's process dies.
+- **Which apps it starts for.** It starts only for BYD's own music apps (its media centre, Kuwo, Kugou, NetEase, QQ Music). A call naming DiPlay creates a session, but nothing starts. DiPlay therefore names the media centre, `com.byd.mediacenter`.
+- **How DiPlay makes the call.** First from its own process, by reflection on the hidden `IAudioService` (`BydCarMusicRhythmDirect`). On the 2024 Tang (DiLink 5, Android 12L) ART logs that access as `blocked, reflection, denied`, yet the call goes through, in a debuggable and in a non-debuggable build. Other firmware may enforce the block. There DiPlay falls back to a helper: `BydCarMusicRhythmTool`, run by app_process as the shell user over DiPlay's existing network ADB access. The switch never asks for ADB.
+  - Switching it on first checks that DiPlay can look up the two calls itself. Only if it cannot does it run the helper's `--probe`, which only checks that the audio service has the calls.
+  - While on, DiPlay starts the rhythm when CarPlay's media track plays and stops it when it pauses, stops or the session ends. It makes the direct call first and opens the helper only when that fails. A rhythm is stopped the same way it was started: on the Tang the head unit keeps each session under its token. The direct call uses one token for DiPlay's whole process.
+  - If DiPlay's process ends, the head unit drops its token, which ends a rhythm started directly. If DiPlay goes away while the helper runs, the helper's stdin closes and it stops. If the helper dies, the head unit drops its token.
+- **What else drives the lamps.** While started, everything on the output mix drives the rhythm, including navigation prompts during music.
+
+### Head units that make no spectrum of their own (2023 Han, DiLink 3.0, Android 10)
+
+The Han's `AudioService` has no visualizer for this. Its `AtmosphereLampControl.startAudioOutput` only tells the lamp controller that media audio is working in music mode (`AUDIO_MEDIA_AUDIO_WORKING_MODE_SET` 2, `AUDIO_MEDIA_AUDIO_WORKING_STATE_SET` 1; stop sets the state to 2), and only for the media centre, Kuwo, Kugou and the karaoke app. The spectrum comes from elsewhere: the media centre builds it itself, and the framework's `AudioDataHandler` does it for Kuwo and Kugou, then calls `BYDAutoAudioDevice.setAmbientLightFreq`, 16 values from 1 to 15 at about 40, 80, 120, 200, 250, 300, 400, 500, 600, 700, 800, 900, 1200, 1600, 1800 and 3500 Hz (feature ids 774897672 to 774897732, 4 apart). On the Han, `startAudioOutput` alone left every lamp dark.
+
+**Send music data to the car's rhythm** (Settings, Ambient light, off by default) fills that gap. While the car's own music rhythm runs, DiPlay reduces the PCM it plays to the same 16 bands (Goertzel filters over the last 2048 frames, in dB below the loudest recent band) and the ADB helper writes them about eleven times a second. The car's own rhythm modes then drive all lamps, including the passenger dash, which the front and rear lamp zones cannot reach.
+
+Observed on a 2023 Han (GCC): with the car's Rhythm Ambient Light on and DiPlay's own lamp control off, writing the "working" state alone switched every lamp off; writing the state and synthetic bands at about 12 Hz for 12 seconds made every lamp, including the passenger dash, follow a beat pattern; the matching stop returned the lamps to normal. This setting has not been installed on a car; the data path was verified with that synthetic input.
+
 ## Evidence and verification
 
 Album-color extension validation on 2026-10-09: the full nine-task repository CI command passed locally, with 2258 tests reported, zero failures/errors and 1 existing platform skip. All three lint tasks had zero errors, and mobile/home/maphost source-only debug builds assembled. Compact 600dp / font 1.3 and full 1280dp / font 1.5 captures were rendered at a 960px physical viewport and visually checked; the dialog controls and Save/Cancel remained accessible. This does not replace vehicle acceptance of the upstream port.

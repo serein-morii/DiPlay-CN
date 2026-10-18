@@ -18,6 +18,7 @@ internal object ConnectionFailureGuidance {
         if (failure.wifiResetRequired) return R.string.connection_help_reset_wifi
         when (failure.startupFailure) {
             WirelessStartupFailure.BLUETOOTH_UNUSABLE -> return R.string.connection_help_bluetooth_unusable
+            WirelessStartupFailure.WIFI_DIRECT_BESIDE_HOTSPOT -> return R.string.connection_help_wifi_direct_beside_hotspot
             WirelessStartupFailure.HOTSPOT_NOT_READY,
             WirelessStartupFailure.HOTSPOT_CONFIGURATION -> return network(mode)
             WirelessStartupFailure.FIRST_TCP_TIMEOUT -> return iphoneWifi(mode)

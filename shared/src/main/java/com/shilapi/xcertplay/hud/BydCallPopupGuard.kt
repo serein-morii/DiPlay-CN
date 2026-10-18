@@ -58,7 +58,7 @@ object BydCallPopupGuard {
             }
             val (value, context) = selected
             try {
-                if (Build.VERSION.SDK_INT != 32) { status = "UNSUPPORTED"; continue }
+                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) { status = "UNSUPPORTED"; continue }
                 val client = LocalAdb(AdbKeys.load(context))
                 client.use {
                     synchronized(gate) {

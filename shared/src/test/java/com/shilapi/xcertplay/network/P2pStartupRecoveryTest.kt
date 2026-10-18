@@ -439,4 +439,64 @@ class P2pStartupRecoveryTest {
         assertEquals(listOf(P2pCreationRequest(P2pCreationMode.PREFERRED_CHANNEL, 5180)),
             P2pStartupRecovery.plan(null, preferredChannel = 36, fiveGhz = false))
     }
+
+    // Each further request would show Android's "turn the hotspot off?" prompt again (Galaxy Note20, Android 13).
+    @Test fun aBusyWithAKnownCauseEndsThePlanAtOnce() {
+        val attempts = mutableListOf<P2pCreationRequest>()
+        val asked = mutableListOf<P2pCreateRejected>()
+        val cause = IOException("refused beside the car hotspot")
+        val failure = assertThrows(IOException::class.java) {
+            P2pStartupRecovery.create(2437, { fail("Unexpected retry") }, busyCause = { asked += it; cause }) {
+                attempts += it
+                throw P2pCreateRejected(WifiP2pManager.BUSY, "busy", replyMillis = 3_500)
+            }
+        }
+        assertSame(cause, failure)
+        assertEquals(1, attempts.size)
+        assertEquals(listOf(3_500L), asked.map { it.replyMillis })
+    }
+
+    @Test fun aBusyWithoutAKnownCauseStillWalksThePlan() {
+        val attempts = mutableListOf<P2pCreationRequest>()
+        var asked = 0
+        assertThrows(P2pCreateRejected::class.java) {
+            P2pStartupRecovery.create(null, {}, busyCause = { asked++; null }) {
+                attempts += it
+                throw P2pCreateRejected(WifiP2pManager.BUSY, "busy", replyMillis = 40)
+            }
+        }
+        assertEquals(P2pStartupRecovery.plan(null).flatMap { listOf(it, it) }, attempts)
+        assertEquals(attempts.size, asked)
+    }
+
+    @Test fun onlyBusyAsksForACause() {
+        var asked = 0
+        assertThrows(P2pCreateRejected::class.java) {
+            P2pStartupRecovery.create(null, {}, busyCause = { asked++; IOException("unexpected") }) {
+                throw P2pCreateRejected(WifiP2pManager.ERROR, "error", replyMillis = 3_500)
+            }
+        }
+        assertEquals(0, asked)
+    }
+
+    @Test fun aRefusedPromptBesideTheCarHotspotEndsWifiDirect() {
+        val rejection = P2pCreateRejected(WifiP2pManager.BUSY, "busy", replyMillis = 3_500)
+        val failure = requireNotNull(P2pHotspotConflict.failure(33, true, rejection))
+        assertEquals(WirelessStartupFailure.WIFI_DIRECT_BESIDE_HOTSPOT, failure.reason)
+        assertFalse(failure.reason.retryable)
+        assertSame(rejection, failure.cause)
+    }
+
+    @Test fun otherBusyAnswersAreNotARefusedPrompt() {
+        fun busy(replyMillis: Long?) = P2pCreateRejected(WifiP2pManager.BUSY, "busy", replyMillis)
+        // Android 12 and older do not ask.
+        assertNull(P2pHotspotConflict.failure(32, true, busy(3_500)))
+        assertNull(P2pHotspotConflict.failure(33, false, busy(3_500)))
+        // Firmware that hides the hotspot state keeps the old behaviour.
+        assertNull(P2pHotspotConflict.failure(33, null, busy(3_500)))
+        // A firmware's own per-channel BUSY answers without waiting for anyone.
+        assertNull(P2pHotspotConflict.failure(33, true, busy(40)))
+        assertNull(P2pHotspotConflict.failure(33, true, busy(null)))
+        assertNull(P2pHotspotConflict.failure(33, true, P2pCreateRejected(WifiP2pManager.ERROR, "error", 3_500)))
+    }
 }

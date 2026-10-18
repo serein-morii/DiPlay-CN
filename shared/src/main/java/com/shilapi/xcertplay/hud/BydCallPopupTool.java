@@ -29,7 +29,7 @@ public final class BydCallPopupTool {
 
     public static void main(String[] args) {
         if (args.length != 1 || !args[0].matches("[a-f0-9]{32}") ||
-                android.os.Process.myUid() != 2000 || Build.VERSION.SDK_INT != 32) return;
+                android.os.Process.myUid() != 2000 || Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return;
         BydCallPopupTool tool = new BydCallPopupTool(args[0]);
         try {
             Os.umask(0077);

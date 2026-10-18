@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="settings_hide_byd_call_popup">隱藏比亞迪來電彈窗（實驗性）</string>
-    <string name="settings_hide_byd_call_popup_description">僅適用於 Android 12L 比亞迪車機，需要已授權的本機 ADB。已連線的 CarPlay 位於前景時隱藏原生來電彈窗，進入背景時恢復。不改變藍牙音訊，也不隱藏全螢幕電話應用程式。</string>
+    <string name="settings_hide_byd_call_popup_description">僅適用於 Android 10 及以上的比亞迪車機，需要已授權的本機 ADB。已連線的 CarPlay 位於前景時隱藏原生來電彈窗，進入背景時恢復。不改變藍牙音訊，也不隱藏全螢幕電話應用程式。</string>
 </resources>

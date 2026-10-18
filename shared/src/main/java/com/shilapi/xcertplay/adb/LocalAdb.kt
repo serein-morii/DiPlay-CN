@@ -65,7 +65,11 @@ class LocalAdb(
 
     /** Same as [shell], with a larger bounded read window for a one-shot slow command. */
     @Synchronized
-    fun shell(command: String, readTimeoutMillis: Int): String? {
+    fun shell(command: String, readTimeoutMillis: Int): String? = shell(command, readTimeoutMillis, null)
+
+    /** Same as [shell], pushing [stdin] to the command right after the stream opens; no EOF is implied. */
+    @Synchronized
+    fun shell(command: String, readTimeoutMillis: Int, stdin: ByteArray?): String? {
         if (cancelled.get()) return null
         if (socket?.isClosed != false && connect(mayAsk = false) != Access.READY) return null
         return try {
@@ -74,12 +78,19 @@ class LocalAdb(
             val local = nextStreamId++
             send(AdbPacket(AdbPacket.OPEN, local, 0, "shell:$command\u0000".toByteArray()))
             var remote = 0
+            var stdinSent = false
             var finished = false
             val text = StringBuilder()
             while (!finished) {
                 val packet = receive()
                 when {
-                    packet.command == AdbPacket.OKAY && packet.arg1 == local -> remote = packet.arg0
+                    packet.command == AdbPacket.OKAY && packet.arg1 == local -> {
+                        remote = packet.arg0
+                        if (stdin != null && !stdinSent) {
+                            stdinSent = true
+                            send(AdbPacket(AdbPacket.WRTE, local, remote, stdin))
+                        }
+                    }
                     packet.command == AdbPacket.WRTE && packet.arg1 == local -> {
                         text.append(String(packet.payload, Charsets.UTF_8))
                         send(AdbPacket(AdbPacket.OKAY, local, packet.arg0, ByteArray(0)))

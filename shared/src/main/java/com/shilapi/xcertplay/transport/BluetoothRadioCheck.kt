@@ -23,6 +23,16 @@ object BluetoothRadioCheck {
     }
 
     /**
+     * Why this attempt cannot reach an iPhone, taking state into account.
+     */
+    fun blockerForState(adapterPresent: Boolean, state: Int?, pausedByDiPlay: Boolean): String? = when {
+        !adapterPresent || state == null -> NO_ADAPTER
+        (state == android.bluetooth.BluetoothAdapter.STATE_OFF ||
+            state == android.bluetooth.BluetoothAdapter.STATE_TURNING_OFF) && !pausedByDiPlay -> RADIO_OFF
+        else -> null
+    }
+
+    /**
      * What [blocker]'s answer is thrown as. A radio that is off can be switched on, so that attempt is
      * retried; no retry gives a head unit an adapter, so that one stops with its cause.
      */

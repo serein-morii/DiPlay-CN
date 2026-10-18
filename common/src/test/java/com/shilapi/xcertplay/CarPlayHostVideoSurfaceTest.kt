@@ -41,12 +41,13 @@ class CarPlayHostVideoSurfaceTest {
     @Test fun softwareWindowReplacesTextureWithoutShrinkingTheNegotiatedViewport() {
         val activity = Robolectric.buildActivity(CarPlayHostActivity::class.java).get()
         val texture = AttachedTexture(activity, false)
-        val overlay = View(activity)
+        val overlay = CarPlayBlackCornerOverlay(activity).apply { radiusDp = 24 }
         val root = FrameLayout(activity).apply {
             addView(texture, FrameLayout.LayoutParams(-1, -1))
             addView(overlay, FrameLayout.LayoutParams(-1, -1))
         }
         set(activity, "videoView", texture)
+        set(activity, "blackCornerOverlay", overlay)
         set(activity, "sessionDisplay", CarPlaySessionDisplay(1920, 990, Surface.ROTATION_0,
             true, true, 1920, 990))
         observe(activity, texture)
@@ -57,6 +58,7 @@ class CarPlayHostVideoSurfaceTest {
         assertNull(texture.parent)
         assertSame(viewport, root.getChildAt(0))
         assertSame(overlay, root.getChildAt(1))
+        assertEquals(24, overlay.radiusDp)
         assertSame(fallback, viewport.getChildAt(0))
         viewport.layout(0, 0, 1920, 942)
         val content = CarPlayVideoLayout.fit(1920, 990, 1920, 942)

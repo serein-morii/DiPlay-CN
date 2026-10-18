@@ -88,6 +88,33 @@ class AmbientMusicSettingsUiTest {
         assertFalse(AmbientMusicSettings.load(activity).enabled)
     }
 
+    @Test fun theCarsRhythmIsSavedOnOnlyAfterItsCheckPasses() {
+        activity.carRhythmSupportCheck = { CompletableFuture.completedFuture(false) }
+        var row = carRhythmSwitch()
+        row.isChecked = true
+        shadowOf(Looper.getMainLooper()).idle()
+        assertFalse(AmbientMusicSettings.load(activity).carRhythm)
+        assertFalse(row.isChecked)
+        assertEquals(activity.getString(R.string.settings_ambient_car_rhythm_unavailable), ShadowToast.getTextOfLatestToast())
+
+        activity.carRhythmSupportCheck = { CompletableFuture.completedFuture(true) }
+        row = carRhythmSwitch()
+        row.isChecked = true
+        shadowOf(Looper.getMainLooper()).idle()
+        assertTrue(AmbientMusicSettings.load(activity).carRhythm)
+        row.isChecked = false
+        shadowOf(Looper.getMainLooper()).idle()
+        assertFalse(AmbientMusicSettings.load(activity).carRhythm)
+    }
+
+    private fun carRhythmSwitch(): Switch {
+        val card = android.widget.LinearLayout(activity)
+        ReflectionHelpers.callInstanceMethod<Unit>(activity, "carRhythmControl",
+            ReflectionHelpers.ClassParameter.from(android.widget.LinearLayout::class.java, card))
+        return descendants(card).filterIsInstance<Switch>()
+            .single { it.contentDescription == activity.getString(R.string.settings_ambient_car_rhythm) }
+    }
+
     private fun open(): AlertDialog {
         ReflectionHelpers.callInstanceMethod<Unit>(activity, "showAmbientConfiguration")
         shadowOf(Looper.getMainLooper()).idle()

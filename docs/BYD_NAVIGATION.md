@@ -133,14 +133,18 @@ BYD's own CarPlay app (`com.byd.carplay.ui`) answers CarPlay calls from the whee
 - the CarPlay voice keys (327 short, 328 long) reach the wheel key service before BYD's window manager keeps them.
 
 DiPlay follows the iPhone's calls from iAP2 CallStateUpdate (0x4155, already subscribed). The separate
-**CarPlay call keys (experimental)** setting is disabled by default and requires explicit opt-in.
-With that setting enabled, during a CarPlay call:
+**CarPlay call, Siri and media keys (experimental)** setting is disabled by default and requires explicit opt-in.
 
-- the call key answers a ringing call with CarPlay's telephony HID Hook Switch, and is kept during a connected call. It works through the wheel key service and on the CarPlay screen; since BYD has already opened its phone screen by then, DiPlay brings CarPlay back to the front;
-- the hang-up and menu keys end or decline the call (telephony HID Drop), through BYD's broadcast; no setting or service is needed;
+With that setting enabled and a CarPlay session active:
+
+- the phone key (313) answers a ringing call with CarPlay's telephony HID Hook Switch, and is consumed without hanging up during a connected call. It reaches DiPlay through the focused CarPlay screen or the wheel key service; outside the CarPlay screen, the service is needed. Since BYD has already opened its phone screen by the key's release, DiPlay brings CarPlay back to the front;
+- the hang-up key (314) and multifunction mode/menu key (309) end or decline the call (telephony HID Drop), through BYD's broadcast. This path requires the call-key setting to be enabled, but does not depend on the wheel key service;
+- next track answers and previous track declines only while a call rings. Neither track key ends a connected call;
 - with a CarPlay session, the CarPlay voice keys open Siri through the wheel key service. **Siri on long press only** (Settings, wheel keys) makes a short press of the voice button do nothing in DiPlay; only the long press (328, or 312 on the CarPlay screen) opens Siri. It is off by default. DiLink 3's play/pause key (331) toggles CarPlay playback. One press of the wheel's voice key also sends the generic voice key (304 short, 312 long) about half a second later, which the CarPlay screen would turn into a second Siri request that ends the first; only the first key within 1.5 s opens Siri. Without the wheel key service, BYD's window manager treats CarPlay as not connected (DiPlay does not set `sys.carplay.connected`) and opens its Bluetooth page on the long press (328).
 
-With the experimental controls disabled, all new call/voice/play-pause key behavior passes through.
+The Siri and media support above applies specifically to DiLink 3 keys 327/328 and 331. This setting
+does not control ordinary media-key mappings or the separate configurable wheel-key settings.
+With this setting disabled, these experimental call-key and dedicated Siri/play-pause mappings are not applied.
 Outside a CarPlay call every call key keeps BYD's action. The exported hang-up receiver requires
 the sender's `android.permission.DUMP`; BYD's system-server window manager can send it, while an
 ordinary third-party app cannot. Actual sender/key behavior still requires vehicle acceptance.

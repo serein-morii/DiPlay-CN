@@ -59,4 +59,78 @@ class BluetoothRadioCheckTest {
     @Test fun theRequestCarriesTheWordsTheHostScreenLooksFor() {
         assertTrue(BluetoothRadioCheck.RADIO_OFF.contains(BluetoothRadioCheck.RADIO_OFF_MARK))
     }
+
+    @Test fun blockerForStateHandlesAllAdapterStatesAndPauseSemantics() {
+        // Bluetooth off -> RADIO_OFF
+        assertEquals(
+            BluetoothRadioCheck.RADIO_OFF,
+            BluetoothRadioCheck.blockerForState(
+                adapterPresent = true,
+                state = android.bluetooth.BluetoothAdapter.STATE_OFF,
+                pausedByDiPlay = false,
+            ),
+        )
+
+        // Bluetooth turning off -> RADIO_OFF
+        assertEquals(
+            BluetoothRadioCheck.RADIO_OFF,
+            BluetoothRadioCheck.blockerForState(
+                adapterPresent = true,
+                state = android.bluetooth.BluetoothAdapter.STATE_TURNING_OFF,
+                pausedByDiPlay = false,
+            ),
+        )
+
+        // Bluetooth off or turning off when DiPlay itself paused it -> no blocker
+        assertNull(
+            BluetoothRadioCheck.blockerForState(
+                adapterPresent = true,
+                state = android.bluetooth.BluetoothAdapter.STATE_OFF,
+                pausedByDiPlay = true,
+            ),
+        )
+        assertNull(
+            BluetoothRadioCheck.blockerForState(
+                adapterPresent = true,
+                state = android.bluetooth.BluetoothAdapter.STATE_TURNING_OFF,
+                pausedByDiPlay = true,
+            ),
+        )
+
+        // Bluetooth turning on -> no blocker
+        assertNull(
+            BluetoothRadioCheck.blockerForState(
+                adapterPresent = true,
+                state = android.bluetooth.BluetoothAdapter.STATE_TURNING_ON,
+                pausedByDiPlay = false,
+            ),
+        )
+
+        // Bluetooth on -> no blocker
+        assertNull(
+            BluetoothRadioCheck.blockerForState(
+                adapterPresent = true,
+                state = android.bluetooth.BluetoothAdapter.STATE_ON,
+                pausedByDiPlay = false,
+            ),
+        )
+
+        // No Bluetooth adapter -> NO_ADAPTER
+        assertEquals(
+            BluetoothRadioCheck.NO_ADAPTER,
+            BluetoothRadioCheck.blockerForState(
+                adapterPresent = false,
+                state = null,
+                pausedByDiPlay = false,
+            ),
+        )
+        assertEquals(
+            BluetoothRadioCheck.NO_ADAPTER,
+            BluetoothRadioCheck.blockerForState(
+                adapterPresent = false,
+                state = null,
+                pausedByDiPlay = true,
+            ),
+        )
+    }
 }

@@ -6,7 +6,7 @@ android {
     compileSdk = 37
 
     defaultConfig {
-        minSdk = 25
+        minSdk = 24
         consumerProguardFiles 'ambient-consumer-rules.pro'
         targetSdk = 37
 
@@ -16,7 +16,7 @@ android {
 
         externalNativeBuild {
             ndkBuild {
-                arguments 'APP_PLATFORM=android-25'
+                arguments 'APP_PLATFORM=android-24'
             }
         }
 

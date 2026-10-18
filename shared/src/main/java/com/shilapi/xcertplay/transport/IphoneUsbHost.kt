@@ -101,6 +101,13 @@ class IphoneUsbHost(
     fun discover(): List<UsbDevice> =
         usbManager.deviceList.values.filter { matcher.matches(it.vendorId, it.productId) }
 
+    /**
+     * Every USB device Android lists, as `vid:pid node` like [Ch341UsbHost.describe], sorted. When no iPhone is
+     * listed, this shows whether Android sees anything on the head unit's port at all.
+     */
+    fun listedDevices(): List<String> =
+        usbManager.deviceList.values.map(Ch341UsbHost::describe).sorted()
+
     @Throws(IphoneUsbException::class)
     fun requestPermission(device: UsbDevice, allowAdbFallback: Boolean = true): PermissionRequest {
         requireConfiguredDevice(device)

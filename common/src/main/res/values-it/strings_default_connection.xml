@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="default_connection_mode">Modalità di connessione predefinita</string>
+    <string name="default_connection_last_used">Ultima usata</string>
+    <string name="default_connection_wireless">Wireless</string>
+    <string name="default_connection_usb">USB</string>
+    <string name="default_connection_description">All’apertura di DiPlay usa la modalità di connessione predefinita e l’iPhone selezionato. I pulsanti di connessione manuale usano la modalità che scegli.</string>
+</resources>

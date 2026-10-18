@@ -6,6 +6,7 @@ import android.media.AudioManager
 import android.os.Looper
 import android.view.KeyEvent
 import android.widget.Button
+import com.shilapi.xcertplay.airplay.CarPlayMediaButton
 import com.shilapi.xcertplay.hud.BydOutputSettings
 import com.shilapi.xcertplay.hud.BydCarPlayCall
 import com.shilapi.xcertplay.hud.CarPlayCallState
@@ -231,6 +232,25 @@ class WheelKeyServiceTest {
         assertEquals(false to false, press(327))
     }
 
+    @Test fun anAssignedBydVoiceKeyStillUsesVoiceKeyPairWhenDoublePressIsOff() {
+        val code = CarPlayMediaButton.KEYCODE_BYD_CARPLAY_VOICE
+        service.session = { "active-phone" }
+        BydOutputSettings.setCarPlayCallControls(service, true)
+        WheelZoomSettings.setSiriKey(service, true)
+        WheelZoomSettings.assign(service, WheelZoomSettings.Role.SIRI, WheelKey(code, 0, "?"))
+        WheelZoomSettings.setSiriDoublePress(service, false)
+        val controller = mock(CarPlayController::class.java)
+        `when`(controller.requestSiri()).thenReturn(true)
+        CarPlayBackgroundSession.store(controller, mock(AndroidMediaSink::class.java), 1, 1,
+            this, mock(CarPlaySessionDisplay::class.java)) { it() }
+
+        assertTrue(key(code, true, time = 10_000))
+        assertTrue(key(code, false, time = 10_000))
+
+        verify(controller, times(1)).requestSiri()
+        assertFalse(VoiceKeyPair.shared.allowGenericKey(10_460))
+    }
+
     @Test
     fun theAllowedListKeepsOtherServicesAndRebindsAListedButStoppedService() {
         val ours = "com.shihab.diplay/com.shilapi.xcertplay.WheelKeyService"
@@ -262,6 +282,114 @@ class WheelKeyServiceTest {
         assertTrue(key(KeyEvent.KEYCODE_F6, true, time = 2_000))
         assertTrue(key(KeyEvent.KEYCODE_F6, false, time = 2_000))
         assertEquals(2, siriRequests)
+    }
+
+    @Test fun doublePressModeLeavesBothPressesToTheVehicleAndDelaysSiri() {
+        siriSetUp()
+        WheelZoomSettings.setSiriDoublePress(service, true)
+        WheelZoomSettings.setSiriDoublePressIntervalMillis(service, 600)
+        WheelZoomSettings.setSiriTriggerDelayMillis(service, 300)
+
+        assertFalse(key(KeyEvent.KEYCODE_F6, true, time = 1_000))
+        assertFalse(key(KeyEvent.KEYCODE_F6, false, time = 1_120))
+        assertEquals(0, siriRequests)
+        assertFalse(key(KeyEvent.KEYCODE_F6, true, time = 1_450))
+        // The delay starts only after the second release, so a held second press cannot open Siri.
+        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(300))
+        assertEquals(0, siriRequests)
+        assertFalse(key(KeyEvent.KEYCODE_F6, false, time = 1_560))
+        assertEquals(0, siriRequests)
+
+        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(299))
+        assertEquals(0, siriRequests)
+        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(1))
+        assertEquals(1, siriRequests)
+    }
+
+    @Test fun doublePressParametersHaveSafeDefaultsAndPersistAllowedValues() {
+        assertFalse(WheelZoomSettings.siriDoublePress(service))
+        assertEquals(600, WheelZoomSettings.siriDoublePressIntervalMillis(service))
+        assertEquals(300, WheelZoomSettings.siriTriggerDelayMillis(service))
+
+        WheelZoomSettings.setSiriDoublePress(service, true)
+        WheelZoomSettings.setSiriDoublePressIntervalMillis(service, 800)
+        WheelZoomSettings.setSiriTriggerDelayMillis(service, 500)
+
+        assertTrue(WheelZoomSettings.siriDoublePress(service))
+        assertEquals(800, WheelZoomSettings.siriDoublePressIntervalMillis(service))
+        assertEquals(500, WheelZoomSettings.siriTriggerDelayMillis(service))
+        val report = WheelKeyService.report(service)
+        assertTrue(report, report.contains("siriDoublePress=true"))
+        assertTrue(report, report.contains("siriDoubleIntervalMs=800"))
+        assertTrue(report, report.contains("siriTriggerDelayMs=500"))
+    }
+
+    @Test fun delayedDoublePressNeverCarriesIntoAnotherCarPlaySession() {
+        siriSetUp()
+        WheelZoomSettings.setSiriDoublePress(service, true)
+        WheelZoomSettings.setSiriTriggerDelayMillis(service, 300)
+        key(KeyEvent.KEYCODE_F6, true, time = 1_000)
+        key(KeyEvent.KEYCODE_F6, false, time = 1_120)
+        key(KeyEvent.KEYCODE_F6, true, time = 1_400)
+        key(KeyEvent.KEYCODE_F6, false, time = 1_520)
+        phone = "phone-two"
+
+        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(300))
+
+        assertEquals(0, siriRequests)
+    }
+
+    @Test fun aLostOrVeryLateSecondReleaseCannotTriggerAFutureSinglePress() {
+        siriSetUp()
+        WheelZoomSettings.setSiriDoublePress(service, true)
+        WheelZoomSettings.setSiriTriggerDelayMillis(service, 0)
+        key(KeyEvent.KEYCODE_F6, true, time = 1_000)
+        key(KeyEvent.KEYCODE_F6, false, time = 1_100)
+        key(KeyEvent.KEYCODE_F6, true, time = 1_400) // confirmed second press; its release is lost
+
+        key(KeyEvent.KEYCODE_F6, true, time = 3_000) // replaces the stale pending press
+        key(KeyEvent.KEYCODE_F6, false, time = 3_100)
+        shadowOf(Looper.getMainLooper()).idle()
+        assertEquals(0, siriRequests)
+
+        key(KeyEvent.KEYCODE_F6, true, time = 4_000)
+        key(KeyEvent.KEYCODE_F6, false, time = 4_100)
+        key(KeyEvent.KEYCODE_F6, true, time = 4_400)
+        key(KeyEvent.KEYCODE_F6, false, time = 6_001) // longer than the second-press release guard
+        shadowOf(Looper.getMainLooper()).idle()
+        assertEquals(0, siriRequests)
+    }
+
+    @Test fun carAssistantCommunicationModeAfterTheFirstPressDoesNotBreakThePair() {
+        siriSetUp()
+        WheelZoomSettings.setSiriDoublePress(service, true)
+        WheelZoomSettings.setSiriTriggerDelayMillis(service, 300)
+        key(KeyEvent.KEYCODE_F6, true, time = 1_000)
+        key(KeyEvent.KEYCODE_F6, false, time = 1_100)
+        service.getSystemService(AudioManager::class.java).mode = AudioManager.MODE_IN_COMMUNICATION
+        key(KeyEvent.KEYCODE_F6, true, time = 1_400)
+        key(KeyEvent.KEYCODE_F6, false, time = 1_500)
+        service.getSystemService(AudioManager::class.java).mode = AudioManager.MODE_NORMAL
+
+        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(300))
+
+        assertEquals(1, siriRequests)
+    }
+
+    @Test fun aPairStartedDuringACallCannotOpenSiriAfterTheCallEnds() {
+        siriSetUp()
+        WheelZoomSettings.setSiriDoublePress(service, true)
+        WheelZoomSettings.setSiriTriggerDelayMillis(service, 300)
+        service.getSystemService(AudioManager::class.java).mode = AudioManager.MODE_IN_CALL
+        key(KeyEvent.KEYCODE_F6, true, time = 1_000)
+        key(KeyEvent.KEYCODE_F6, false, time = 1_100)
+        key(KeyEvent.KEYCODE_F6, true, time = 1_400)
+        key(KeyEvent.KEYCODE_F6, false, time = 1_500)
+        service.getSystemService(AudioManager::class.java).mode = AudioManager.MODE_NORMAL
+
+        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(300))
+
+        assertEquals(0, siriRequests)
     }
 
     @Test fun siriKeyKeepsTheCarsActionWithoutCarPlayInACallOrWhenOff() {
@@ -332,6 +460,87 @@ class WheelKeyServiceTest {
         assertEquals(WheelZoomSettings.Role.MODE, WheelZoomSettings.conflict(service, WheelZoomSettings.Role.SIRI, mode))
         WheelZoomSettings.setEnabled(service, false)
         assertNull(WheelZoomSettings.conflict(service, WheelZoomSettings.Role.SIRI, mode))
+    }
+
+    @Test fun mediaPlayPauseKeyIsOffByDefaultAndWorksWithOnlyItsOwnSettingEnabled() {
+        assertFalse(WheelZoomSettings.mediaPlayPause(service))
+        WheelZoomSettings.setEnabled(service, false)
+        WheelZoomSettings.setSiriKey(service, false)
+        WheelZoomSettings.setMediaPlayPause(service, true)
+        assertTrue(WheelZoomSettings.anyEnabled(service))
+        val selected = WheelKey(KeyEvent.KEYCODE_F9, 0, "?")
+        WheelZoomSettings.assign(service, WheelZoomSettings.Role.MEDIA_PLAY_PAUSE, selected)
+        service.session = { "live-iphone" }
+        val actions = mutableListOf<Int>()
+        service.sendMedia = { index -> actions += index; true }
+
+        assertTrue(key(KeyEvent.KEYCODE_F9, true))
+        assertTrue(key(KeyEvent.KEYCODE_F9, true, repeat = 1))
+        assertTrue(key(KeyEvent.KEYCODE_F9, false))
+        assertEquals(listOf(com.shilapi.xcertplay.airplay.CarPlayMediaButton.PLAY_PAUSE), actions)
+        assertEquals(1, actions.size)
+        assertEquals(false to false, press(KeyEvent.KEYCODE_F8))
+        assertEquals(1, actions.size)
+    }
+
+    @Test fun remappedMediaKeyPreservesVehicleBehaviorDuringCallsWithoutPhoneOrWhenDisabled() {
+        WheelZoomSettings.setEnabled(service, false)
+        WheelZoomSettings.setMediaPlayPause(service, true)
+        WheelZoomSettings.assign(service, WheelZoomSettings.Role.MEDIA_PLAY_PAUSE,
+            WheelKey(KeyEvent.KEYCODE_F9, 0, "?"))
+        var count = 0
+        service.sendMedia = { count++; true }
+        service.session = { null }
+        assertEquals(false to false, press(KeyEvent.KEYCODE_F9))
+        service.session = { "iphone" }
+        service.getSystemService(AudioManager::class.java).mode = AudioManager.MODE_IN_CALL
+        assertEquals(false to false, press(KeyEvent.KEYCODE_F9))
+        service.getSystemService(AudioManager::class.java).mode = AudioManager.MODE_NORMAL
+        assertTrue(key(KeyEvent.KEYCODE_F9, true))
+        WheelZoomSettings.setMediaPlayPause(service, false)
+        assertTrue(key(KeyEvent.KEYCODE_F9, false))
+        assertEquals(false to false, press(KeyEvent.KEYCODE_F9))
+        assertEquals(1, count)
+    }
+
+    @Test fun learningPlayPauseRejectsExistingSiriAndZoomKeys() {
+        WheelZoomSettings.setMediaPlayPause(service, true)
+        WheelZoomSettings.setSiriKey(service, true)
+        val siri = WheelKey(KeyEvent.KEYCODE_F6, 0, "?")
+        WheelZoomSettings.assign(service, WheelZoomSettings.Role.SIRI, siri)
+        var refused: WheelZoomSettings.Role? = null
+        assertTrue(WheelKeyService.learn(WheelZoomSettings.Role.MEDIA_PLAY_PAUSE,
+            refused = { refused = it }) { _, _ -> learned++ })
+        assertEquals(true to true, press(KeyEvent.KEYCODE_F6))
+        assertEquals(WheelZoomSettings.Role.SIRI, refused)
+        assertEquals(0, learned)
+        assertNull(WheelZoomSettings.key(service, WheelZoomSettings.Role.MEDIA_PLAY_PAUSE))
+        assertTrue(WheelKeyService.learn(WheelZoomSettings.Role.MEDIA_PLAY_PAUSE,
+            refused = { refused = it }) { _, _ -> learned++ })
+        assertEquals(true to true, press(KeyEvent.KEYCODE_F1))
+        assertEquals(WheelZoomSettings.Role.MODE, refused)
+        assertEquals(0, learned)
+        // An unused key can be learnt with no other wheel features configured.
+        WheelZoomSettings.setSiriKey(service, false)
+        WheelZoomSettings.setEnabled(service, false)
+        assertTrue(WheelKeyService.learn(WheelZoomSettings.Role.MEDIA_PLAY_PAUSE) { _, _ -> learned++ })
+        assertEquals(true to true, press(KeyEvent.KEYCODE_F9))
+        assertEquals(1, learned)
+        assertEquals(KeyEvent.KEYCODE_F9, WheelZoomSettings.key(service,
+            WheelZoomSettings.Role.MEDIA_PLAY_PAUSE)?.code)
+    }
+
+    @Test fun remoteNavigationKeyCannotBeLearnedForMediaAndRemainsAvailableToTv() {
+        WheelZoomSettings.setEnabled(service, false)
+        WheelZoomSettings.setMediaPlayPause(service, true)
+        var learned = 0
+        assertTrue(WheelKeyService.learn(WheelZoomSettings.Role.MEDIA_PLAY_PAUSE) { _, _ -> learned++ })
+        assertEquals(true to true, press(KeyEvent.KEYCODE_DPAD_CENTER))
+        assertEquals(0, learned)
+        assertNull(WheelZoomSettings.key(service, WheelZoomSettings.Role.MEDIA_PLAY_PAUSE))
+        assertTrue(WheelKeyService.isLearning())
+        assertEquals(true to true, press(KeyEvent.KEYCODE_F9))
+        assertEquals(1, learned)
     }
 
     @Test fun theSiriKeyWinsOverAnotherRoleWithTheSameKey() {

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="settings_hide_byd_call_popup">Скрывать окно звонка BYD (экспериментально)</string>
-    <string name="settings_hide_byd_call_popup_description">Только BYD с Android 12L. Требуется авторизованный локальный ADB. Скрывает штатное окно звонка, пока подключённый CarPlay на переднем плане; восстанавливает его в фоне. Не меняет звук Bluetooth и не скрывает полноэкранное приложение телефона.</string>
+    <string name="settings_hide_byd_call_popup_description">Только BYD с Android 10 или новее. Требуется авторизованный локальный ADB. Скрывает штатное окно звонка, пока подключённый CarPlay на переднем плане; восстанавливает его в фоне. Не меняет звук Bluetooth и не скрывает полноэкранное приложение телефона.</string>
 </resources>

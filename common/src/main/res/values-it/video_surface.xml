@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="picture_surface_output_unavailable">Le regolazioni dell’immagine non sono disponibili con l’uscita video compatibile di questo schermo. Le regolazioni salvate verranno mantenute.</string>
+</resources>

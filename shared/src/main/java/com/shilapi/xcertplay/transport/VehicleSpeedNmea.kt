@@ -53,8 +53,18 @@ object PascdEncoder {
 class VehicleSpeedLocationProvider(
     private val position: Iap2LocationProvider,
     private val speed: VehicleSpeedSource,
+    private val log: (String) -> Unit = {},
+    private val nowMillis: () -> Long = { System.nanoTime() / 1_000_000L },
 ) : Iap2LocationProvider {
     @Volatile private var speedRequested = false
+    // A minute of what reached the iPhone. In a tunnel the speed went after about two minutes (#807), and
+    // the report could not say whether the car's position or its wheel speed had stopped.
+    private var windowStart = -1L
+    private var updates = 0
+    private var withFix = 0
+    private var withSpeed = 0
+    private var speedSamples = 0
+    private var lastKmh: Double? = null
 
     override fun onRequested(components: Set<Int>) {
         speedRequested = Iap2LocationMessages.VEHICLE_SPEED_DATA in components
@@ -74,7 +84,35 @@ class VehicleSpeedLocationProvider(
 
     override fun latestNmea(): String? {
         val fix = position.latestNmea()
-        val pascd = if (speedRequested) speed.drain()?.let(PascdEncoder::encode) else null
+        val reading = if (speedRequested) speed.drain() else null
+        val pascd = reading?.let(PascdEncoder::encode)
+        record(fix != null, reading)
         return if (fix == null) pascd else fix + pascd.orEmpty()
+    }
+
+    private fun record(hasFix: Boolean, reading: VehicleSpeedReading?) {
+        val now = nowMillis()
+        if (windowStart < 0) windowStart = now
+        updates++
+        if (hasFix) withFix++
+        if (!reading?.samples.isNullOrEmpty()) {
+            withSpeed++
+            speedSamples += reading!!.samples.size
+            lastKmh = reading.samples.last().metersPerSecond * 3.6
+        }
+        if (now - windowStart < SUMMARY_MILLIS) return
+        log("Location: last ${(now - windowStart) / 1000} s updates=$updates withPosition=$withFix " +
+            "withWheelSpeed=$withSpeed wheelSpeedSamples=$speedSamples " +
+            "lastWheelSpeed=${lastKmh?.let { String.format(Locale.US, "%.1f", it) + " km/h" } ?: "none"} " +
+            "speedRequested=$speedRequested")
+        windowStart = now
+        updates = 0
+        withFix = 0
+        withSpeed = 0
+        speedSamples = 0
+    }
+
+    internal companion object {
+        const val SUMMARY_MILLIS = 60_000L
     }
 }

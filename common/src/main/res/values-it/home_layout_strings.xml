@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_force_full_settings">Forza il layout completo delle Impostazioni</string>
+    <string name="settings_force_full_settings_hint">Usa il layout completo delle Impostazioni con una barra laterale delle categorie in orizzontale e il layout automatico in verticale. Non modifica la schermata Home né CarPlay.</string>
+</resources>

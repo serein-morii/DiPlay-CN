@@ -1754,15 +1754,16 @@ private class AudioRenderer(
     private val navigationPlaybackToken = NavigationPlayback.open()
     private var actualLegacyStreamType: Int? = null
     private val queue = LinkedBlockingQueue<AudioPacket>(MAX_QUEUED_PACKETS)
+    /** Music with sustained decoder backpressure must not keep playing minutes-old packets. */
+    private val mediaLagGuard = if (format.audioType == "media") MediaPacketLagGuard(format.rtpClockRate) else null
+    @Volatile private var newestRtpSample = 0
+    private var lagRecoveryReports = 0
     @Volatile private var running = true
     @Volatile private var started = false
     private var codec: MediaCodec? = null
     private var track: AudioTrack? = null
     @Volatile private var navigationAttenuationDb = 0
     private var appliedNavigationAttenuationDb: Int? = null
-    private var lastNavigationGainAttemptDb: Int? = null
-    private var lastNavigationGainFailureNs = 0L
-    private var reportedNavigationGainFailureDb: Int? = null
     private var pcm = ByteArray(64 * 1024)
     private var playbackStarted = false
     private var prebufferBytes = 0
@@ -1787,6 +1788,7 @@ private class AudioRenderer(
     private val ambientMedia = AmbientMusicActivityPolicy.acceptsAudio(format.audioType, format.payloadType)
     private val ambientEnvelope = AmbientMusicEnvelope()
     private val ambientBass = AmbientMusicBassAnalyzer(format.sampleRate, pcmChannels)
+    private val ambientBands = AmbientMusicBandAnalyzer(format.sampleRate, pcmChannels)
     private var ambientRendererToken = 0L
     private var writtenFramesThisWindow = 0L
     private var writeErrorsThisWindow = 0
@@ -1826,6 +1828,18 @@ private class AudioRenderer(
             val now = System.nanoTime()
             val previous = lastArrivalNs.getAndSet(now)
             if (previous != 0L) maxArrivalGapMs.accumulateAndGet((now - previous) / 1_000_000L, ::maxOf)
+            newestRtpSample = sample
+            // Hold short Wi-Fi bursts intact. If compressed audio remains >1.5s behind for
+            // another 1.5s, skip only stale undecoded packets to catch up to the live song.
+            val removed = mediaLagGuard?.recover(queue, sample, AudioPacket::sample, now) ?: 0
+            if (removed > 0) {
+                packetsDropped.addAndGet(removed)
+                if (lagRecoveryReports < MAX_REBUFFER_REPORTS) {
+                    lagRecoveryReports++
+                    report("Audio: stale media packet backlog recovered audioType=${format.audioType} " +
+                        "packetsDiscarded=$removed remaining=${queue.size}")
+                }
+            }
         }
         if (!started || !queue.offer(AudioPacket(rtp, sample))) {
             if (started) packetsDropped.incrementAndGet()
@@ -1863,8 +1877,7 @@ private class AudioRenderer(
             diagnosticStage = "focus"
             requestAudioFocus()
             while (running) {
-                // Apply pending Settings changes on this worker, never on the UI thread.
-                // Also handles quiet navigation tracks with no incoming PCM.
+                // Report Settings changes from this worker, never from the UI thread, also between prompts.
                 applyNavigationAttenuation()
                 diagnosticStage = "packet"
                 queue.poll(AUDIO_POLL_MILLIS, TimeUnit.MILLISECONDS)?.let(::handle)
@@ -2059,33 +2072,25 @@ private class AudioRenderer(
         navigationAttenuationDb = NavigationAudioGain.clamp(db)
     }
 
-    /** Worker-thread only: never call AudioTrack APIs from a Settings callback. */
+    /**
+     * Worker-thread only. The guidance is scaled in [attenuateNavigation] as it is written, not with
+     * AudioTrack.setVolume: on a BYD DiLink 3.0 the track accepted every setVolume and the guidance on
+     * stream 14 stayed as loud (#719). Each change is reported once, when it reaches this stream.
+     */
     private fun applyNavigationAttenuation() {
         if (mappedChannel != AudioChannel.NAVIGATION) return
-        val playingTrack = track ?: return
         val requestedDb = navigationAttenuationDb
         // Leave default playback exactly as it was before this setting existed.
         if (requestedDb == 0 && appliedNavigationAttenuationDb == null) return
         if (appliedNavigationAttenuationDb == requestedDb) return
-        // Some head units reject setVolume for an entire stream. Avoid retrying on every
-        // 10 ms poll/PCM write and flooding diagnostics, but recover from transient failures.
-        if (lastNavigationGainAttemptDb == requestedDb && lastNavigationGainFailureNs != 0L &&
-            System.nanoTime() - lastNavigationGainFailureNs < NAVIGATION_GAIN_RETRY_NS) return
-        val gain = NavigationAudioGain.linear(requestedDb)
-        val success = runCatching { playingTrack.setVolume(gain) == AudioTrack.SUCCESS }.getOrDefault(false)
-        lastNavigationGainAttemptDb = requestedDb
-        if (success) {
-            appliedNavigationAttenuationDb = requestedDb
-            lastNavigationGainFailureNs = 0L
-            reportedNavigationGainFailureDb = null
-            runCatching { report("Audio: navigation attenuation=" + requestedDb + "dB applied=true") }
-        } else {
-            lastNavigationGainFailureNs = System.nanoTime()
-            if (reportedNavigationGainFailureDb != requestedDb) {
-                reportedNavigationGainFailureDb = requestedDb
-                runCatching { report("Audio: navigation attenuation=" + requestedDb + "dB applied=false") }
-            }
-        }
+        appliedNavigationAttenuationDb = requestedDb
+        runCatching { report("Audio: navigation attenuation=" + requestedDb + "dB applied=true") }
+    }
+
+    /** Lowers navigation guidance in the PCM itself; other channels and 0 dB pass through untouched. */
+    private fun attenuateNavigation(data: ByteArray, offset: Int, length: Int) {
+        if (mappedChannel != AudioChannel.NAVIGATION) return
+        NavigationAudioGain.scalePcm16(data, offset, length, navigationAttenuationDb)
     }
 
     private fun audioAttributesFor(
@@ -2378,14 +2383,14 @@ private class AudioRenderer(
             )
         }
         voiceFilter?.process(data, offset, length)
+        applyNavigationAttenuation()
+        attenuateNavigation(data, offset, length)
         if (!fadeApplied) {
             applyFadeIn(data, offset, length)
             fadeApplied = true
         }
         var written = 0
         while (written < length && running) {
-            // Long-running PCM writes may span several slider adjustments.
-            applyNavigationAttenuation()
             val writeLength = if (playbackStarted) {
                 length - written
             } else {
@@ -2409,7 +2414,8 @@ private class AudioRenderer(
             if (ambientMedia && AmbientMusicController.wantsPcm(ambientRendererToken)) {
                 ambientEnvelope.append(totalWrittenFrames, framesWritten.toLong(),
                     AmbientMusicEnvelope.pcmRms(data, offset + written, count),
-                    ambientBass.rms(data, offset + written, count))
+                    ambientBass.rms(data, offset + written, count),
+                    if (AmbientMusicController.wantsBands(ambientRendererToken)) ambientBands.analyze(data, offset + written, count) else null)
             }
             written += count
             totalWrittenFrames += framesWritten
@@ -2467,7 +2473,12 @@ private class AudioRenderer(
     private fun trimClock(track: AudioTrack) {
         val trim = clockTrim ?: return
         val now = System.nanoTime()
-        trim.sample(bufferProgress.queuedBytes(track.playbackHeadPosition) / frameBytes, now)
+        val compressedRtpFrames = mediaLagGuard?.pendingFrames(queue, newestRtpSample, AudioPacket::sample)
+            ?: 0L
+        val compressedPcmFrames = compressedRtpFrames * format.sampleRate /
+            format.rtpClockRate.coerceAtLeast(1)
+        trim.sample(bufferProgress.queuedBytes(track.playbackHeadPosition) / frameBytes,
+            now, compressedPcmFrames)
         val rate = trim.rateDue(now) ?: return
         val result = runCatching { track.setPlaybackRate(rate) }.getOrDefault(AudioTrack.ERROR)
         if (result != AudioTrack.SUCCESS) {
@@ -2641,7 +2652,6 @@ private class AudioRenderer(
         const val INPUT_TIMEOUT_US = 10_000L
         const val AUDIO_INPUT_WAIT_NS = 100_000_000L
         const val AUDIO_POLL_MILLIS = 10L
-        const val NAVIGATION_GAIN_RETRY_NS = 500_000_000L
         const val BUFFER_TAIL_WAIT_NS = 500_000_000L
         // Holds a burst after a Wi-Fi gap (~4 s of AAC) instead of dropping it.
         const val MAX_QUEUED_PACKETS = 192

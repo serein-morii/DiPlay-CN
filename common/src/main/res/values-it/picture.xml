@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="picture_adjustments">Regolazioni immagine</string>
+    <string name="picture_live_hint">In tempo reale sul video principale di CarPlay. Le modifiche vengono salvate immediatamente. L’originale è un confronto temporaneo.</string>
+    <string name="picture_show_original">Mostra originale</string>
+    <string name="picture_done">Fine</string>
+    <string name="picture_brightness">Luminosità</string>
+    <string name="picture_contrast">Contrasto</string>
+    <string name="picture_saturation">Saturazione</string>
+    <string name="picture_warmth">Calore</string>
+    <string name="picture_reset">Reimposta immagine</string>
+</resources>

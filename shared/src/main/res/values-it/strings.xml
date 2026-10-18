@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="carapp_hw_status_title">Stato dell’hardware di xcertplay</string>
+    <string name="carapp_hw_not_configured">Il trasporto hardware non è configurato. L’I2C della scheda richiede un percorso /dev/i2c-N e i permessi OS/SELinux; CH341 richiede una configurazione VID/PID distribuita.</string>
+</resources>

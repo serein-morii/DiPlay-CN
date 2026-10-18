@@ -63,6 +63,8 @@ class CarPlayRuntimeConfig(
     val manualHotspotBand: ManualHotspotBand = ManualHotspotBand.AUTO,
     val manualHotspotChannel: Int = 0,
     val manualHotspotSecurity: ManualHotspotSecurity = ManualHotspotSecurity.WPA2,
+    /** Interface override for head units that keep their hotspot off the Wi-Fi tether list (#573). */
+    val manualHotspotInterface: String? = null,
     val wirelessBluetoothDeviceAddress: String? = null,
     val locationReportingEnabled: Boolean = false,
     val wifiP2pPreferredChannel: Int = WifiP2pChannels.AUTO,

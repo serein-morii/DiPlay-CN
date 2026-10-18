@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="ambient_delay_title">Ritardo di transizione</string>
+    <string name="ambient_delay_hint">Inserisci un valore da 0 a 60 secondi. Con 0 il cambio è immediato.</string>
+    <string name="custom_number_error">Inserisci un numero intero da %1$d a %2$d.</string>
+    <string name="ambient_delay_summary">%1$d s</string>
+</resources>

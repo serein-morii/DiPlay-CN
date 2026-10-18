@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="contrib_audio_home_channel_preview_unavailable">Impossibile ascoltare in anteprima lo stream audio Android %1$d su questo dispositivo.</string>
+    <string name="contrib_audio_home_choice_summary">%1$s · %2$s</string>
+    <string name="contrib_audio_home_media_channel_label">Stream audio multimediale</string>
+    <string name="contrib_audio_home_nav_channel_label">Stream audio di navigazione</string>
+    <string name="contrib_audio_home_nav_channel_note">0 = instradamento automatico. I valori da 1 a 20 selezionano gli ID legacy degli stream audio, inclusi gli output specifici del produttore, se supportati dalla head unit. Tocca un valore per ascoltarne l’anteprima. Le modifiche si applicano alla riconnessione.</string>
+    <string name="contrib_audio_home_toggle_audio_focus">Focus audio</string>
+    <string name="contrib_audio_home_toggle_audio_focus_desc">I contenuti multimediali di CarPlay acquisiscono il focus audio. Se l’audio scompare quando è attivo (alcune head unit gestiscono male il focus), disattivalo. Le modifiche si applicano alla riconnessione.</string>
+    <string name="audio_focus_auto_yield">Silenzia i contenuti multimediali quando il focus audio viene perso temporaneamente</string>
+    <string name="audio_focus_auto_yield_desc">Quando il focus audio è attivo, silenzia i contenuti multimediali durante le interruzioni audio di Android, incluse le chiamate. Ripristina l’audio quando il focus torna disponibile. Disattiva questa opzione se la head unit non restituisce il focus. Le modifiche si applicano alla riconnessione.</string>
+</resources>

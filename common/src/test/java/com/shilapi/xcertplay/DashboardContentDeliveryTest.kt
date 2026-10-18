@@ -41,6 +41,11 @@ class DashboardContentDeliveryTest {
                 if (setup) setup(it)
             }
         fun activate(phone: AirPlaySession) = set(controller, "activeSession", phone)
+        fun cornerMask(phone: AirPlaySession, png: ByteArray, width: Int = 800) {
+            val listener = controller.javaClass.getDeclaredField("sessionListener").apply { isAccessible = true }
+                .get(controller) as AirPlaySessionListener
+            listener.onCornerMask(phone, png, width)
+        }
         fun record(phone: AirPlaySession) {
             val listener = controller.javaClass.getDeclaredField("sessionListener").apply { isAccessible = true }
                 .get(controller) as AirPlaySessionListener
@@ -106,6 +111,28 @@ class DashboardContentDeliveryTest {
             val withoutCluster = Completion()
             f.controller.showDashboardContent(CarPlayClusterDisplay.MAP_URL, withoutCluster::accept)
             assertFalse(withoutCluster.await())
+        }
+    }
+
+    @Test fun iPhoneMaskIsAvailableForActivityReattachmentOnlyFromActiveSession() {
+        Fixture().use { f ->
+            val phone = f.phone(setup = false)
+            val image = byteArrayOf(0x89.toByte(), 0x50, 0x4e)
+            f.cornerMask(phone, image)
+            assertNull(f.controller.activeIphoneCornerMask())
+            f.activate(phone)
+            val retained = f.controller.activeIphoneCornerMask()!!
+            assertSame(phone, retained.first)
+            assertEquals(800, retained.third)
+            assertArrayEquals(image, retained.second)
+            retained.second[0] = 0
+            assertArrayEquals(image, f.controller.activeIphoneCornerMask()!!.second)
+            // A concurrent handshake must not overwrite the live phone's corner mask.
+            val probe = f.phone(setup = false)
+            f.cornerMask(probe, byteArrayOf(1, 2, 3))
+            assertSame(phone, f.controller.activeIphoneCornerMask()!!.first)
+            f.activate(probe)
+            assertNull(f.controller.activeIphoneCornerMask())
         }
     }
 

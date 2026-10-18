@@ -2,6 +2,8 @@ package com.shilapi.xcertplay
 
 import android.Manifest
 import android.os.Build
+import androidx.annotation.StringRes
+import com.shilapi.xcertplay.host.R
 import com.shilapi.xcertplay.orchestration.WirelessHotspotMode
 
 /**
@@ -33,5 +35,19 @@ internal object WirelessPermissions {
         } else {
             permissions
         }
+    }
+
+    /**
+     * What the CarPlay screen asks for once the wireless start permissions were refused (#290): Location,
+     * or Nearby devices for Bluetooth and Nearby Wi-Fi devices. Anything else, such as Android 17's local
+     * network access, is not under Nearby devices, so the screen only says to check the app permissions.
+     */
+    @StringRes
+    fun refusalMessage(missing: Collection<String>): Int = when {
+        Manifest.permission.ACCESS_FINE_LOCATION in missing || Manifest.permission.ACCESS_COARSE_LOCATION in missing ->
+            R.string.allow_precise_location_for_diplay_in_the_head_unit_s_app_p
+        Manifest.permission.BLUETOOTH_CONNECT in missing || Manifest.permission.NEARBY_WIFI_DEVICES in missing ->
+            R.string.allow_nearby_devices_for_diplay_in_the_head_unit_s_app_per
+        else -> R.string.could_not_start_carplay_return_to_diplay_and_check_app_per
     }
 }

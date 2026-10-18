@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="platform21_cluster_mode">Funzione quadro strumenti piattaforma 21 (sperimentale)</string>
+    <string name="platform21_cluster_description">Adattamento per il controller 21 del Tang DM-i 2023. Disattivato per impostazione predefinita. Usa solo lo schermo di proiezione verificato, mantiene la mappa centrata a metà larghezza e non modifica le modalità del quadro strumenti originale né disattiva la mappa originale. Richiede l’autorizzazione ADB locale già concessa. Applicare questa impostazione riconnette CarPlay. Questa integrazione upstream deve ancora essere provata con l’auto ferma.</string>
+</resources>

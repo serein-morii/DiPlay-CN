@@ -1,6 +1,6 @@
 # Connection reliability validation
 
-Android 7.1 / API 25 is the installation minimum. A head unit's firmware, USB driver,
+Android 7.0 / API 24 is the installation minimum. A head unit's firmware, USB driver,
 Bluetooth service, Wi-Fi implementation and video compositor also determine whether
 a CarPlay session can run. Record the actual firmware and failed connection stage;
 the Android version or vehicle model alone is not a compatibility verdict.

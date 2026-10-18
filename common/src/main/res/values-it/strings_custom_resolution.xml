@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="custom_resolution_hint">Inserisci una percentuale tra 30 e 160. Applica per riconnettere CarPlay.</string>
+    <string name="resolution_number_error">Inserisci un numero intero da %1$d a %2$d.</string>
+    <string name="custom_resolution_summary">%1$d%%</string>
+    <string name="resolution_reset_defaults">Ripristina predefinito</string>
+    <string name="resolution_canvas_unsupported" formatted="false">Questa head unit non può decodificare la risoluzione ingrandita. Viene usato il 100%.</string>
+</resources>

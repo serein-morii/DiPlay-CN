@@ -42,7 +42,7 @@ Exception: a gated control that only its own audience sees, and that completes a
 Example: auto car hotspot needs ADB but appears only for car-hotspot users, so it is in Connection.
 
 Mark an experimental setting or card with the title suffix ` (experimental)`, never `· experimental`, a dash, or an `Experimental …` prefix.
-Each locale MUST use its existing form: `(تجريبي)`, `(experimental)`, `(экспериментально)`, `(експериментально)`, `（实验性）`, `（實驗性）`, `（実験的機能）`.
+Each locale MUST use its existing form: `(تجريبي)`, `(experimental)`, `(sperimentale)`, `(экспериментально)`, `(експериментально)`, `（实验性）`, `（實驗性）`, `（実験的機能）`.
 
 ### Add the code
 

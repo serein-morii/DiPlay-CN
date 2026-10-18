@@ -1,5 +1,6 @@
 package com.shilapi.xcertplay.media
 
+import org.concentus.OpusApplication
 import org.concentus.OpusDecoder
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -27,6 +28,48 @@ class SoftwareOpusEncoderTest {
         }
         encoder.close()
         assertTrue(encoder.encode(toneFrame(0)).isEmpty())
+    }
+
+    // #865: a failed Concentus check is an AssertionError, which ended the microphone thread and DiPlay.
+    @Test
+    fun aFailedEncoderCheckCostsOneFrameAndTheNextStartsClean() {
+        val errors = mutableListOf<Throwable>()
+        var resets = 0
+        val encoder = SoftwareOpusEncoder(
+            bitrate = 48_000,
+            onError = { _, error -> errors += error },
+            create = {
+                object : org.concentus.OpusEncoder(SoftwareOpusEncoder.SAMPLE_RATE, SoftwareOpusEncoder.CHANNELS,
+                    OpusApplication.OPUS_APPLICATION_VOIP) {
+                    var frames = 0
+
+                    override fun encode(pcm: ByteArray, pcmOffset: Int, frameSize: Int, out: ByteArray,
+                        outOffset: Int, maxBytes: Int): Int {
+                        if (frames++ == 1) throw AssertionError()
+                        return super.encode(pcm, pcmOffset, frameSize, out, outOffset, maxBytes)
+                    }
+
+                    override fun resetState() {
+                        resets++
+                        super.resetState()
+                    }
+                }
+            },
+        )
+        val decoder = OpusDecoder(48_000, 1)
+        assertEquals(1, encoder.encode(toneFrame(0)).size)
+        val resetsBefore = resets
+
+        assertTrue(encoder.encode(toneFrame(1)).isEmpty())
+        assertTrue(errors.single() is AssertionError)
+        assertEquals(resetsBefore + 1, resets)
+        assertTrue(encoder.available)
+
+        repeat(5) { index ->
+            val packet = encoder.encode(toneFrame(index + 2)).single()
+            val pcm = ShortArray(SoftwareOpusEncoder.FRAME_SAMPLES)
+            assertEquals(SoftwareOpusEncoder.FRAME_SAMPLES, decoder.decode(packet, 0, packet.size, pcm, 0, pcm.size, false))
+        }
     }
 
     @Test

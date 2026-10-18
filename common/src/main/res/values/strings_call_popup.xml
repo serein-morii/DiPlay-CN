@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="settings_hide_byd_call_popup">Hide BYD call popup (experimental)</string>
-    <string name="settings_hide_byd_call_popup_description">Android 12L BYD only. Requires approved local ADB. Hides the native call popup while connected CarPlay is in the foreground; restores it in the background. Does not change Bluetooth audio or hide the full phone app.</string>
+    <string name="settings_hide_byd_call_popup_description">BYD head units running Android 10 or later only. Requires approved local ADB. Hides the native call popup while connected CarPlay is in the foreground; restores it in the background. Does not change Bluetooth audio or hide the full phone app.</string>
 </resources>

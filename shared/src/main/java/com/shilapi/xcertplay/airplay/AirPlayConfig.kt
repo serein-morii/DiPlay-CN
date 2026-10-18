@@ -36,6 +36,8 @@ data class AirPlayDisplayConfig(
      * the video stream to fill the entire display as right angles without requiring additional clipping.
      */
     val mainDisplayCornerMasks: Boolean? = null,
+    /** Separately opt into iOS's genuine corner-mask PNG stream (not the old square-corner mode). */
+    val useIphoneCornerMask: Boolean = false,
     /** When true, do not declare safeArea in viewAreas dictionary to avoid conflict with cornerMasks. */
     val mainDisplayDisableSafeArea: Boolean = (mainDisplayCornerMasks == true),
 )

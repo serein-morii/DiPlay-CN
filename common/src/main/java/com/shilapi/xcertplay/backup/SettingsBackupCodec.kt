@@ -31,7 +31,9 @@ object SettingsBackupCodec {
         "adb_cluster_activity_enabled", "center_map_overlay", "center_map_auto_hide",
         "center_map_follows_dashboard", "settings_gesture_fingers", "display_width_physical_mm",
         "display_physical_size_basis", "right_hand_drive", "hide_top_bar", "hide_bottom_bar",
+        "temporary_system_bars",
         "harman_fullscreen", "safe_area_draw_outside", "main_display_disable_safe_area",
+        "black_corner_radius_dp",
         "adapt_pip_resolution", "auto_start_on_boot", "bt_suspend_during_carplay", "hide_byd_call_popup",
         "bt_suspend_delay_seconds", "location_reporting_enabled", "external_controller", "usb_charging_current",
     )

@@ -61,6 +61,26 @@ class VehicleSpeedNmeaTest {
         assertTrue(provider.latestNmea()!!.startsWith("\$PASCD,"))
     }
 
+    // #807: in a tunnel the speed went after about two minutes, and the report could not say why.
+    @Test
+    fun summarisesWhatReachedTheIphoneOnceAMinute() {
+        var now = 1_000L
+        val logs = mutableListOf<String>()
+        val fixes = mutableListOf<String?>("\$GPGGA\r\n", "\$GPGGA\r\n", null, null)
+        val position = object : Iap2LocationProvider {
+            override fun start() = true
+            override fun stop() = Unit
+            override fun latestNmea() = fixes.removeAt(0)
+        }
+        val provider = VehicleSpeedLocationProvider(position, FakeSpeed(), logs::add, { now })
+        provider.onRequested(setOf(Iap2LocationMessages.VEHICLE_SPEED_DATA))
+        repeat(3) { provider.latestNmea(); now += 20_000L }
+        assertTrue(logs.isEmpty())
+        provider.latestNmea()
+        assertEquals(listOf("Location: last 60 s updates=4 withPosition=2 withWheelSpeed=4 wheelSpeedSamples=4 " +
+            "lastWheelSpeed=50.0 km/h speedRequested=true"), logs)
+    }
+
     @Test
     fun readsTheRequestedSentenceTypes() {
         val request = Iap2Messages.buildRaw(Iap2LocationMessages.START_LOCATION_INFORMATION) {

@@ -26,9 +26,28 @@ class CrashRecordTest {
         assertEquals("crash atEpochMs=1000 thread=main", lines[0])
         assertEquals("java.lang.RuntimeException: Unable to start activity", lines[1])
         assertEquals("  at com.shilapi.xcertplay.DiPlayActivity.onCreate0(DiPlayActivity.kt:0)", lines[2])
-        assertTrue(record.contains("  ... 8 more"))
+        assertTrue(record.contains("  at com.shilapi.xcertplay.DiPlayActivity.onCreate17(DiPlayActivity.kt:17)"))
+        assertTrue(record.contains("  ... 2 more"))
         assertTrue(record.contains("caused by java.lang.IllegalStateException: surface released at 192.168.1.20"))
         assertFalse(record.contains("second line"))
+    }
+
+    // #463: Android's startActivity frames filled the record and hid the DiPlay call that crashed.
+    @Test fun ourFramesBelowTheFirstOnesAreKept() {
+        val framework = Array(14) { StackTraceElement("android.app.Activity", "startActivity$it", "Activity.java", it) }
+        val ours = Array(9) { StackTraceElement("com.shilapi.xcertplay.DiPlayActivity", "open$it", "DiPlayActivity.kt", it) }
+        val crash = IllegalArgumentException("There is no running activity in rootTask")
+        crash.stackTrace = framework + ours + StackTraceElement("android.os.Looper", "loop", "Looper.java", 1)
+
+        val record = CrashRecord.format("main", crash, 0)
+
+        assertTrue(record.contains("  at android.app.Activity.startActivity11(Activity.java:11)"))
+        assertFalse(record.contains("startActivity12"))
+        assertTrue(record.contains("  ... DiPlay frames further down:"))
+        assertTrue(record.contains("  at com.shilapi.xcertplay.DiPlayActivity.open0(DiPlayActivity.kt:0)"))
+        assertTrue(record.contains("  at com.shilapi.xcertplay.DiPlayActivity.open5(DiPlayActivity.kt:5)"))
+        assertFalse(record.contains("open6"))
+        assertTrue(record.contains("  ... 6 more"))
     }
 
     @Test fun aCauseLoopEndsTheChain() {

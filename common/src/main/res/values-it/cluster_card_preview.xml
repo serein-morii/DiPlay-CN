@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="card_preview_title">Anteprima posizionamento scheda svolta</string>
+    <string name="card_preview_note">Posizione proporzionale sull’intero pannello del quadro strumenti. Il bordo effettivo della finestra piccola varia in base all’auto.</string>
+    <string name="card_preview_full">Schermo intero</string>
+    <string name="card_preview_small">Finestra piccola</string>
+</resources>

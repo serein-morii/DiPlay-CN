@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="hotspot_join_title">Collegamento automatico hotspot (sperimentale)</string>
+    <string name="hotspot_join_description">Riparazione facoltativa per firmware supportati con Android 13+ e un hotspot dell’auto solo a 5 GHz. La verifica prepara un backup privato per il ripristino senza modificare l’hotspot. Richiede ADB locale autorizzato su localhost:5555; l’associazione di debug wireless TLS non è supportata.</string>
+    <string name="hotspot_join_check">Verifica riparazione hotspot</string>
+    <string name="hotspot_join_apply">Aggiungi informazioni per il collegamento automatico</string>
+    <string name="hotspot_join_restore">Ripristina hotspot salvato</string>
+    <string name="hotspot_join_working">Verifica o aggiornamento in corso… L’annullamento potrebbe richiedere una nuova verifica per controllare l’esito.</string>
+    <string name="hotspot_join_confirm">Mentre sei parcheggiato, disconnetti CarPlay e per prima cosa spegni l’hotspot nelle impostazioni dell’auto. Questa azione modifica solo la configurazione salvata dell’hotspot e ne verifica la rilettura. Riaccendi tu stesso l’hotspot in seguito per aggiornare i suoi broadcast. I client esistenti si disconnetteranno quando lo spegni. Conserva il backup privato per il ripristino.</string>
+    <string name="hotspot_join_disconnect">Disconnetti CarPlay prima di modificare l’hotspot.</string>
+    <string name="hotspot_join_ready">Configurazione a 5 GHz supportata. Backup completo privato preparato; nessuna modifica all’hotspot ancora effettuata.</string>
+    <string name="hotspot_join_present">Le informazioni testate sono già presenti. Nessun duplicato aggiunto; DiPlay non ha la proprietà di ripristino di un elemento esistente.</string>
+    <string name="hotspot_join_applied">Configurazione salvata verificata. Accendi l’hotspot nelle impostazioni dell’auto per aggiornare i broadcast, quindi testa il collegamento automatico. Il successo del broadcast e di CarPlay richiede ancora un test sul dispositivo.</string>
+    <string name="hotspot_join_restored">Configurazione completa salvata ripristinata e verificata. Accendi l’hotspot nelle impostazioni dell’auto.</string>
+    <string name="hotspot_join_unsupported">API, firmware, banda non supportati o informazioni del produttore in conflitto. Nessuna riparazione applicata. Usa una configurazione supportata solo a 5 GHz; le altre bande non sono verificate.</string>
+    <string name="hotspot_join_off_required">L’hotspot deve essere confermato come spento. Disconnetti i client e spegnilo nelle impostazioni dell’auto, poi riprova. DiPlay non lo riavvierà automaticamente.</string>
+    <string name="hotspot_join_drift">La configurazione è cambiata dopo il backup. Nulla è stato sovrascritto. Verifica di nuovo; un backup di ripristino in sospeso viene mantenuto.</string>
+    <string name="hotspot_join_firmware_changed">Il firmware è cambiato. Il backup privato viene mantenuto ma non può essere ripristinato in sicurezza su questo firmware.</string>
+    <string name="hotspot_join_cancelled">Annullato prima della scrittura. Verifica di nuovo per ispezionare qualsiasi stato di ripristino mantenuto.</string>
+    <string name="hotspot_join_failed_restored">La riparazione è fallita o è stata annullata dopo la scrittura. Configurazione originale ripristinata e rilettura verificata.</string>
+    <string name="hotspot_join_busy">Un’altra operazione sull’hotspot è in corso. Attendi, poi verifica di nuovo.</string>
+    <string name="hotspot_join_adb_required">Richiede ADB locale semplice approvato su localhost:5555. Abilitalo e autorizzalo usando la configurazione supportata della tua auto. L’associazione di debug wireless TLS di Android da sola non funzionerà.</string>
+    <string name="hotspot_join_recovery">L’esito o la verifica del backup sono incerti. Spegni l’hotspot e verifica di nuovo prima di continuare. Viene mantenuto un backup privato esistente; il ripristino è consentito solo quando la configurazione corrisponde ancora.</string>
+</resources>

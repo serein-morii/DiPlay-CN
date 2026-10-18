@@ -33,9 +33,10 @@ class ManualHotspotManager(
     security: ManualHotspotSecurity,
     private val onDiagnostic: (String) -> Unit = {},
     private val isCancelled: () -> Boolean = { false },
+    preferredInterface: String? = null,
 ) : WirelessHotspotManager {
     private val appContext = context.applicationContext
-    private val interfaces = ManualHotspotInterfaces(appContext, onDiagnostic)
+    private val interfaces = ManualHotspotInterfaces(appContext, onDiagnostic, preferredInterface)
     private val waitLock = Object()
     private var confirmed: HotspotSelection? = null
     private var lastSampleLog = emptyList<String>()

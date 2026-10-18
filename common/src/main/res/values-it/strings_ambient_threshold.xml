@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="ambient_light_threshold_title">Soglia di luminosità</string>
+    <string name="ambient_light_threshold_summary">%1$d lux</string>
+    <string name="ambient_light_threshold_value">Soglia di commutazione (lux)</string>
+    <string name="ambient_light_threshold_hint">Al di sotto della soglia (lux) viene selezionata la modalità notte; alla soglia o al di sopra viene selezionata la modalità giorno. La lettura deve restare sul nuovo lato per il tempo di ritardo selezionato. Inserisci un numero intero da 1 a 200000.</string>
+    <string name="ambient_light_threshold_error">Inserisci un numero intero da 1 a 200000.</string>
+    <string name="ambient_light_reset_defaults">Ripristina il valore predefinito</string>
+</resources>

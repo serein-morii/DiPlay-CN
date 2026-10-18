@@ -18,6 +18,7 @@ internal object CrashRecord {
     private const val FILE = "logs/last-crash.txt"
     private const val MAX_CAUSES = 4
     private const val MAX_FRAMES = 12
+    private const val MAX_OWN_FRAMES = 6
     private const val MAX_MESSAGE = 120
     private var installed = false
 
@@ -45,10 +46,21 @@ internal object CrashRecord {
             appendLine((if (seen.size == 1) "" else "caused by ") + current.javaClass.name + (message?.let { ": $it" } ?: ""))
             val frames = current.stackTrace
             frames.take(MAX_FRAMES).forEach { appendLine("  at $it") }
-            if (frames.size > MAX_FRAMES) appendLine("  ... ${frames.size - MAX_FRAMES} more")
+            // A crash inside a framework call fills the first frames with Android's own; the DiYou card's
+            // startActivity crash (#463) lost the DiPlay code that called it. Keep the first few of ours.
+            val rest = frames.drop(MAX_FRAMES)
+            val own = rest.filter(::ownFrame).take(MAX_OWN_FRAMES)
+            if (own.isNotEmpty()) {
+                appendLine("  ... DiPlay frames further down:")
+                own.forEach { appendLine("  at $it") }
+            }
+            if (rest.size > own.size) appendLine("  ... ${rest.size - own.size} more")
             current = current.cause
         }
     }
+
+    private fun ownFrame(frame: StackTraceElement): Boolean =
+        frame.className.startsWith("com.shilapi.") || frame.className.startsWith("com.shihab.")
 
     fun report(context: Context): String {
         val file = File(context.filesDir, FILE)

@@ -23,6 +23,8 @@ class ConnectionFailureGuidanceTest {
             guide("unknown", reset = true, startup = WirelessStartupFailure.FIRST_TCP_TIMEOUT))
         assertEquals(R.string.connection_help_bluetooth_unusable,
             guide("usb permission denied", startup = WirelessStartupFailure.BLUETOOTH_UNUSABLE))
+        assertEquals(R.string.connection_help_wifi_direct_beside_hotspot, guide("Wi-Fi P2P createGroup failed",
+            startup = WirelessStartupFailure.WIFI_DIRECT_BESIDE_HOTSPOT, mode = WirelessHotspotMode.WIFI_P2P))
         assertEquals(R.string.connection_help_hotspot,
             guide("unknown", startup = WirelessStartupFailure.HOTSPOT_NOT_READY))
         assertEquals(R.string.connection_help_hotspot,

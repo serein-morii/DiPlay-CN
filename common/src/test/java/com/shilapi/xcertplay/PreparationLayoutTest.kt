@@ -20,7 +20,9 @@ class PreparationLayoutTest {
         val method = CarPlayHostActivity::class.java.getDeclaredMethod("buildContentView")
         method.isAccessible = true
         val root = method.invoke(activity) as android.widget.FrameLayout
-        val viewport = root.getChildAt(2) as FrameLayout
+        // The viewport is named; a video-only overlay can be inserted before it.
+        val viewport = CarPlayHostActivity::class.java.getDeclaredField("connectionPanel")
+            .apply { isAccessible = true }.get(activity) as FrameLayout
         val panel = viewport.getChildAt(0) as LinearLayout
         val density = activity.resources.displayMetrics.density
         fun layout(heightDp: Int) {

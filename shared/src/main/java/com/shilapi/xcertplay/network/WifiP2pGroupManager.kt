@@ -199,6 +199,10 @@ class WifiP2pGroupManager(
                         throw P2pResetRequiredException()
                     }
                 },
+                busyCause = { rejection ->
+                    P2pHotspotConflict.failure(Build.VERSION.SDK_INT, CarHotspotStatus.isEnabled(appContext), rejection)
+                        ?.also { diagnostic("Wi-Fi P2P refused beside the car hotspot replyMs=${rejection.replyMillis}; not asking again") }
+                },
                 request = { selection ->
                     ensureStartActive(attempt)
                     if (remainingNanos(deadlineNanos) == 0L) throw IOException("Wi-Fi Direct startup timed out")
@@ -373,14 +377,15 @@ class WifiP2pGroupManager(
         }
 
         override fun onFailure(reason: Int) {
+            val replyMillis = (System.nanoTime() - request.createdNanos) / NANOS_PER_MILLISECOND
             synchronized(stateLock) {
                 if (request.completed || attempt.request !== request) return
                 request.completed = true
                 request.failure = P2pCreateRejected(reason,
-                    "Wi-Fi P2P createGroup failed: ${failureReason(reason)} (code=$reason)")
+                    "Wi-Fi P2P createGroup failed: ${failureReason(reason)} (code=$reason)", replyMillis)
                 stateLock.notifyAll()
             }
-            diagnostic("Wi-Fi P2P create rejected code=$reason reason=${failureReason(reason)}")
+            diagnostic("Wi-Fi P2P create rejected code=$reason reason=${failureReason(reason)} replyMs=$replyMillis")
         }
     }
 
@@ -939,6 +944,7 @@ class WifiP2pGroupManager(
     }
 
     private class CreateRequest {
+        val createdNanos = System.nanoTime()
         var completed = false
         var failure: P2pCreateRejected? = null
     }

@@ -11,7 +11,25 @@ internal enum class P2pCreationMode {
 
 internal data class P2pCreationRequest(val mode: P2pCreationMode, val frequencyMHz: Int? = null)
 
-internal class P2pCreateRejected(val reason: Int, message: String) : IOException(message)
+/** [replyMillis]: from createGroup to this answer, when known. */
+internal class P2pCreateRejected(val reason: Int, message: String, val replyMillis: Long? = null) : IOException(message)
+
+/**
+ * Android 13 can ask the driver before Wi-Fi Direct stops another Wi-Fi role, such as the car
+ * hotspot, and answers "no" with BUSY. Every further createGroup then asks again: one prompt per
+ * channel in the plan and per retry. The prompt waits for a person; a firmware's own per-channel
+ * BUSY does not, and keeps walking the plan.
+ */
+internal object P2pHotspotConflict {
+    const val PROMPT_REPLY_MILLIS = 1_000L
+
+    fun failure(sdk: Int, hotspotOn: Boolean?, rejection: P2pCreateRejected): WirelessStartupException? {
+        if (sdk < 33 || hotspotOn != true || rejection.reason != WifiP2pManager.BUSY) return null
+        if ((rejection.replyMillis ?: 0L) < PROMPT_REPLY_MILLIS) return null
+        return WirelessStartupException(WirelessStartupFailure.WIFI_DIRECT_BESIDE_HOTSPOT,
+            "Android was not allowed to turn the car hotspot off for Wi-Fi Direct").apply { initCause(rejection) }
+    }
+}
 
 /** Raised only for a recognized framework defect before createGroup has been called. */
 internal class P2pConfigBuildCompatibilityFailure(cause: NoSuchMethodError) :
@@ -102,6 +120,7 @@ internal object P2pStartupRecovery {
         preferredChannel: Int = WifiP2pChannels.AUTO,
         bandRequests: Boolean = true,
         fiveGhz: Boolean = true,
+        busyCause: (P2pCreateRejected) -> IOException? = { null },
         request: (P2pCreationRequest) -> Unit,
     ): P2pCreationRequest {
         val modes = plan(stationFrequency, preferred, preferredChannel, bandRequests, fiveGhz)
@@ -127,6 +146,8 @@ internal object P2pStartupRecovery {
                     return systemDefault
                 } catch (failure: P2pCreateRejected) {
                     lastRejection = failure
+                    // A BUSY with a known cause that no other channel removes ends the plan here.
+                    if (failure.reason == WifiP2pManager.BUSY) busyCause(failure)?.let { throw it }
                     when {
                         // A rejection that is not tied to one channel cannot be fixed by asking
                         // for a different channel, and retrying would only stall the bring-up.

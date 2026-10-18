@@ -3,6 +3,7 @@ package com.shilapi.xcertplay
 import android.view.KeyCharacterMap
 import android.view.KeyEvent
 import com.shilapi.xcertplay.airplay.AirPlayKnobState
+import com.shilapi.xcertplay.airplay.CarPlayMediaButton
 import com.shilapi.xcertplay.orchestration.CarPlayController
 
 /**
@@ -15,6 +16,41 @@ import com.shilapi.xcertplay.orchestration.CarPlayController
 internal object CarPlayRemoteKeys {
     private const val WHEEL_STEP = 1
     private const val HELD_REPEAT_INTERVAL = 3
+
+    /**
+     * Standard TV/controller navigation, system and transport keys are never available for the
+     * *new* custom play/pause assignment. This preserves the existing knob, Android MediaSession
+     * and OEM/system handlers for Fire TV, Google TV and other HID remotes. A previously saved
+     * assignment using one of these codes is deliberately ignored.
+     */
+    fun isProtectedNavigationKey(keyCode: Int): Boolean = when (keyCode) {
+        KeyEvent.KEYCODE_DPAD_UP, KeyEvent.KEYCODE_DPAD_DOWN,
+        KeyEvent.KEYCODE_DPAD_LEFT, KeyEvent.KEYCODE_DPAD_RIGHT,
+        KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER, KeyEvent.KEYCODE_NUMPAD_ENTER,
+        KeyEvent.KEYCODE_BUTTON_SELECT, KeyEvent.KEYCODE_BUTTON_A, KeyEvent.KEYCODE_BUTTON_B,
+        KeyEvent.KEYCODE_BACK, KeyEvent.KEYCODE_MENU,
+        KeyEvent.KEYCODE_HOME, KeyEvent.KEYCODE_APP_SWITCH, KeyEvent.KEYCODE_SETTINGS,
+        KeyEvent.KEYCODE_ASSIST, KeyEvent.KEYCODE_VOICE_ASSIST, KeyEvent.KEYCODE_SEARCH,
+        KeyEvent.KEYCODE_POWER, KeyEvent.KEYCODE_SLEEP, KeyEvent.KEYCODE_WAKEUP,
+        KeyEvent.KEYCODE_VOLUME_UP, KeyEvent.KEYCODE_VOLUME_DOWN,
+        KeyEvent.KEYCODE_VOLUME_MUTE, KeyEvent.KEYCODE_MUTE,
+        KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE, KeyEvent.KEYCODE_MEDIA_PLAY,
+        KeyEvent.KEYCODE_MEDIA_PAUSE, KeyEvent.KEYCODE_MEDIA_STOP,
+        KeyEvent.KEYCODE_MEDIA_NEXT, KeyEvent.KEYCODE_MEDIA_PREVIOUS,
+        KeyEvent.KEYCODE_MEDIA_FAST_FORWARD, KeyEvent.KEYCODE_MEDIA_REWIND,
+        KeyEvent.KEYCODE_HEADSETHOOK,
+        CarPlayMediaButton.KEYCODE_BYD_AUTO_MEDIA_PLAY_PAUSE,
+        CarPlayMediaButton.KEYCODE_BYD_AUTO_MEDIA_PLAY_PAUSE_DILINK3,
+        CarPlayMediaButton.KEYCODE_BYD_AUTO_MEDIA_VOICE,
+        CarPlayMediaButton.KEYCODE_BYD_AUTO_MEDIA_VOICE_LONG,
+        CarPlayMediaButton.KEYCODE_BYD_CARPLAY_VOICE,
+        CarPlayMediaButton.KEYCODE_BYD_CARPLAY_VOICE_LONG,
+        KeyEvent.KEYCODE_TV, KeyEvent.KEYCODE_TV_INPUT,
+        KeyEvent.KEYCODE_GUIDE, KeyEvent.KEYCODE_CHANNEL_UP, KeyEvent.KEYCODE_CHANNEL_DOWN,
+        KeyEvent.KEYCODE_SYSTEM_NAVIGATION_UP, KeyEvent.KEYCODE_SYSTEM_NAVIGATION_DOWN,
+        KeyEvent.KEYCODE_SYSTEM_NAVIGATION_LEFT, KeyEvent.KEYCODE_SYSTEM_NAVIGATION_RIGHT -> true
+        else -> false
+    }
 
     /**
      * With the external-controller setting on a touchscreen head unit, only keys from a real input

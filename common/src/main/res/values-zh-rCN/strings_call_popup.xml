@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="settings_hide_byd_call_popup">隐藏比亚迪来电弹窗（实验性）</string>
-    <string name="settings_hide_byd_call_popup_description">仅适用于 Android 12L 比亚迪车机，需要已授权的本地 ADB。连接的 CarPlay 位于前台时隐藏原生来电弹窗，进入后台时恢复。不改变蓝牙音频，也不隐藏全屏电话应用。</string>
+    <string name="settings_hide_byd_call_popup_description">仅适用于 Android 10 及以上的比亚迪车机，需要已授权的本地 ADB。连接的 CarPlay 位于前台时隐藏原生来电弹窗，进入后台时恢复。不改变蓝牙音频，也不隐藏全屏电话应用。</string>
 </resources>

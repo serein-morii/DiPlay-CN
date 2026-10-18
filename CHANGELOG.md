@@ -1,3 +1,14 @@
+# DiPlay 0.2.21 — 2026-10-17
+
+- Fix the 0.2.20 music lag by counting the music still waiting to be decoded in the clock adjustment, and bring music back after an interruption when the iPhone plays again (#814, #804).
+- Let wired CarPlay recover by itself: retry when the iPhone never opens its session, stop waiting forever for an ignored mode request, keep an attempt that recovered before its retry, and lower navigation guidance in the audio itself (#907, #841, #876).
+- Stop DiPlay closing when the software Opus encoder fails a check, name the wireless startup failure and refused permissions on the CarPlay screen, stop re-asking about the car hotspot on Android 13, find car hotspots on VLAN interfaces, wait for Bluetooth that is turning on, and save the CarPlay menu settings when an unused hotspot is empty (#866, #824, #795, #893, #885, #822, #853).
+- On BYD head units, hand the dashboard back to the car when CarPlay ends, survive the DiYou desktop card, warn again about a car hotspot that stays off, open BYD's own screens on DiLink 1.0, hide the call popup on Android 10+, clarify the call key setting and offer DiLink 7.0's split screen (#909, #827, #794, #845, #842, #875).
+- Install on Android 7.0, add Italian, and add options that are off by default: temporary system bars, black rounded corners, a play/pause wheel key, double press for Siri, car hotspot import, a home-screen bubble, the car's own music rhythm and music data for it (#847, #863, #818, #811, #823, #813, #769, #844, #695, #908).
+- Record more in the diagnostic report: DiPlay's own frames in the crash record, the USB devices Android lists while waiting for the iPhone, a wheel-speed line each minute, and the USB network traffic when the iPhone never opens CarPlay; note screenshots under screen turning (#827, #830, #862, #907, #864).
+
+See [0.2.21 release notes](docs/RELEASE-NOTES-0.2.21.md) for contribution links and limits, and [validation](docs/VALIDATION.md) for checks. Full-release vehicle acceptance is not claimed.
+
 # DiPlay 0.2.20 — 2026-10-15
 
 - Keep music playing when a head unit's audio clock drifts by adjusting its playback rate, run DiPlay's audio threads at audio priority, and keep separate music buffers for wireless and USB (#788, #740, #746).

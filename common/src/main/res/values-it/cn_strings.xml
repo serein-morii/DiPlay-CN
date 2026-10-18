@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- DiPlay CN additions for the Italian locale. -->
+<resources>
+    <string name="settings_save_notice">Le modifiche si applicano dopo aver toccato Salva e riconnesso</string>
+    <string name="settings_swipe_target_label">Lo swipe verso il basso apre</string>
+    <string name="settings_swipe_target_overlay">Impostazioni in sessione</string>
+    <string name="settings_swipe_target_full">Pagina impostazioni principale</string>
+    <string name="settings_swipe_target_hint">Sceglie quali impostazioni apre lo swipe verso il basso di CarPlay. Il menu in sessione resta disponibile; il suo pulsante Apri le impostazioni complete di DiPlay apre sempre la pagina principale.</string>
+    <string name="settings_launcher_returns_to_carplay">L\'icona DiPlay torna a CarPlay</string>
+    <string name="settings_launcher_returns_to_carplay_description">Quando CarPlay è già in esecuzione, toccare l\'icona DiPlay nell\'elenco app dell\'auto ritorna a CarPlay. Disattivalo per aprire invece la schermata principale di DiPlay.</string>
+    <string name="settings_cluster_menu_small_title">Navigazione in finestra piccola</string>
+    <string name="settings_cluster_menu_small_state_small">finestra piccola attiva</string>
+    <string name="settings_cluster_menu_small_state_full">finestra intera</string>
+    <string name="settings_cluster_menu_small_state_unknown">in attesa del quadro strumenti</string>
+    <string name="settings_turn_camera">Telecamera laterale di svolta (sperimentale)</string>
+    <string name="settings_turn_camera_status">Compatibilità</string>
+    <string name="settings_turn_camera_status_unprobed">Non ancora verificata. Esegui la verifica in sola lettura in Diagnostica.</string>
+    <string name="settings_turn_camera_status_hints">Verifica completata: solo indizi in sola lettura, non confermati su questa vettura</string>
+    <string name="settings_turn_camera_enable">Attiva la telecamera laterale di svolta</string>
+    <string name="settings_turn_camera_enable_blocked">Non disponibile in questa build. Richiede prima una verifica del firmware, una calibrazione a veicolo fermo e una validazione reale su questa unità.</string>
+    <string name="settings_turn_camera_probe">Esegui la verifica della telecamera di svolta (sola lettura)</string>
+    <string name="settings_turn_camera_probe_running">Verifica in corso…</string>
+    <string name="settings_turn_camera_probe_cancel">Annulla la verifica</string>
+    <string name="settings_turn_camera_probe_busy">Una verifica precedente non ha ancora terminato un passo bloccato. Riprova tra poco.</string>
+    <string name="settings_turn_camera_probe_title">Report della verifica della telecamera di svolta</string>
+    <string name="settings_turn_camera_probe_copy">Copia</string>
+    <string name="settings_turn_camera_probe_failed">Verifica non riuscita. Riprova.</string>
+</resources>

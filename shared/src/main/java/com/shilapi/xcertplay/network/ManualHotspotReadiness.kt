@@ -36,9 +36,16 @@ internal fun selectHotspotInterface(snapshot: HotspotNetworkSnapshot, log: (Stri
     return snapshot.interfaces.mapNotNull { iface ->
         val owned = snapshot.apInterfaces?.contains(iface.name) == true
         val upstream = snapshot.wifiUpstreams?.contains(iface.name) == true
-        val address = wirelessHostAddress(iface.addresses.filter {
-            it is Inet6Address && it.isLinkLocalAddress || it is Inet4Address && it.isSiteLocalAddress
+        val hotspotAddress = wirelessHostAddress(iface.addresses.filter {
+            it is Inet6Address && it.isLinkLocalAddress || publishesHotspotAddress(it)
         }, iface.index)
+        // A vendor AP interface may publish a non-private subnet: the reference head unit hands out
+        // 198.18.34.x on its eth0.3 VLAN (#573), which isSiteLocalAddress() rejects. The wider rule
+        // applies only to an interface already named as the hotspot; an ordinary station interface
+        // still has to publish a private address before it may stand in for one.
+        val address = if (owned) hotspotAddress else hotspotAddress?.takeIf {
+            it !is Inet4Address || it.isSiteLocalAddress
+        }
         val reason = when {
             !iface.up || iface.index <= 0 -> "interface_down"
             address == null -> "address_unavailable"

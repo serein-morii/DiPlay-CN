@@ -25,6 +25,15 @@ class AmbientMusicSettingsTest {
         assertEquals(3, values.area)
     }
 
+    @Test fun theCarsOwnRhythmIsOffUntilSavedOnAndSurvivesASave() {
+        assertFalse(AmbientMusicSettings.load(context).carRhythm)
+        AmbientMusicSettings.save(context, AmbientMusicSettings.load(context).copy(carRhythm = true))
+        assertTrue(AmbientMusicSettings.load(context).carRhythm)
+        // Saving the lamp settings keeps it.
+        AmbientMusicSettings.save(context, AmbientMusicSettings.load(context).copy(brightness = 4))
+        assertTrue(AmbientMusicSettings.load(context).carRhythm)
+    }
+
     @Test fun oldSingleColorSettingsSupplyMissingPaletteAndModes() {
         prefs.edit().putInt("color", 12).putInt("brightness", 4).commit()
         val values = AmbientMusicSettings.load(context)
@@ -50,6 +59,14 @@ class AmbientMusicSettingsTest {
         assertEquals(AmbientColorMode.BEAT, values.colorMode)
         assertEquals(AmbientColorSpeed.STANDARD, values.speed)
         assertEquals(AmbientIdleBehavior.STEADY, values.idle)
+    }
+
+    @Test fun carRhythmFeedRoundTripsAndDefaultsOff() {
+        assertFalse(AmbientMusicSettings.load(context).carRhythmFeed)
+        AmbientMusicSettings.save(context, AmbientMusicSettings.Values(carRhythm = true, carRhythmFeed = true))
+        assertTrue(AmbientMusicSettings.load(context).carRhythmFeed)
+        AmbientMusicSettings.save(context, AmbientMusicSettings.Values(carRhythm = true))
+        assertFalse(AmbientMusicSettings.load(context).carRhythmFeed)
     }
 
     @Test fun idleChoiceRoundTripsAndUnknownValuesFallBackToTheSteadyGlow() {

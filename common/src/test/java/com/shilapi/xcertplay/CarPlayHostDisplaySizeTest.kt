@@ -262,6 +262,61 @@ class CarPlayHostDisplaySizeTest {
         }
     }
 
+    @Test fun optionalTemporaryBarsRevealAndRestoreAfterFiveSecondsWithoutRenegotiatingCarPlay() {
+        val display = startSession()
+        setField("temporarySystemBarsEnabled", true)
+        setField("gestureFingerCount", 3)
+        setField("hideTopBar", true)
+        setField("hideBottomBar", true)
+        invoke("applyFullscreenMode")
+        assertWindowBars(true, true)
+
+        assertEquals(true, invoke("showTemporarySystemBars"))
+        assertWindowBars(false, false)
+        assertEquals(display, getField("sessionDisplay"))
+        assertEquals(0, getField("restartGeneration"))
+        // Transient visibility must not change the persistent CarPlay fullscreen selection.
+        assertTrue(getField("hideTopBar") as Boolean)
+        assertTrue(getField("hideBottomBar") as Boolean)
+        assertTrue(AirPlayPersistence.loadHideTopBar(activity))
+        assertTrue(AirPlayPersistence.loadHideBottomBar(activity))
+
+        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(4_999))
+        assertWindowBars(false, false)
+        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(1))
+        assertWindowBars(true, true)
+        assertEquals(false, getField("temporarySystemBarsVisible"))
+        assertEquals(display, getField("sessionDisplay"))
+    }
+
+    @Test fun revealingAgainExtendsTheExpiryAndBackgroundCancelsIt() {
+        setField("temporarySystemBarsEnabled", true)
+        invoke("applyFullscreenMode")
+        assertEquals(true, invoke("showTemporarySystemBars"))
+        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofSeconds(3))
+        assertEquals(true, invoke("showTemporarySystemBars"))
+        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofSeconds(3))
+        assertWindowBars(false, false)
+        invoke("onPause")
+        assertWindowBars(true, true)
+        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofSeconds(5))
+        assertWindowBars(true, true)
+    }
+
+    @Test fun temporarySystemBarsRequireOptInHiddenBarsAndCompatibleMode() {
+        assertEquals(false, invoke("showTemporarySystemBars"))
+        setField("temporarySystemBarsEnabled", true)
+        setField("hideTopBar", false)
+        setField("hideBottomBar", false)
+        assertEquals(false, invoke("showTemporarySystemBars"))
+        setField("hideTopBar", true)
+        setField("harmanFullscreenEnabled", true)
+        assertEquals(false, invoke("showTemporarySystemBars"))
+        setField("harmanFullscreenEnabled", false)
+        setField("gestureFingerCount", 0)
+        assertEquals(false, invoke("showTemporarySystemBars"))
+    }
+
     @Suppress("DEPRECATION")
     @Test fun harmanFullscreenUsesTheVerifiedLegacyFlags() {
         setField("harmanFullscreenEnabled", true)

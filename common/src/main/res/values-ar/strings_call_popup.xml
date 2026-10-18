@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="settings_hide_byd_call_popup">إخفاء نافذة مكالمات BYD (تجريبي)</string>
-    <string name="settings_hide_byd_call_popup_description">لأجهزة BYD بنظام Android 12L فقط. يتطلب تصريح ADB المحلي. يخفي نافذة المكالمة الأصلية أثناء اتصال CarPlay وظهوره في المقدمة، ويعيدها في الخلفية. لا يغيّر صوت Bluetooth ولا يخفي تطبيق الهاتف الكامل.</string>
+    <string name="settings_hide_byd_call_popup_description">لأجهزة BYD بنظام Android 10 أو أحدث فقط. يتطلب تصريح ADB المحلي. يخفي نافذة المكالمة الأصلية أثناء اتصال CarPlay وظهوره في المقدمة، ويعيدها في الخلفية. لا يغيّر صوت Bluetooth ولا يخفي تطبيق الهاتف الكامل.</string>
 </resources>

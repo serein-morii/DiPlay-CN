@@ -13,6 +13,16 @@ class AmbientMusicActivityPolicyTest {
         assertFalse(AmbientMusicActivityPolicy.acceptsAudio("", 101))
     }
 
+    @Test fun theCarsRhythmRunsOnlyWhileCarPlayMusicPlays() {
+        assertTrue(carRhythmPlaying(rendererActive = true, trackPlaying = true, phonePlaying = null))
+        assertTrue(carRhythmPlaying(rendererActive = true, trackPlaying = true, phonePlaying = true))
+        // The iPhone reported a pause before the track drained.
+        assertFalse(carRhythmPlaying(rendererActive = true, trackPlaying = true, phonePlaying = false))
+        assertFalse(carRhythmPlaying(rendererActive = true, trackPlaying = false, phonePlaying = true))
+        // No media track: navigation or a call, or the session ended.
+        assertFalse(carRhythmPlaying(rendererActive = false, trackPlaying = null, phonePlaying = true))
+    }
+
     @Test fun masterOffRestoresOemRegardlessOfBrightnessOrPlayback() {
         assertEquals(AmbientMusicTarget.RESTORE_OEM,
             AmbientMusicActivityPolicy.target(false, true, 0, false, false))

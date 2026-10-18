@@ -113,6 +113,91 @@ class CarPlayControllerUsbServiceTest {
         assertTrue(statuses.contains(CarPlayStatus.RequestingMfiPermission))
     }
 
+    @Test fun aMissingIphoneIsReportedWithWhatAndroidListsOnce() {
+        // #763: the report said only "iPhone USB device not present", whether Android saw the port or not.
+        val context = UsbContext(true)
+        val usb = context.getSystemService(UsbManager::class.java)
+        val logs = mutableListOf<String>()
+        val controller = controller(context, CarPlayTransport.WIRED, MfiTarget.LOCAL, logs)
+        // Local MFi needs the private identity of a real build, so the attempt starts at the iPhone step.
+        ReflectionHelpers.setField(controller, "phase",
+            Class.forName("com.shilapi.xcertplay.orchestration.CarPlayController\$Phase").enumConstants
+                .single { (it as Enum<*>).name == "IPHONE" })
+        ReflectionHelpers.callInstanceMethod<Unit>(controller, "checkIphoneAvailability")
+        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofSeconds(5))
+        assertTrue(statuses.contains(CarPlayStatus.WaitingForIphone))
+        assertEquals(listOf("wired iPhone not listed by Android; USB devices=[]"),
+            logs.filter { it.startsWith("wired iPhone") })
+
+        // A USB stick in the port is listed, once.
+        shadowOf(usb).addOrUpdateUsbDevice(usbDevice(0x0781, 0x5567, "/dev/bus/usb/001/003"), false)
+        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofSeconds(5))
+        assertEquals(listOf("wired iPhone not listed by Android; USB devices=[]",
+            "wired iPhone not listed by Android; USB devices=[0781:5567 /dev/bus/usb/001/003]"),
+            logs.filter { it.startsWith("wired iPhone") })
+        // The report keeps the lines as they are.
+        logs.filter { it.startsWith("wired iPhone not listed") }.forEach { assertEquals(it, DiagnosticRedactor.redact(it)) }
+
+        // Then the iPhone: found as before.
+        shadowOf(usb).addOrUpdateUsbDevice(usbDevice(0x05ac, 0x12a8, "/dev/bus/usb/001/004"), false)
+        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofSeconds(3))
+        assertEquals("wired iPhone discovered vid=0x5ac pid=0x12a8", logs.filter { it.startsWith("wired iPhone") }[2])
+        assertTrue(statuses.contains(CarPlayStatus.RequestingIphonePermission))
+    }
+
+    // #335: after Save and reconnect an iPhone still in CarPlay mode ignored the mode request, and only a USB
+    // attach ended the wait, so wired CarPlay sat on "waiting for the CarPlay USB configuration" for minutes.
+    @Test fun anUnansweredModeRequestLooksAtTheIphoneAgainAfterTheWait() {
+        val context = UsbContext(true)
+        val usb = context.getSystemService(UsbManager::class.java)
+        val iphone = usbDevice(0x05ac, 0x12a8, "/dev/bus/usb/001/004")
+        shadowOf(usb).addOrUpdateUsbDevice(iphone, true)
+        val logs = mutableListOf<String>()
+        val controller = waitingForReenumeration(context, logs)
+
+        ReflectionHelpers.callInstanceMethod<Unit>(controller, "watchReenumeration",
+            ReflectionHelpers.ClassParameter.from(UsbDevice::class.java, iphone))
+        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(CarPlayController.REENUMERATION_WAIT_MILLIS - 100))
+        assertTrue(logs.none { it.contains("USB transition unanswered") || it.contains("permission already granted") })
+
+        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(200))
+        assertTrue(logs.any { it.contains("USB transition unanswered after 10000ms count=1; checking the iPhone again") })
+        assertTrue(logs.any { it == "wired iPhone USB permission already granted" })
+    }
+
+    @Test fun anAttachOrAnIphoneThatLeftTheBusEndsTheWaitWithoutALook() {
+        val context = UsbContext(true)
+        val usb = context.getSystemService(UsbManager::class.java)
+        val iphone = usbDevice(0x05ac, 0x12a8, "/dev/bus/usb/001/004")
+        shadowOf(usb).addOrUpdateUsbDevice(iphone, true)
+        val logs = mutableListOf<String>()
+        val controller = waitingForReenumeration(context, logs)
+
+        // The iPhone came back on its own: its attach answered the request.
+        ReflectionHelpers.callInstanceMethod<Unit>(controller, "watchReenumeration",
+            ReflectionHelpers.ClassParameter.from(UsbDevice::class.java, iphone))
+        ReflectionHelpers.getField<java.util.concurrent.atomic.AtomicInteger>(controller, "availabilityPollGeneration")
+            .incrementAndGet()
+        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofSeconds(11))
+        assertTrue(logs.none { it.contains("USB transition unanswered") })
+
+        // The iPhone is off the bus while it re-enumerates: its attach will end the wait.
+        shadowOf(usb).removeUsbDevice(iphone)
+        ReflectionHelpers.callInstanceMethod<Unit>(controller, "watchReenumeration",
+            ReflectionHelpers.ClassParameter.from(UsbDevice::class.java, iphone))
+        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofSeconds(11))
+        assertTrue(logs.none { it.contains("USB transition unanswered") })
+    }
+
+    private fun waitingForReenumeration(context: Context, logs: MutableList<String>): CarPlayController {
+        val controller = controller(context, CarPlayTransport.WIRED, MfiTarget.LOCAL, logs)
+        ReflectionHelpers.setField(controller, "phase",
+            Class.forName("com.shilapi.xcertplay.orchestration.CarPlayController\$Phase").enumConstants
+                .single { (it as Enum<*>).name == "REENUMERATION" })
+        ReflectionHelpers.setField(controller, "reenumerationAttempts", 1)
+        return controller
+    }
+
     private fun usbDevice(vendor: Int, product: Int, node: String): UsbDevice =
         ReflectionHelpers.newInstance(UsbDevice::class.java).apply {
             ReflectionHelpers.setField(this, "mName", node)
