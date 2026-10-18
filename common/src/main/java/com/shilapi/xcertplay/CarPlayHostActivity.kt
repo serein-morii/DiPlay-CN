@@ -3604,35 +3604,13 @@ class CarPlayHostActivity : ComponentActivity() {
             },
             stacked = true,
         )
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && CarHotspotSetup.isBydHeadUnit(this)) {
-            content.addView(settingsSwitchRow(
+        val bydCallPopupRow = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && CarHotspotSetup.isBydHeadUnit(this)) {
+            settingsSwitchRow(
                 label = getString(R.string.settings_hide_byd_call_popup),
                 checked = hideBydCallPopup,
                 description = getString(R.string.settings_hide_byd_call_popup_description),
-            ) { hideBydCallPopup = it })
-        }
-        pageFor("display").addView(
-            buildAirPlayIconSection(),
-            LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-            ).apply { topMargin = dp(26) },
-        )
-        content.addView(
-            buildDrivingSideSection(),
-            LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-            ).apply { topMargin = dp(26) },
-        )
-        pageFor("display").addView(
-            buildDockSection(),
-            LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-            ).apply { topMargin = dp(26) },
-        )
-        content = pageFor("display")
+            ) { hideBydCallPopup = it }
+        } else null
 
         val resolutionControl = DisplaySettingsSection.createResolutionSlider(
             context = this,
@@ -3677,7 +3655,7 @@ class CarPlayHostActivity : ComponentActivity() {
                 fpsRow,
                 dockSection,
             )),
-            overlayCard(null, null, listOf(
+            overlayCard(null, null, listOfNotNull(bydCallPopupRow) + listOf(
                 buildFullscreenSection(),
                 sidePanelRow,
                 buildSafeAreaSection(),
@@ -4230,6 +4208,71 @@ class CarPlayHostActivity : ComponentActivity() {
             appendLog("Debug logs ${if (debugLogsEnabled) "enabled" else "disabled"}")
             updateDebugOverlays()
         }
+
+    private fun buildStepSliderSection(
+        title: String,
+        values: List<Int>,
+        selectedValue: Int,
+        label: (Int) -> String,
+        onValueChanged: (Int) -> Unit,
+    ): View {
+        val section = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+        }
+        val header = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+        }
+        header.addView(
+            menuText(title, 20f, MENU_SECONDARY),
+            LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f),
+        )
+        val selectedIndex = values.indexOf(selectedValue)
+            .takeIf { it >= 0 }
+            ?: 0
+        val valueView = menuText(label(values[selectedIndex]), 22f, MENU_ACCENT, bold = true)
+        header.addView(
+            valueView,
+            LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+            ),
+        )
+        section.addView(
+            header,
+            LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+            ),
+        )
+        val seekBar = SeekBar(this).apply {
+            max = (values.size - 1).coerceAtLeast(0)
+            progress = selectedIndex
+            splitTrack = false
+            progressTintList = ColorStateList.valueOf(MENU_ACCENT)
+            thumbTintList = ColorStateList.valueOf(MENU_ACCENT)
+            setOnSeekBarChangeListener(
+                object : SeekBar.OnSeekBarChangeListener {
+                    override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {
+                        val value = values.getOrNull(progress) ?: return
+                        valueView.text = label(value)
+                        if (fromUser) onValueChanged(value)
+                    }
+
+                    override fun onStartTrackingTouch(seekBar: SeekBar) = Unit
+                    override fun onStopTrackingTouch(seekBar: SeekBar) = Unit
+                },
+            )
+        }
+        section.addView(
+            seekBar,
+            LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+            ).apply { topMargin = dp(8) },
+        )
+        return section
+    }
 
     private fun buildAirPlayIconSection(): View {
         val section = LinearLayout(this).apply {
