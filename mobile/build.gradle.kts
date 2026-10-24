@@ -19,10 +19,11 @@ android {
         applicationId = "com.shihab.diplay.cn"
         minSdk = 25
         targetSdk = 37
-        versionCode = 118
-        versionName = if (experimentalTurnCameraBuild) "0.2.21-cn.1-experimental.2" else "0.2.21-cn.1"
+        versionCode = 119
+        versionName = "0.2.21-cn.2"
 
     }
+
 
 
     localAuthenticationAssets?.let { sourceSets.getByName("main").assets.srcDir(it) }
@@ -78,6 +79,16 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     debugImplementation(libs.androidx.compose.ui.tooling)
+}
+
+// Experimental turn-camera builds carry a distinct versionName; the plain literal in defaultConfig
+// stays machine-readable for scripts/check_release_version.py.
+androidComponents {
+    onVariants(selector().all()) { variant ->
+        if (experimentalTurnCameraBuild) {
+            variant.outputs.forEach { it.versionName.set("0.2.21-cn.2-experimental.1") }
+        }
+    }
 }
 
 // No implicit import. Only the two explicitly selected local runtime assets are allowed.
