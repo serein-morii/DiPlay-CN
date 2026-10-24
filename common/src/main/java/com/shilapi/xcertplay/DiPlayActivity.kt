@@ -400,6 +400,8 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
         languagePreferenceAtCreate = AppLocale.preference(this)
         com.shilapi.xcertplay.hud.BydNavigationOutputs.onAppOpened(applicationContext)
         PhoneAudioRoute.attach(applicationContext)
+        // The turn side-view engine revives with the app process when its switch is on.
+        runCatching { com.shilapi.xcertplay.turncamera.sideview.SideViewRuntime.maybeStart(applicationContext) }
         WindowCompat.setDecorFitsSystemWindows(window, false)
         if (Build.VERSION.SDK_INT >= 28) {
             window.attributes = window.attributes.apply {
@@ -2237,6 +2239,105 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
                         }.setNegativeButton(R.string.cancel) { _, _ -> render() }
                         .setOnCancelListener { render() }.show()
                 }
+            }
+            // Turn side view (own implementation, verified Han DM-i parameters): the feature this
+            // card exists for, built on the car's ADB channel and the vendor AVM camera.
+            val sideView = com.shilapi.xcertplay.turncamera.sideview.SideViewRuntime
+            val sideViewPrefs = sideView.prefs(this)
+            card.addView(label(getString(R.string.settings_side_view_title), 14, MUTED)
+                .apply { setPadding(0, dp(CONTROL_GAP_DP), 0, 0) })
+            card.addView(label(sideView.status(this), 14, TEXT))
+            card.addView(button(getString(R.string.settings_side_view_readiness), false) {
+                Thread {
+                    val check = sideView.readiness(applicationContext)
+                    if (!check.usageAppop && check.adbReachable) sideView.grantUsageAppop(applicationContext)
+                    runOnUiThread {
+                        if (!check.overlayAllowed) openOverlayPermission()
+                        val lines = listOfNotNull(
+                            "ADB: " + getString(if (check.adbReachable) R.string.settings_side_view_ok else R.string.settings_side_view_missing),
+                            getString(R.string.settings_side_view_usage) + " " +
+                                getString(if (check.usageAppop) R.string.settings_side_view_ok else R.string.settings_side_view_missing),
+                            getString(R.string.settings_side_view_overlay) + " " +
+                                getString(if (check.overlayAllowed) R.string.settings_side_view_ok else R.string.settings_side_view_missing),
+                        ).joinToString("\n")
+                        appDialogBuilder().setTitle(R.string.settings_side_view_readiness)
+                            .setMessage(lines + "\n\n" + getString(R.string.settings_side_view_readiness_hint))
+                            .setPositiveButton(R.string.done) { _, _ -> render() }.show()
+                    }
+                }.start()
+            }.apply { fitWrappedLabel = true }, matchButton(CONTROL_GAP_DP, CONTROL_HEIGHT_DP))
+            toggle(card, getString(R.string.settings_side_view_enable),
+                getString(R.string.settings_side_view_description),
+                sideViewPrefs.enabled) { on ->
+                if (on) {
+                    appDialogBuilder().setTitle(R.string.settings_side_view_enable)
+                        .setMessage(R.string.settings_side_view_warning)
+                        .setPositiveButton(R.string.settings_side_view_confirm) { _, _ ->
+                            sideView.setEnabled(applicationContext, true)
+                            render()
+                        }.setNegativeButton(R.string.cancel) { _, _ -> render() }
+                        .setOnCancelListener { render() }.show()
+                } else {
+                    sideView.setEnabled(applicationContext, false)
+                    render()
+                }
+            }
+            if (sideViewPrefs.enabled) {
+                val thresholds = (0..12).map { it * 5 }
+                choice(card, getString(R.string.settings_side_view_threshold),
+                    thresholds.map { getString(R.string.settings_side_view_kmh, it) },
+                    thresholds.indexOf(sideViewPrefs.thresholdKmh), reconnects = false) {
+                    sideViewPrefs.edit()
+                        .putInt(com.shilapi.xcertplay.turncamera.sideview.SideViewPrefs.THRESHOLD, thresholds[it]).apply()
+                }
+                val widths = (4..12).map { it * 5 }
+                choice(card, getString(R.string.settings_side_view_width),
+                    widths.map { getString(R.string.percent_value, it) },
+                    widths.indexOf(sideViewPrefs.windowWidthPct), reconnects = false) {
+                    sideViewPrefs.edit()
+                        .putInt(com.shilapi.xcertplay.turncamera.sideview.SideViewPrefs.WIDTH, widths[it]).apply()
+                }
+                fun sideViewToggle(title: String, key: String, value: Boolean) {
+                    toggle(card, title, "", value) {
+                        sideViewPrefs.edit().putBoolean(key, it).apply()
+                    }
+                }
+                sideViewToggle(getString(R.string.settings_side_view_rotate),
+                    com.shilapi.xcertplay.turncamera.sideview.SideViewPrefs.ROTATE, sideViewPrefs.rotate)
+                sideViewToggle(getString(R.string.settings_side_view_swap),
+                    com.shilapi.xcertplay.turncamera.sideview.SideViewPrefs.SWAP, sideViewPrefs.swapSides)
+                sideViewToggle(getString(R.string.settings_side_view_mirror_left),
+                    com.shilapi.xcertplay.turncamera.sideview.SideViewPrefs.MIRROR_LEFT, sideViewPrefs.mirrorLeft)
+                sideViewToggle(getString(R.string.settings_side_view_mirror_right),
+                    com.shilapi.xcertplay.turncamera.sideview.SideViewPrefs.MIRROR_RIGHT, sideViewPrefs.mirrorRight)
+                sideViewToggle(getString(R.string.settings_side_view_bsd),
+                    com.shilapi.xcertplay.turncamera.sideview.SideViewPrefs.BSD, sideViewPrefs.bsdWarn)
+                sideViewToggle(getString(R.string.settings_side_view_both_main),
+                    com.shilapi.xcertplay.turncamera.sideview.SideViewPrefs.BOTH_MAIN, sideViewPrefs.bothOnMain)
+                card.addView(label(getString(R.string.settings_side_view_nudge_hint), 14, MUTED)
+                    .apply { setPadding(0, dp(CONTROL_GAP_DP), 0, 0) })
+                val stepPx = dp(20)
+                fun nudgeRow(title: String, nudge: (Int, Int) -> Unit, reset: () -> Unit) {
+                    val row = android.widget.LinearLayout(this).apply {
+                        orientation = android.widget.LinearLayout.HORIZONTAL
+                    }
+                    row.addView(button("←", false) { nudge(-stepPx, 0) }, matchButton(0, CONTROL_HEIGHT_DP).apply { weight = 1f })
+                    row.addView(button("→", false) { nudge(stepPx, 0) }, matchButton(4, CONTROL_HEIGHT_DP).apply { weight = 1f })
+                    row.addView(button("↑", false) { nudge(0, -stepPx) }, matchButton(4, CONTROL_HEIGHT_DP).apply { weight = 1f })
+                    row.addView(button("↓", false) { nudge(0, stepPx) }, matchButton(4, CONTROL_HEIGHT_DP).apply { weight = 1f })
+                    row.addView(button(getString(R.string.settings_side_view_reset), false) { reset() }, matchButton(4, CONTROL_HEIGHT_DP).apply { weight = 1.6f })
+                    card.addView(label(title, 14, TEXT).apply { setPadding(0, dp(12), 0, 0) })
+                    card.addView(row)
+                }
+                nudgeRow(getString(R.string.settings_side_view_right_window),
+                    { dx, dy -> sideView.nudgeRight(applicationContext, dx, dy) }) { sideView.resetRight(applicationContext) }
+                nudgeRow(getString(R.string.settings_side_view_left_window),
+                    { dx, dy -> sideView.nudgeLeft(applicationContext, dx, dy) }) { sideView.resetLeft(applicationContext) }
+                card.addView(button(getString(R.string.settings_side_view_camera_log), false) {
+                    val log = sideView.cameraJournal().joinToString("\n").ifEmpty { "—" }
+                    appDialogBuilder().setTitle(R.string.settings_side_view_camera_log)
+                        .setMessage(log).setPositiveButton(R.string.done) { _, _ -> }.show()
+                }.apply { fitWrappedLabel = true }, matchButton(CONTROL_GAP_DP, CONTROL_HEIGHT_DP))
             }
         }
         filteredSection(content, SettingsSection.LOCATION,
