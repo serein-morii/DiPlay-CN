@@ -1000,4 +1000,39 @@
     <string name="settings_hotspot_interface_description">Solo per head unit che usano per l’hotspot un’interfaccia di rete che Android non riconosce come hotspot Wi-Fi, per esempio eth0.3 su alcune unità Geely, Lynk &amp; Co e altre Qualcomm. Lascia vuoto per trovarla automaticamente.</string>
     <string name="wifi_direct_refused_beside_hotspot">L’hotspot dell’auto è attivo e Wi-Fi Direct non può avviarsi insieme a esso</string>
     <string name="connection_help_wifi_direct_beside_hotspot">Disattiva l’hotspot dell’auto e riprova, oppure scegli Hotspot integrato dell’auto in Configurazione connessione e salva nome e password.</string>
+
+    <!-- Experimental turn side camera (untranslated on this branch's base; required by SettingsTranslationsTest). -->
+    <string name="settings_turn_camera_calibration">Calibrazione telecamera</string>
+    <string name="settings_turn_camera_calibration_notice">Simulazione 16:9, non video reale. Le bozze di sinistra/destra restano su questo dispositivo; gli ID non sono verificati e vuoto significa non assegnato.</string>
+    <string name="settings_turn_camera_experiment_config">Profilo segnale e acquisizione (sperimentale)</string>
+    <string name="settings_turn_camera_experiment_confirm">Attiva esperimento</string>
+    <string name="settings_turn_camera_experiment_description">Frecia a sinistra → telecamera sinistra; freccia a destra → telecamera destra. Richiede configurazione manuale completa di telecamere/segnali/occupazione OEM e un rapporto di compatibilità esistente.</string>
+    <string name="settings_turn_camera_experiment_enable">Telecamera di svolta automatica sul quadro (sperimentale)</string>
+    <string name="settings_turn_camera_experiment_help">Bozza JSON per il tuo firmware; null significa sconosciuto, non zero. Inserisci i codici reali di freccia/emergenza/retromarcia, un getter int senza argomenti per l\'OEM 360 e i canali delle telecamere.</string>
+    <string name="settings_turn_camera_experiment_invalid">Profilo incompleto o non valido, telecamere non assegnate o firmware sconosciuto. L\'esperimento resta spento.</string>
+    <string name="settings_turn_camera_experiment_saved">Bozza salvata. Esperimento disattivato; riattivalo esplicitamente dopo aver controllato la configurazione.</string>
+    <string name="settings_turn_camera_experiment_warning">Sperimentale e non verificato su questa vettura. Configura e prova solo da fermo. ID telecamera, valori segnale o occupazione OEM errati possono disturbare la guida.</string>
+    <string name="settings_turn_camera_fill">Riempi e ritaglia</string>
+    <string name="settings_turn_camera_fit">Scalatura immagine</string>
+    <string name="settings_turn_camera_fit_inside">Adatta tutta l\'immagine</string>
+    <string name="settings_turn_camera_id">ID telecamera (manuale, non verificato)</string>
+    <string name="settings_turn_camera_id_invalid">ID telecamera non valido. L\'AVM del fornitore richiede un intero a 32 bit non negativo, oppure lascia vuoto.</string>
+    <string name="settings_turn_camera_image_x">Scostamento orizzontale immagine</string>
+    <string name="settings_turn_camera_image_y">Scostamento verticale immagine</string>
+    <string name="settings_turn_camera_left">Sinistra</string>
+    <string name="settings_turn_camera_mirror_x">Specchia immagine in orizzontale</string>
+    <string name="settings_turn_camera_mirror_y">Capvolgi immagine in verticale</string>
+    <string name="settings_turn_camera_report_stale">Firmware cambiato o non riconosciuto. Questo rapporto è storico; esegui di nuovo il probe a sola lettura. Lo streaming resta non disponibile.</string>
+    <string name="settings_turn_camera_reset">Azzera questo lato</string>
+    <string name="settings_turn_camera_right">Destra</string>
+    <string name="settings_turn_camera_rotation">Rotazione immagine in senso orario</string>
+    <string name="settings_turn_camera_saved_report">Visualizza rapporto di compatibilità salvato</string>
+    <string name="settings_turn_camera_side">Lato fisico</string>
+    <string name="settings_turn_camera_simulation">Solo simulazione</string>
+    <string name="settings_turn_camera_source">Backend</string>
+    <string name="settings_turn_camera_window_height">Altezza finestra</string>
+    <string name="settings_turn_camera_window_width">Larghezza finestra</string>
+    <string name="settings_turn_camera_window_x">Posizione orizzontale finestra</string>
+    <string name="settings_turn_camera_window_y">Posizione verticale finestra</string>
+    <string name="settings_turn_camera_zoom">Zoom immagine</string>
 </resources>
