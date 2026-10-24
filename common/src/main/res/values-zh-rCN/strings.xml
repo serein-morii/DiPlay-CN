@@ -1092,6 +1092,12 @@
     <string name="settings_side_view_right_window">右侧窗口位置</string>
     <string name="settings_side_view_left_window">左侧窗口位置</string>
     <string name="settings_side_view_reset">重置</string>
+    <string name="settings_side_view_flip">画面倒置（上下翻转）</string>
+    <string name="settings_side_view_channels_current">当前通道：左 %1$d / 右 %2$d</string>
+    <string name="settings_side_view_resweep">重新识别左右通道（停车扫查）</string>
+    <string name="settings_side_view_reset_channels">通道恢复实测默认值（2/3）</string>
+    <string name="settings_side_view_channels_saved">通道已保存：左 %1$d / 右 %2$d</string>
+    <string name="settings_side_view_sweep_saves">两侧都标好后点完成，标记会立即生效到转向侧影像功能。</string>
     <string name="settings_side_view_camera_log">摄像头日志</string>
     <string name="settings_turn_camera_capture_mark_left">这是左侧</string>
     <string name="settings_turn_camera_capture_mark_right">这是右侧</string>

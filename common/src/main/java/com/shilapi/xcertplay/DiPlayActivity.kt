@@ -2306,10 +2306,25 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
                     com.shilapi.xcertplay.turncamera.sideview.SideViewPrefs.ROTATE, sideViewPrefs.rotate)
                 sideViewToggle(getString(R.string.settings_side_view_swap),
                     com.shilapi.xcertplay.turncamera.sideview.SideViewPrefs.SWAP, sideViewPrefs.swapSides)
+                sideViewToggle(getString(R.string.settings_side_view_flip),
+                    com.shilapi.xcertplay.turncamera.sideview.SideViewPrefs.FLIP_VERTICAL, sideViewPrefs.flipVertical)
                 sideViewToggle(getString(R.string.settings_side_view_mirror_left),
                     com.shilapi.xcertplay.turncamera.sideview.SideViewPrefs.MIRROR_LEFT, sideViewPrefs.mirrorLeft)
                 sideViewToggle(getString(R.string.settings_side_view_mirror_right),
                     com.shilapi.xcertplay.turncamera.sideview.SideViewPrefs.MIRROR_RIGHT, sideViewPrefs.mirrorRight)
+                // Channel identification: the defaults are the car-verified indexes; the parking
+                // sweep can re-identify them, and one button undoes a sweep again.
+                val (leftChannel, rightChannel) = sideViewPrefs.channels()
+                card.addView(label(getString(
+                    R.string.settings_side_view_channels_current, leftChannel, rightChannel), 14, TEXT)
+                    .apply { setPadding(0, dp(CONTROL_GAP_DP), 0, 0) })
+                card.addView(button(getString(R.string.settings_side_view_resweep), false) {
+                    confirmTurnCameraPreviewSweep()
+                }.apply { fitWrappedLabel = true }, matchButton(0, CONTROL_HEIGHT_DP))
+                card.addView(button(getString(R.string.settings_side_view_reset_channels), false) {
+                    sideView.resetChannels(applicationContext)
+                    render()
+                }.apply { fitWrappedLabel = true }, matchButton(CONTROL_GAP_DP, CONTROL_HEIGHT_DP))
                 sideViewToggle(getString(R.string.settings_side_view_bsd),
                     com.shilapi.xcertplay.turncamera.sideview.SideViewPrefs.BSD, sideViewPrefs.bsdWarn)
                 sideViewToggle(getString(R.string.settings_side_view_both_main),
@@ -6423,7 +6438,7 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
         val body = column().apply { setPadding(dp(SETTINGS_DIALOG_PADDING_DP), dp(SETTINGS_DIALOG_GAP_DP), dp(SETTINGS_DIALOG_PADDING_DP), dp(SETTINGS_DIALOG_GAP_DP)) }
         val view = android.view.TextureView(this)
         val channelLabel = label("", 20, TEXT, true)
-        val hint = label(sweeper.hint(), 12, MUTED)
+        val hint = label(sweeper.hint() + "\n" + getString(R.string.settings_side_view_sweep_saves), 12, MUTED)
         body.addView(channelLabel)
         body.addView(view, LinearLayout.LayoutParams(-1, 0, 1f))
         body.addView(hint)
@@ -6477,9 +6492,17 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
             .setView(ScrollView(appDialogContext()).apply { addView(body) })
             .setPositiveButton(R.string.done) { _, _ ->
                 session.getAndSet(null)?.let { runCatching { it.close() } }
-                val report = "preview sweep: cameraId=$cameraId left=${sweeper.left} right=${sweeper.right}\n" +
-                    "fill leftChannel/rightChannel (and the camera id) in the JSON profile from these."
-                showTurnCameraProbeReport(report)
+                if (sweeper.complete()) {
+                    // The marks become the side-view feature's channel mapping on the spot.
+                    com.shilapi.xcertplay.turncamera.sideview.SideViewRuntime
+                        .saveChannels(applicationContext, sweeper.left!!, sweeper.right!!)
+                    toast(getString(
+                        R.string.settings_side_view_channels_saved, sweeper.left!!, sweeper.right!!))
+                } else {
+                    val report = "preview sweep: cameraId=$cameraId left=${sweeper.left} right=${sweeper.right}\n" +
+                        "fill leftChannel/rightChannel (and the camera id) in the JSON profile from these."
+                    showTurnCameraProbeReport(report)
+                }
             }
             .setOnDismissListener {
                 session.getAndSet(null)?.let { runCatching { it.close() } }

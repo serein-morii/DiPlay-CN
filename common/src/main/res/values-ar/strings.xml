@@ -1081,6 +1081,12 @@
     <string name="settings_side_view_right_window">Right window position</string>
     <string name="settings_side_view_left_window">Left window position</string>
     <string name="settings_side_view_reset">Reset</string>
+    <string name="settings_side_view_flip">Upside-down picture (flip vertically)</string>
+    <string name="settings_side_view_channels_current">Channels: LEFT %1$d / RIGHT %2$d</string>
+    <string name="settings_side_view_resweep">Re-identify channels (parked sweep)</string>
+    <string name="settings_side_view_reset_channels">Reset channels to verified defaults (2/3)</string>
+    <string name="settings_side_view_channels_saved">Channels saved: LEFT %1$d / RIGHT %2$d</string>
+    <string name="settings_side_view_sweep_saves">Marking both sides and finishing applies the marks to the side-view feature at once.</string>
     <string name="settings_side_view_camera_log">Camera log</string>
     <string name="settings_turn_camera_capture_mark_left">هذه اليسرى</string>
     <string name="settings_turn_camera_capture_mark_right">هذه اليمنى</string>

@@ -36,6 +36,23 @@ internal object SideViewRuntime {
 
     fun cameraJournal(): List<String> = engine?.cameraJournal() ?: emptyList()
 
+    // ── Channel mapping from the parking sweep ──────────────────────────────────
+
+    /** Adopts the sweep's marks (-1 restores the verified defaults 2 left / 3 right). */
+    fun saveChannels(context: Context, left: Int, right: Int) {
+        prefs(context).edit()
+            .putInt(SideViewPrefs.LEFT_CHANNEL, left)
+            .putInt(SideViewPrefs.RIGHT_CHANNEL, right)
+            .apply()
+    }
+
+    fun resetChannels(context: Context) {
+        prefs(context).edit()
+            .remove(SideViewPrefs.LEFT_CHANNEL)
+            .remove(SideViewPrefs.RIGHT_CHANNEL)
+            .apply()
+    }
+
     // ── Window position nudging (settings arrows) ───────────────────────────────
 
     private fun screen(context: Context): Pair<Int, Int> {

@@ -30,8 +30,22 @@ internal class SideViewPrefs(private val context: Context) {
     val mirrorLeft: Boolean get() = store.getBoolean(MIRROR_LEFT, false)
     val mirrorRight: Boolean get() = store.getBoolean(MIRROR_RIGHT, false)
 
+    /** Upside-down pictures; combined with a mirror this yields any orientation. */
+    val flipVertical: Boolean get() = store.getBoolean(FLIP_VERTICAL, false)
+
     /** The two AVM channels landed on the wrong sides: swap them without re-sweeping. */
     val swapSides: Boolean get() = store.getBoolean(SWAP, false)
+
+    /** Channel overrides from the parking sweep; -1 keeps the verified defaults (2 left / 3 right). */
+    val leftChannel: Int get() = store.getInt(LEFT_CHANNEL, -1)
+    val rightChannel: Int get() = store.getInt(RIGHT_CHANNEL, -1)
+
+    /** The preview indexes each side binds, after the overrides and the swap flag. */
+    fun channels(): Pair<Int, Int> {
+        val left = leftChannel.takeIf { it >= 0 } ?: VERIFIED_LEFT
+        val right = rightChannel.takeIf { it >= 0 } ?: VERIFIED_RIGHT
+        return if (swapSides) right to left else left to right
+    }
 
     /** BSD radar warning border on the shown window. */
     val bsdWarn: Boolean get() = store.getBoolean(BSD, true)
@@ -44,10 +58,6 @@ internal class SideViewPrefs(private val context: Context) {
     val rightY: Int get() = store.getInt(RIGHT_Y, UNSET)
     val leftX: Int get() = store.getInt(LEFT_X, UNSET)
     val leftY: Int get() = store.getInt(LEFT_Y, UNSET)
-
-    /** The preview indexes each side binds, after the swap flag. */
-    fun channels(): Pair<Int, Int> =
-        if (swapSides) (VERIFIED_RIGHT to VERIFIED_LEFT) else (VERIFIED_LEFT to VERIFIED_RIGHT)
 
     /** A saved window corner, UNSET while the user never moved it. */
     fun savedInt(key: String): Int = store.getInt(key, UNSET)
@@ -62,7 +72,10 @@ internal class SideViewPrefs(private val context: Context) {
         const val ROTATE = "rotate"
         const val MIRROR_LEFT = "mirror_left"
         const val MIRROR_RIGHT = "mirror_right"
+        const val FLIP_VERTICAL = "flip_vertical"
         const val SWAP = "swap_sides"
+        const val LEFT_CHANNEL = "left_channel"
+        const val RIGHT_CHANNEL = "right_channel"
         const val BSD = "bsd_warn"
         const val BOTH_MAIN = "both_on_main"
         const val RIGHT_X = "right_x"

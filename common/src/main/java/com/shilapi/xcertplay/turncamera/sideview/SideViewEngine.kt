@@ -589,11 +589,12 @@ internal class SideViewEngine(
                 SideViewSide.LEFT -> -90f
                 SideViewSide.NONE -> 0f
             } else 0f
-            val flip = when (side) {
+            val flipX = when (side) {
                 SideViewSide.LEFT -> prefs.mirrorLeft
                 SideViewSide.RIGHT -> prefs.mirrorRight
                 SideViewSide.NONE -> false
             }
+            val flipY = prefs.flipVertical
             val turnedW = if (turn != 0f) SOURCE_H else SOURCE_W
             val turnedH = if (turn != 0f) SOURCE_W else SOURCE_H
             val scale = maxOf(width / turnedW, height / turnedH)
@@ -601,7 +602,8 @@ internal class SideViewEngine(
             matrix.postScale(SOURCE_W / width, SOURCE_H / height)
             if (turn != 0f) matrix.postRotate(turn, SOURCE_W / 2f, SOURCE_H / 2f)
             matrix.postTranslate(-SOURCE_W / 2f, -SOURCE_H / 2f)
-            if (flip) matrix.postScale(-1f, 1f)
+            if (flipX) matrix.postScale(-1f, 1f)
+            if (flipY) matrix.postScale(1f, -1f)
             matrix.postScale(scale, scale)
             matrix.postTranslate(width / 2f, height / 2f)
             view.setTransform(matrix)
@@ -611,12 +613,14 @@ internal class SideViewEngine(
     /** Compact status for the settings row. */
     fun statusLine(): String {
         val snapshot = lastSnapshot
+        val (leftChannel, rightChannel) = prefs.channels()
         return buildString {
             append("speed=${snapshot?.speedKmh ?: "?"}")
             append(" blink=${snapshot?.blink ?: "?"}")
             append(" gear=${snapshot?.gear ?: "?"}")
             append(" 360=${watch360.foreground}")
             append(" camera=${if (!found) "untried" else if (camera.cameraId >= 0) "id ${camera.cameraId}" else "none"}")
+            append(" ch L$leftChannel/R$rightChannel")
             if (!watch360.readable) append(" usageAppop=missing")
         }
     }
