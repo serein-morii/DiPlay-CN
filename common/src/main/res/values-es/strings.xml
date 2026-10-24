@@ -995,4 +995,19 @@
     <string name="settings_turn_camera_experiment_invalid">Perfil incompleto o inválido, cámaras sin asignar o firmware desconocido. Permanece desactivado.</string>
     <string name="settings_turn_camera_experiment_help">Borrador JSON específico del firmware; null es desconocido, no cero. Indique códigos de giro/intermitentes de emergencia/marcha atrás, getter OEM 360 int sin argumentos (android.hardware.bydauto.*), valores libre/ocupado, canales y tamaños. Confirme el reloj del productor antes de elegir timestampTimebase: ELAPSED_REALTIME_NANOS o MONOTONIC_NANOS. safeArea es [izquierda, arriba, derecha, abajo] dentro del mapa del cuadro. Confirme ambos booleanos solo tras verificar. Ocupación desconocida bloquea la captura. Guardar desactiva el experimento.</string>
     <string name="settings_turn_camera_experiment_saved">Borrador guardado y experimento desactivado. Revíselo y actívelo de nuevo explícitamente.</string>
+    <string name="settings_turn_camera_capture_enumerate">Enumerar cámaras AVM (solo lectura)</string>
+    <string name="settings_turn_camera_capture_signal">Capturar valores de señal (estacionado, ~40 s)</string>
+    <string name="settings_turn_camera_capture_signal_unavailable">La interfaz de lectura de señales no está disponible en esta unidad.</string>
+    <string name="settings_turn_camera_capture_preview">Barrido de canales de vista previa (estacionado)</string>
+    <string name="settings_turn_camera_capture_preview_warning">Abre la cámara AVM del proveedor y muestra un canal cada vez. Úselo solo estacionado. La vista 360/reversa de fábrica tiene prioridad; deténgase si aparece.</string>
+    <string name="settings_turn_camera_phase_idle">Sin señal — no toque la palanca</string>
+    <string name="settings_turn_camera_phase_left">Mantenga el intermitente IZQUIERDO</string>
+    <string name="settings_turn_camera_phase_right">Mantenga el intermitente DERECHO</string>
+    <string name="settings_turn_camera_phase_neutral">Vuelva a neutro — sin señal</string>
+    <string name="settings_turn_camera_phase_hazard_on">Encienda las LUCES DE EMERGENCIA</string>
+    <string name="settings_turn_camera_phase_hazard_off">Apague las LUCES DE EMERGENCIA</string>
+    <string name="settings_turn_camera_capture_seconds">Quedan %1$d s</string>
+    <string name="settings_turn_camera_capture_channel">Canal %1$d / %2$d</string>
+    <string name="settings_turn_camera_capture_mark_left">Esta es la IZQUIERDA</string>
+    <string name="settings_turn_camera_capture_mark_right">Esta es la DERECHA</string>
 </resources>

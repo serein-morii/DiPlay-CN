@@ -296,7 +296,7 @@ class TurnCameraCapabilities(
                 Pair(
                     if (displays.isEmpty()) Status.UNCONFIRMED else Status.OK,
                     displays.joinToString("; ").ifEmpty { "no presentation displays visible to this app" } +
-                        (chosen?.let { " · projection target: ${it.name}" } ?: " · projection target: none"),
+                        (chosen?.let { " · projection target: ${it.name.take(48)}" } ?: " · projection target: none"),
                 )
             }
             item("camera_permission") {
@@ -433,6 +433,7 @@ class TurnCameraCapabilities(
         private const val MAX_STREAM_BYTES = 64 * 1_024
         private const val REDACT_MAX = 400
         private val WHITELISTED_PROPERTIES = setOf("apps.setting.product.outswver")
+        private val DISPLAY_TOKEN = Regex("«[^»]*»")
         const val BUSY_ITEM_KEY = "probe_busy"
 
         /** Process-wide probe worker budget and its current occupancy (Rework S4). */
@@ -505,10 +506,18 @@ class TurnCameraCapabilities(
             }
             val expected = header.groupValues[1].toIntOrNull()
                 ?: return Status.UNCONFIRMED to "invalid service count; presence not adjudicated"
-            val services = lines.drop(1)
-                .mapNotNull { line -> SERVICE_LINE.matchEntire(line.trim())?.groupValues?.get(1) }
+            val services = mutableListOf<String>()
+            val unparsed = mutableListOf<String>()
+            for (line in lines.drop(1)) {
+                val name = SERVICE_LINE.matchEntire(line.trim())?.groupValues?.get(1)
+                if (name != null) services += name else unparsed += line.trim()
+            }
             if (services.size != expected) {
-                return Status.UNCONFIRMED to "header lists $expected services but ${services.size} parsed; not adjudicated"
+                // A real head unit answered with 7 lines the strict pattern does not match
+                // (on-car 2026-10-25: header 277, parsed 270). Keep failing closed, but
+                // carry the offending shapes out so the format can be adapted with evidence.
+                return Status.UNCONFIRMED to "header lists $expected services but ${services.size} parsed; " +
+                    "unparsed shapes: " + unparsed.take(3).joinToString(" | ") { it.take(60) } + "; not adjudicated"
             }
             if (lines.size - 1 != expected || services.distinct().size != services.size) {
                 return Status.UNCONFIRMED to "malformed or duplicate service listing; presence not adjudicated"
@@ -532,6 +541,12 @@ class TurnCameraCapabilities(
          */
         // Metadata lists need more room than ordinary shell/property snippets. Keep the
         // same sanitizer and a separate fixed bound, including when saving a report again.
+        /**
+         * A firmware display name wrapped for the report: machine-generated strings (often
+         * long opaque tokens) are trimmed and marked so [redact] keeps them verbatim.
+         */
+        internal fun displayToken(name: String): String = "«" + name.take(48) + "»"
+
         internal fun redactDetail(key: String, text: String): String =
             redact(text, if (key == "camera2_ids") 8_000 else REDACT_MAX)
 
@@ -542,7 +557,20 @@ class TurnCameraCapabilities(
             cleaned = Regex("(?i)\\b(token|secret|password|passwd|authorization|auth|key|session)[=: ]+(?:(bearer|basic|mac)\\s+)?\\S+")
                 .replace(cleaned) { it.groupValues[1] + "=<redacted>" }
             cleaned = Regex("\\b[A-HJ-NPR-Z0-9]{17}\\b").replace(cleaned, "<vin>")
-            cleaned = Regex("[A-Za-z0-9+/=_-]{32,}").replace(cleaned, "<opaque>")
+            // Firmware display names arrive as «…» tokens and must survive verbatim (on-car
+            // 2026-10-25 the projection target was exactly such an opaque-looking machine
+            // string). Lookarounds are not enough — a long run can start INSIDE a token —
+            // so the tokens are lifted out, the opaque mask runs on the rest, then restored.
+            val displayTokens = DISPLAY_TOKEN.findAll(cleaned).map { it.value }.toList()
+            var masked = cleaned
+            displayTokens.forEachIndexed { index, token ->
+                masked = masked.replace(token, "\u2063$index\u2063")
+            }
+            masked = Regex("[A-Za-z0-9+/=_-]{32,}").replace(masked, "<opaque>")
+            displayTokens.forEachIndexed { index, token ->
+                masked = masked.replace("\u2063$index\u2063", token)
+            }
+            cleaned = masked
             return if (cleaned.length > maxChars) cleaned.take(maxChars) + "…" else cleaned
         }
 

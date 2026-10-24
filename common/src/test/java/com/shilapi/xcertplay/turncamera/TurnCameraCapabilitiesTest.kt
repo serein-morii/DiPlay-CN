@@ -471,6 +471,27 @@ class TurnCameraCapabilitiesTest {
         assertTrue(TurnCameraCapabilities.redact("sig $blob end").contains("<opaque>"))
     }
 
+    @Test fun displayNamesSurviveRedactionAsMarkedTokens() {
+        val token = TurnCameraCapabilities.displayToken("Display4_Port0_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6")
+        val line = "projection target: $token"
+        val redacted = TurnCameraCapabilities.redact(line)
+        assertTrue(redacted.contains(token))
+        assertTrue(TurnCameraCapabilities.displayToken("x".repeat(200)).length <= 50)
+        // Opaque runs outside the marks are still masked.
+        assertTrue(TurnCameraCapabilities.redact("sig a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6").contains("<opaque>"))
+    }
+
+    @Test fun headerCountMismatchReportsUnparsedShapes() {
+        val outcome = TurnCameraCapabilities.ShellOutcome(
+            exitCode = 0,
+            stdout = "Found 3 services:\n1\tcamera: [android.hardware.ICameraService]\nweird line without format\n",
+            stderr = "", timedOut = false,
+        )
+        val (status, detail) = TurnCameraCapabilities.parseServiceList(outcome)
+        assertEquals(TurnCameraCapabilities.Status.UNCONFIRMED, status)
+        assertTrue(detail.contains("unparsed shapes: weird line without format"))
+    }
+
     @Test fun redactionCapsLength() {
         assertTrue(TurnCameraCapabilities.redact("x".repeat(1_000)).length <= 401)
     }

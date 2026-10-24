@@ -1055,4 +1055,19 @@
     <string name="settings_turn_camera_experiment_invalid">設定不完整或無效、攝影機未指定，或無法確認韌體。實驗功能維持關閉。</string>
     <string name="settings_turn_camera_experiment_help">本車韌體專用 JSON 草稿；null 表示未知，不是 0。填入實際轉向/雙閃/倒車編碼、原車 360 的零參數 int getter（android.hardware.bydauto.* 類別）、閒置/占用值、攝影機通道及緩衝尺寸。確認時間戳來源後，timestampTimebase 填 ELAPSED_REALTIME_NANOS 或 MONOTONIC_NANOS。safeArea 是儀表地圖區域內的 [左,上,右,下] 比例。兩個確認項僅於驗證後設為 true。無猜測預設值；占用未知時禁止串流。儲存編輯會關閉實驗功能。</string>
     <string name="settings_turn_camera_experiment_saved">草稿已儲存，實驗功能已關閉；核對後需重新明確啟用。</string>
+    <string name="settings_turn_camera_capture_enumerate">列舉 AVM 攝影機（唯讀）</string>
+    <string name="settings_turn_camera_capture_signal">擷取訊號值（停車，約 40 秒）</string>
+    <string name="settings_turn_camera_capture_signal_unavailable">此車機不支援訊號讀取介面。</string>
+    <string name="settings_turn_camera_capture_preview">預覽通道掃查（停車）</string>
+    <string name="settings_turn_camera_capture_preview_warning">此操作會開啟廠商 AVM 攝影機，逐個通道顯示預覽。僅在停車時使用。原廠 360/倒車影像優先，如出現請立即停止。</string>
+    <string name="settings_turn_camera_phase_idle">無訊號——撥桿保持不動</string>
+    <string name="settings_turn_camera_phase_left">保持左轉向燈</string>
+    <string name="settings_turn_camera_phase_right">保持右轉向燈</string>
+    <string name="settings_turn_camera_phase_neutral">回中——無訊號</string>
+    <string name="settings_turn_camera_phase_hazard_on">開啟雙黃燈</string>
+    <string name="settings_turn_camera_phase_hazard_off">關閉雙黃燈</string>
+    <string name="settings_turn_camera_capture_seconds">剩餘 %1$d 秒</string>
+    <string name="settings_turn_camera_capture_channel">通道 %1$d / %2$d</string>
+    <string name="settings_turn_camera_capture_mark_left">這是左側</string>
+    <string name="settings_turn_camera_capture_mark_right">這是右側</string>
 </resources>

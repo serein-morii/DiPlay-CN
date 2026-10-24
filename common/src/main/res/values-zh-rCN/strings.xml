@@ -1055,4 +1055,19 @@
     <string name="settings_turn_camera_experiment_invalid">配置不完整或无效、摄像头未分配，或无法确认固件。实验功能保持关闭。</string>
     <string name="settings_turn_camera_experiment_help">本车固件专用 JSON 草稿；null 表示未知，不是 0。填写实际转向/双闪/倒车编码、原车 360 的零参数 int getter（android.hardware.bydauto.* 类）、空闲/占用值、摄像头通道及缓冲尺寸。确认画面时间戳来源后，timestampTimebase 填 ELAPSED_REALTIME_NANOS 或 MONOTONIC_NANOS。safeArea 为现有仪表地图区域内的 [左,上,右,下] 比例。两个确认项仅在验证后设为 true。无猜测默认值；占用未知时禁止取流。编辑保存会关闭实验功能。</string>
     <string name="settings_turn_camera_experiment_saved">草稿已保存，实验功能已关闭；核对后需重新显式启用。</string>
+    <string name="settings_turn_camera_capture_enumerate">枚举 AVM 摄像头（只读）</string>
+    <string name="settings_turn_camera_capture_signal">采集信号值（停车，约 40 秒）</string>
+    <string name="settings_turn_camera_capture_signal_unavailable">此车机不支持信号读取接口。</string>
+    <string name="settings_turn_camera_capture_preview">预览通道扫查（停车）</string>
+    <string name="settings_turn_camera_capture_preview_warning">此操作会打开厂商 AVM 摄像头，逐个通道显示预览。仅在停车时使用。原车 360/倒车影像优先，如出现请立即停止。</string>
+    <string name="settings_turn_camera_phase_idle">无信号——拨杆保持不动</string>
+    <string name="settings_turn_camera_phase_left">保持左转向灯</string>
+    <string name="settings_turn_camera_phase_right">保持右转向灯</string>
+    <string name="settings_turn_camera_phase_neutral">回中——无信号</string>
+    <string name="settings_turn_camera_phase_hazard_on">打开双闪灯</string>
+    <string name="settings_turn_camera_phase_hazard_off">关闭双闪灯</string>
+    <string name="settings_turn_camera_capture_seconds">剩余 %1$d 秒</string>
+    <string name="settings_turn_camera_capture_channel">通道 %1$d / %2$d</string>
+    <string name="settings_turn_camera_capture_mark_left">这是左侧</string>
+    <string name="settings_turn_camera_capture_mark_right">这是右侧</string>
 </resources>

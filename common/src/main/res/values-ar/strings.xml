@@ -1044,4 +1044,19 @@
     <string name="settings_turn_camera_experiment_invalid">ملف ناقص أو غير صالح، أو كاميرات غير معيّنة، أو برنامج ثابت مجهول. تبقى التجربة معطّلة.</string>
     <string name="settings_turn_camera_experiment_help">مسودة JSON خاصة بالبرنامج الثابت؛ null يعني مجهولًا لا صفرًا. أدخل قيم الانعطاف والطوارئ والرجوع، وgetter من نوع int بلا معاملات للنظام الأصلي 360 (android.hardware.bydauto.*)، وقيم الخمول والانشغال والقنوات والأبعاد. بعد تأكيد ساعة المصدر اختر timestampTimebase: ELAPSED_REALTIME_NANOS أو MONOTONIC_NANOS. safeArea هي نسب [يسار، أعلى، يمين، أسفل] ضمن خريطة العدادات. أكّد القيمتين المنطقيتين بعد التحقق فقط. الانشغال المجهول يمنع التصوير. الحفظ يعطّل التجربة.</string>
     <string name="settings_turn_camera_experiment_saved">حُفظت المسودة وعُطّلت التجربة. راجع الإعدادات ثم فعّلها صراحةً.</string>
+    <string name="settings_turn_camera_capture_enumerate">عدّ كاميرات AVM (قراءة فقط)</string>
+    <string name="settings_turn_camera_capture_signal">تسجيل قيم الإشارات (متوقف، ~40 ثانية)</string>
+    <string name="settings_turn_camera_capture_signal_unavailable">واجهة قراءة الإشارات غير متاحة في هذا الجهاز.</string>
+    <string name="settings_turn_camera_capture_preview">استعراض قنوات المعاينة (متوقف)</string>
+    <string name="settings_turn_camera_capture_preview_warning">سيفتح كاميرا AVM ويعرض القنوات واحدة تلو الأخرى. استخدمه فقط أثناء التوقف. عرض 360°/الرؤية الخلفية الأصلي له الأولوية؛ توقف فورًا عند ظهوره.</string>
+    <string name="settings_turn_camera_phase_idle">لا إشارة — اترك ذراع الإشارة دون حراك</string>
+    <string name="settings_turn_camera_phase_left">ثبّت الإشارة اليسرى</string>
+    <string name="settings_turn_camera_phase_right">ثبّت الإشارة اليمنى</string>
+    <string name="settings_turn_camera_phase_neutral">أعدها للحياد — لا إشارة</string>
+    <string name="settings_turn_camera_phase_hazard_on">شغّل أضواء التحذير</string>
+    <string name="settings_turn_camera_phase_hazard_off">أطفئ أضواء التحذير</string>
+    <string name="settings_turn_camera_capture_seconds">بقيت %1$d ثانية</string>
+    <string name="settings_turn_camera_capture_channel">القناة %1$d / %2$d</string>
+    <string name="settings_turn_camera_capture_mark_left">هذه اليسرى</string>
+    <string name="settings_turn_camera_capture_mark_right">هذه اليمنى</string>
 </resources>

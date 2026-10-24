@@ -1098,4 +1098,19 @@
     <string name="settings_turn_camera_experiment_invalid">Incomplete or invalid profile, unassigned cameras, or unknown firmware. Experiment remains off.</string>
     <string name="settings_turn_camera_experiment_help">JSON draft for your firmware; null means unknown, not zero. Fill actual turn/hazard/reverse codes, an OEM 360 zero-argument int getter (android.hardware.bydauto.*), idle/active values, camera channels and buffer sizes. timestampTimebase must be ELAPSED_REALTIME_NANOS or MONOTONIC_NANOS only after confirming the producer timebase. safeArea is [left, top, right, bottom] within the existing cluster map viewport. Confirm both booleans only after testing. No guessed defaults; unknown occupancy blocks capture. Saving edits turns the experiment off.</string>
     <string name="settings_turn_camera_experiment_saved">Draft saved. Experiment switched off; re-enable explicitly after checking the configuration.</string>
+    <string name="settings_turn_camera_capture_enumerate">Enumerate AVM cameras (read-only)</string>
+    <string name="settings_turn_camera_capture_signal">Capture signal values (parked, ~40 s)</string>
+    <string name="settings_turn_camera_capture_signal_unavailable">Signal getters are unavailable on this unit.</string>
+    <string name="settings_turn_camera_capture_preview">Preview channel sweep (parked)</string>
+    <string name="settings_turn_camera_capture_preview_warning">This opens the vendor AVM camera to show one preview channel at a time. Use only while parked. The factory 360/reverse view has priority; stop if either appears.</string>
+    <string name="settings_turn_camera_phase_idle">No signal — leave the stalk alone</string>
+    <string name="settings_turn_camera_phase_left">Hold the LEFT turn signal</string>
+    <string name="settings_turn_camera_phase_right">Hold the RIGHT turn signal</string>
+    <string name="settings_turn_camera_phase_neutral">Back to neutral — no signal</string>
+    <string name="settings_turn_camera_phase_hazard_on">Turn the HAZARD lights ON</string>
+    <string name="settings_turn_camera_phase_hazard_off">Turn the HAZARD lights OFF</string>
+    <string name="settings_turn_camera_capture_seconds">%1$d s left</string>
+    <string name="settings_turn_camera_capture_channel">Channel %1$d / %2$d</string>
+    <string name="settings_turn_camera_capture_mark_left">This is LEFT</string>
+    <string name="settings_turn_camera_capture_mark_right">This is RIGHT</string>
 </resources>

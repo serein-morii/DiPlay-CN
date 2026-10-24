@@ -2211,9 +2211,18 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
             card.addView(button("${getString(R.string.settings_turn_camera_calibration)} · ${getString(R.string.settings_turn_camera_simulation)}", false) {
                 showTurnCameraCalibration()
             }.apply { fitWrappedLabel = true }, matchButton(0, CONTROL_HEIGHT_DP))
+            card.addView(button(getString(R.string.settings_turn_camera_capture_enumerate), false) {
+                runTurnCameraEnumeration()
+            }.apply { fitWrappedLabel = true }, matchButton(CONTROL_GAP_DP, CONTROL_HEIGHT_DP))
+            card.addView(button(getString(R.string.settings_turn_camera_capture_signal), false) {
+                startTurnCameraSignalCapture()
+            }.apply { fitWrappedLabel = true }, matchButton(CONTROL_GAP_DP, CONTROL_HEIGHT_DP))
+            card.addView(button(getString(R.string.settings_turn_camera_capture_preview), false) {
+                confirmTurnCameraPreviewSweep()
+            }.apply { fitWrappedLabel = true }, matchButton(CONTROL_GAP_DP, CONTROL_HEIGHT_DP))
             card.addView(button("${getString(R.string.settings_turn_camera_experiment_config)} · JSON", false) {
                 showTurnCameraExperimentConfiguration()
-            }.apply { fitWrappedLabel = true }, matchButton(0, CONTROL_HEIGHT_DP))
+            }.apply { fitWrappedLabel = true }, matchButton(CONTROL_GAP_DP, CONTROL_HEIGHT_DP))
             toggle(card, getString(R.string.settings_turn_camera_experiment_enable),
                 getString(R.string.settings_turn_camera_experiment_description),
                 TurnCameraExperimentSettings.enabled(this)) { enabled ->
@@ -6182,6 +6191,202 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
                 }
             }
         }.apply { isDaemon = true }.start()
+    }
+
+    // ---- Turn camera calibration capture (phase B evidence gathering) ----
+
+    /** Read-only AVM camera enumeration: counts, tags, ids and default sizes; never opens one. */
+    private fun runTurnCameraEnumeration() {
+        val enumeration = com.shilapi.xcertplay.turncamera.TurnCameraAvmEnumeration()
+        Thread {
+            val ok = enumeration.run()
+            runOnUiThread {
+                if (isFinishing || isDestroyed) return@runOnUiThread
+                val report = buildString {
+                    appendLine(if (ok) "AVM camera enumeration (read-only)" else "AVM camera enumeration found no camera")
+                    appendLine("cameraCount=${enumeration.cameraCount}")
+                    appendLine("cameras: ${enumeration.cameras.joinToString("; ") { "${it.tag}=${it.id}" + (if (it.fromFirmwareTags) " (firmware tag)" else "") + " default=${it.width}?x${it.height}?" }}")
+                    appendLine()
+                    appendLine("journal:")
+                    enumeration.journal.forEach { appendLine(" $it") }
+                    appendLine()
+                    appendLine(com.shilapi.xcertplay.turncamera.TurnCameraAvmEnumeration.KNOWN_TAGS.joinToString(", ") { it })
+                    appendLine("IDs are leads only; verify each channel with the parked preview sweep.")
+                }
+                showTurnCameraProbeReport(report)
+            }
+        }.apply { isDaemon = true }.start()
+    }
+
+    /** Guided, parked signal-value capture that fills the JSON profile's value encodings. */
+    private fun startTurnCameraSignalCapture() {
+        val now = { android.os.SystemClock.elapsedRealtime() }
+        // Raw int reads of the three BYD Light getters plus the draft's OEM getter when valid.
+        val draft = TurnCameraExperimentSettings.text(this)
+        val reader = com.shilapi.xcertplay.turncamera.TurnCameraRawSignalReader(this, draft, now)
+        if (!reader.available()) {
+            toast(getString(R.string.settings_turn_camera_capture_signal_unavailable))
+            return
+        }
+        val capture = com.shilapi.xcertplay.turncamera.TurnCameraSignalCapture(clock = now, read = { reader.read() })
+        listOf(
+            "idle" to 8_000L, "left" to 6_000L, "neutral" to 4_000L, "right" to 6_000L,
+            "neutral2" to 4_000L, "hazard_on" to 6_000L, "hazard_off" to 5_000L,
+        ).forEach { (key, millis) -> capture.phase(key, millis) }
+        val phaseLabel = { key: String ->
+            getString(
+                when (key) {
+                    "left" -> R.string.settings_turn_camera_phase_left
+                    "right" -> R.string.settings_turn_camera_phase_right
+                    "neutral", "neutral2" -> R.string.settings_turn_camera_phase_neutral
+                    "hazard_on" -> R.string.settings_turn_camera_phase_hazard_on
+                    "hazard_off" -> R.string.settings_turn_camera_phase_hazard_off
+                    else -> R.string.settings_turn_camera_phase_idle
+                },
+            )
+        }
+        val body = column().apply { setPadding(dp(SETTINGS_DIALOG_PADDING_DP), dp(SETTINGS_DIALOG_GAP_DP), dp(SETTINGS_DIALOG_PADDING_DP), dp(SETTINGS_DIALOG_GAP_DP)) }
+        val prompt = label("", 22, TEXT, true)
+        val countdown = label("", 16, MUTED)
+        val live = label("", 13, MUTED).apply { typeface = Typeface.MONOSPACE }
+        body.addView(prompt); body.addView(countdown); body.addView(live)
+        val cancelled = java.util.concurrent.atomic.AtomicBoolean(false)
+        val dialog = appDialogBuilder().setTitle(R.string.settings_turn_camera_capture_signal)
+            .setView(ScrollView(appDialogContext()).apply { addView(body) })
+            .setNegativeButton(R.string.cancel) { _, _ -> cancelled.set(true) }
+            .setOnCancelListener { cancelled.set(true) }
+            .create()
+        dialog.show()
+        Thread {
+            val handler = Handler(Looper.getMainLooper())
+            while (!cancelled.get()) {
+                val phase = capture.beginNext() ?: break
+                handler.post {
+                    if (dialog.isShowing) {
+                        prompt.text = phaseLabel(phase.key)
+                        countdown.text = getString(R.string.settings_turn_camera_capture_seconds, phase.millis / 1000)
+                    }
+                }
+                val startedAt = now()
+                while (!cancelled.get()) {
+                    val open = capture.tick() ?: break
+                    val left = ((startedAt + phase.millis - now()) / 1000).coerceAtLeast(0)
+                    val values = reader.lastRead()?.joinToString(", ") ?: "…"
+                    handler.post {
+                        if (dialog.isShowing) {
+                            countdown.text = getString(R.string.settings_turn_camera_capture_seconds, left)
+                            live.text = values
+                        }
+                    }
+                    Thread.sleep(100)
+                }
+            }
+            reader.close()
+            handler.post {
+                if (dialog.isShowing) dialog.dismiss()
+                if (isFinishing || isDestroyed || cancelled.get()) return@post
+                showTurnCameraProbeReport(capture.reportText())
+            }
+        }.apply { isDaemon = true }.start()
+    }
+
+    /** Parked preview sweep consent: opening the vendor camera is explicitly confirmed. */
+    private fun confirmTurnCameraPreviewSweep() {
+        appDialogBuilder().setTitle(R.string.settings_turn_camera_capture_preview)
+            .setMessage(R.string.settings_turn_camera_capture_preview_warning)
+            .setPositiveButton(R.string.settings_turn_camera_experiment_confirm) { _, _ -> showTurnCameraPreviewSweep() }
+            .setNegativeButton(R.string.cancel, null).show()
+    }
+
+    private fun showTurnCameraPreviewSweep() {
+        val enumeration = com.shilapi.xcertplay.turncamera.TurnCameraAvmEnumeration()
+        Thread {
+            enumeration.run()
+            runOnUiThread {
+                if (isFinishing || isDestroyed) return@runOnUiThread
+                val camera = enumeration.cameras.firstOrNull()
+                if (camera == null) {
+                    showTurnCameraProbeReport(
+                        "AVM camera enumeration found no camera; the sweep needs a camera id.\n" +
+                            enumeration.journal.joinToString("\n"),
+                    )
+                    return@runOnUiThread
+                }
+                openTurnCameraPreviewSweep(camera.id, (enumeration.cameraCount ?: 5).coerceIn(1, 16) - 1)
+            }
+        }.apply { isDaemon = true }.start()
+    }
+
+    private fun openTurnCameraPreviewSweep(cameraId: Int, lastChannel: Int) {
+        val sweeper = com.shilapi.xcertplay.turncamera.AvmPreviewSweeper(cameraId, 0..lastChannel)
+        val body = column().apply { setPadding(dp(SETTINGS_DIALOG_PADDING_DP), dp(SETTINGS_DIALOG_GAP_DP), dp(SETTINGS_DIALOG_PADDING_DP), dp(SETTINGS_DIALOG_GAP_DP)) }
+        val view = android.view.TextureView(this)
+        val channelLabel = label("", 20, TEXT, true)
+        val hint = label(sweeper.hint(), 12, MUTED)
+        body.addView(channelLabel)
+        body.addView(view, LinearLayout.LayoutParams(-1, 0, 1f))
+        body.addView(hint)
+        val boundChannel = java.util.concurrent.atomic.AtomicInteger(-1)
+        val session = java.util.concurrent.atomic.AtomicReference<AutoCloseable?>(null)
+        val surfaceReady = java.util.concurrent.atomic.AtomicBoolean(false)
+        val sweepDialog = java.util.concurrent.atomic.AtomicReference<android.app.Dialog?>(null)
+        fun refresh() {
+            channelLabel.text = getString(R.string.settings_turn_camera_capture_channel, sweeper.channel, lastChannel) +
+                "  L=" + (sweeper.left?.toString() ?: "–") + "  R=" + (sweeper.right?.toString() ?: "–")
+        }
+        val markLeft = button(getString(R.string.settings_turn_camera_capture_mark_left), false) { sweeper.markLeft(); refresh() }
+        val markRight = button(getString(R.string.settings_turn_camera_capture_mark_right), false) { sweeper.markRight(); refresh() }
+
+        fun bind(channel: Int) {
+            refresh()
+            if (!surfaceReady.get() || boundChannel.get() == channel) return
+            val surface = view.surfaceTexture?.let { android.view.Surface(it) } ?: return
+            val previous = session.getAndSet(null)
+            boundChannel.set(channel)
+            Thread {
+                runCatching { previous?.close() }
+                val opened = try {
+                    com.shilapi.xcertplay.turncamera.VendorAvmCameraDriver().open(cameraId, surface, channel) { sweepDialog.get()?.isShowing == true }
+                } catch (_: Exception) { null }
+                if (opened != null) session.set(opened)
+            }.apply { isDaemon = true }.start()
+        }
+
+        val row = row().apply {
+            addView(button("◀", false) { bind(sweeper.previous()) }, LinearLayout.LayoutParams(0, -2, 1f))
+            addView(button("▶", false) { bind(sweeper.next()) }, LinearLayout.LayoutParams(0, -2, 1f))
+        }
+        body.addView(row, matchButton(CONTROL_GAP_DP, CONTROL_HEIGHT_DP))
+        val marks = row().apply {
+            addView(markLeft, LinearLayout.LayoutParams(0, -2, 1f))
+            addView(markRight, LinearLayout.LayoutParams(0, -2, 1f))
+        }
+        body.addView(marks, matchButton(CONTROL_GAP_DP, CONTROL_HEIGHT_DP))
+        view.surfaceTextureListener = object : android.view.TextureView.SurfaceTextureListener {
+            override fun onSurfaceTextureAvailable(t: android.graphics.SurfaceTexture, w: Int, h: Int) {
+                surfaceReady.set(true); bind(sweeper.channel)
+            }
+            override fun onSurfaceTextureSizeChanged(t: android.graphics.SurfaceTexture, w: Int, h: Int) {}
+            override fun onSurfaceTextureDestroyed(t: android.graphics.SurfaceTexture): Boolean {
+                surfaceReady.set(false); return true
+            }
+            override fun onSurfaceTextureUpdated(t: android.graphics.SurfaceTexture) {}
+        }
+        val dialog = appDialogBuilder().setTitle(R.string.settings_turn_camera_capture_preview)
+            .setView(ScrollView(appDialogContext()).apply { addView(body) })
+            .setPositiveButton(R.string.done) { _, _ ->
+                session.getAndSet(null)?.let { runCatching { it.close() } }
+                val report = "preview sweep: cameraId=$cameraId left=${sweeper.left} right=${sweeper.right}\n" +
+                    "fill leftChannel/rightChannel (and the camera id) in the JSON profile from these."
+                showTurnCameraProbeReport(report)
+            }
+            .setOnDismissListener {
+                session.getAndSet(null)?.let { runCatching { it.close() } }
+            }
+            .create()
+        refresh()
+        sweepDialog.set(dialog)
+        dialog.show()
     }
 
     private fun showTurnCameraProbeReport(report: String) {

@@ -1057,4 +1057,19 @@
     <string name="settings_turn_camera_experiment_invalid">設定が不完全・無効、カメラ未割り当て、またはファームウェア不明です。無効のままです。</string>
     <string name="settings_turn_camera_experiment_help">ファームウェア専用 JSON。null は不明であり 0 ではありません。方向/ハザード/バックの実際の値、純正 360 の引数なし int getter（android.hardware.bydauto.*）、空き/使用中の値、チャンネルとサイズを入力します。生成元の時計を確認して timestampTimebase を ELAPSED_REALTIME_NANOS または MONOTONIC_NANOS にします。safeArea はメーター地図領域内の [左,上,右,下] の割合です。確認した場合のみ両 boolean を true にします。不明な使用状態ではキャプチャしません。保存で実験は無効になります。</string>
     <string name="settings_turn_camera_experiment_saved">下書きを保存し実験を無効にしました。確認後に明示的に有効化してください。</string>
+    <string name="settings_turn_camera_capture_enumerate">AVMカメラを列挙（読み取り専用）</string>
+    <string name="settings_turn_camera_capture_signal">信号値を取得（停車中、約40秒）</string>
+    <string name="settings_turn_camera_capture_signal_unavailable">この車機では信号取得インターフェースが利用できません。</string>
+    <string name="settings_turn_camera_capture_preview">プレビューチャンネルの確認（停車中）</string>
+    <string name="settings_turn_camera_capture_preview_warning">ベンダーAVMカメラを開き、チャンネルを1つずつ表示します。停車中のみ使用してください。純正360°/リバース映像が優先されます。表示されたら直ちに中止してください。</string>
+    <string name="settings_turn_camera_phase_idle">無信号——ウインカーレバーは動かさない</string>
+    <string name="settings_turn_camera_phase_left">左ウインカーを点灯したまま</string>
+    <string name="settings_turn_camera_phase_right">右ウインカーを点灯したまま</string>
+    <string name="settings_turn_camera_phase_neutral">ニュートラルに戻す——無信号</string>
+    <string name="settings_turn_camera_phase_hazard_on">ハザードランプをON</string>
+    <string name="settings_turn_camera_phase_hazard_off">ハザードランプをOFF</string>
+    <string name="settings_turn_camera_capture_seconds">残り %1$d 秒</string>
+    <string name="settings_turn_camera_capture_channel">チャンネル %1$d / %2$d</string>
+    <string name="settings_turn_camera_capture_mark_left">これは左側</string>
+    <string name="settings_turn_camera_capture_mark_right">これは右側</string>
 </resources>

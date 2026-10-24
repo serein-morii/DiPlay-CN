@@ -995,4 +995,19 @@
     <string name="settings_turn_camera_experiment_invalid">Неполный/неверный профиль, камеры не назначены или прошивка неизвестна. Остаётся выключенным.</string>
     <string name="settings_turn_camera_experiment_help">JSON для конкретной прошивки; null — неизвестно, не ноль. Укажите коды поворота/аварийки/заднего хода, int getter OEM 360 без аргументов (android.hardware.bydauto.*), значения свободно/занято, каналы и размеры. После проверки часов источника выберите timestampTimebase: ELAPSED_REALTIME_NANOS или MONOTONIC_NANOS. safeArea — доли [слева, сверху, справа, снизу] в области карты панели. Оба флага true только после проверки. Неизвестная занятость запрещает видео. Сохранение выключает эксперимент.</string>
     <string name="settings_turn_camera_experiment_saved">Черновик сохранён, эксперимент выключен. Проверьте настройки и включите явно.</string>
+    <string name="settings_turn_camera_capture_enumerate">Перечислить камеры AVM (только чтение)</string>
+    <string name="settings_turn_camera_capture_signal">Записать значения сигналов (на стоянке, ~40 с)</string>
+    <string name="settings_turn_camera_capture_signal_unavailable">Интерфейс чтения сигналов недоступен на этом ГУ.</string>
+    <string name="settings_turn_camera_capture_preview">Просмотр каналов (на стоянке)</string>
+    <string name="settings_turn_camera_capture_preview_warning">Откроет камеру AVM и покажет каналы по одному. Используйте только на стоянке. Штатный обзор 360°/задний вид имеет приоритет; при его появлении немедленно прекратите.</string>
+    <string name="settings_turn_camera_phase_idle">Нет сигнала — не трогайте подрулевой переключатель</string>
+    <string name="settings_turn_camera_phase_left">Держите ЛЕВЫЙ поворотник</string>
+    <string name="settings_turn_camera_phase_right">Держите ПРАВЫЙ поворотник</string>
+    <string name="settings_turn_camera_phase_neutral">Верните в нейтраль — нет сигнала</string>
+    <string name="settings_turn_camera_phase_hazard_on">Включите АВАРИЙКУ</string>
+    <string name="settings_turn_camera_phase_hazard_off">Выключите АВАРИЙКУ</string>
+    <string name="settings_turn_camera_capture_seconds">Осталось %1$d с</string>
+    <string name="settings_turn_camera_capture_channel">Канал %1$d / %2$d</string>
+    <string name="settings_turn_camera_capture_mark_left">Это ЛЕВАЯ</string>
+    <string name="settings_turn_camera_capture_mark_right">Это ПРАВАЯ</string>
 </resources>

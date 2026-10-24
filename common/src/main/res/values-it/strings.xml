@@ -1035,4 +1035,19 @@
     <string name="settings_turn_camera_window_x">Posizione orizzontale finestra</string>
     <string name="settings_turn_camera_window_y">Posizione verticale finestra</string>
     <string name="settings_turn_camera_zoom">Zoom immagine</string>
+    <string name="settings_turn_camera_capture_enumerate">Elenca telecamere AVM (sola lettura)</string>
+    <string name="settings_turn_camera_capture_signal">Registra valori dei segnali (in sosta, ~40 s)</string>
+    <string name="settings_turn_camera_capture_signal_unavailable">L\'interfaccia di lettura dei segnali non è disponibile su questa unità.</string>
+    <string name="settings_turn_camera_capture_preview">Scansione canali anteprima (in sosta)</string>
+    <string name="settings_turn_camera_capture_preview_warning">Apre la telecamera AVM del fornitore mostrando un canale alla volta. Usare solo in sosta. La vista 360/retromarcia di serie ha la priorità; fermarsi se appare.</string>
+    <string name="settings_turn_camera_phase_idle">Nessun segnale — lasciare la leva ferma</string>
+    <string name="settings_turn_camera_phase_left">Tenere la FRECCIA SINISTRA</string>
+    <string name="settings_turn_camera_phase_right">Tenere la FRECCIA DESTRA</string>
+    <string name="settings_turn_camera_phase_neutral">Tornare in neutro — nessun segnale</string>
+    <string name="settings_turn_camera_phase_hazard_on">Accendere le LUCI DI EMERGENZA</string>
+    <string name="settings_turn_camera_phase_hazard_off">Spegnere le LUCI DI EMERGENZA</string>
+    <string name="settings_turn_camera_capture_seconds">Rimangono %1$d s</string>
+    <string name="settings_turn_camera_capture_channel">Canale %1$d / %2$d</string>
+    <string name="settings_turn_camera_capture_mark_left">Questa è la SINISTRA</string>
+    <string name="settings_turn_camera_capture_mark_right">Questa è la DESTRA</string>
 </resources>
