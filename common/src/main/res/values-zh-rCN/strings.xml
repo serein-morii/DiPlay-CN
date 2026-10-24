@@ -1068,10 +1068,11 @@
     <string name="settings_turn_camera_phase_hazard_off">关闭双闪灯</string>
     <string name="settings_turn_camera_capture_seconds">剩余 %1$d 秒</string>
     <string name="settings_turn_camera_capture_channel">通道 %1$d / %2$d</string>
-    <string name="settings_side_view_title">转向侧影像 · 汉 DM-i 实测参数</string>
-    <string name="settings_side_view_enable">打转向灯显示对应侧摄像头</string>
+    <string name="settings_side_view_title">转向侧影像 · 实验性，未实车验证（参数为汉 DM-i 实测）</string>
+    <string name="settings_side_view_experimental_suffix">（实验）</string>
+    <string name="settings_side_view_enable">打转向灯显示对应侧摄像头（实验性）</string>
     <string name="settings_side_view_description">打灯即出该侧画面；倒车和原车 360 永远优先，信号失真时画面自动隐藏</string>
-    <string name="settings_side_view_warning">通过车机网络 ADB 读取转向灯、车速、挡位（与仪表歌曲卡片同一通道），并打开厂商 AVM 摄像头。需要：车机开启一次网络 ADB、使用情况访问权、悬浮窗权限。倒车、原车 360、数据失效都会隐藏画面——请先停车测试，切勿依赖它驾驶。</string>
+    <string name="settings_side_view_warning">实验性功能，未经过实车验证。通过车机网络 ADB 读取转向灯、车速、挡位（与仪表歌曲卡片同一通道），并打开厂商 AVM 摄像头。需要：车机开启一次网络 ADB、使用情况访问权、悬浮窗权限。倒车、原车 360、数据失效都会隐藏画面——请先停车测试，切勿依赖它驾驶。</string>
     <string name="settings_side_view_confirm">启用</string>
     <string name="settings_side_view_readiness">检测 ADB / 使用权限 / 悬浮窗</string>
     <string name="settings_side_view_ok">正常</string>

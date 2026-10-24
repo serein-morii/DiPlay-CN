@@ -2284,21 +2284,23 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
             }
             if (sideViewPrefs.enabled) {
                 val thresholds = (0..12).map { it * 5 }
-                choice(card, getString(R.string.settings_side_view_threshold),
+                choice(card, getString(R.string.settings_side_view_threshold) +
+                    getString(R.string.settings_side_view_experimental_suffix),
                     thresholds.map { getString(R.string.settings_side_view_kmh, it) },
                     thresholds.indexOf(sideViewPrefs.thresholdKmh), reconnects = false) {
                     sideViewPrefs.edit()
                         .putInt(com.shilapi.xcertplay.turncamera.sideview.SideViewPrefs.THRESHOLD, thresholds[it]).apply()
                 }
                 val widths = (4..12).map { it * 5 }
-                choice(card, getString(R.string.settings_side_view_width),
+                choice(card, getString(R.string.settings_side_view_width) +
+                    getString(R.string.settings_side_view_experimental_suffix),
                     widths.map { getString(R.string.percent_value, it) },
                     widths.indexOf(sideViewPrefs.windowWidthPct), reconnects = false) {
                     sideViewPrefs.edit()
                         .putInt(com.shilapi.xcertplay.turncamera.sideview.SideViewPrefs.WIDTH, widths[it]).apply()
                 }
                 fun sideViewToggle(title: String, key: String, value: Boolean) {
-                    toggle(card, title, "", value) {
+                    toggle(card, title + getString(R.string.settings_side_view_experimental_suffix), "", value) {
                         sideViewPrefs.edit().putBoolean(key, it).apply()
                     }
                 }

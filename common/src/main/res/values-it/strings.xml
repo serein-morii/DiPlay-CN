@@ -1048,10 +1048,11 @@
     <string name="settings_turn_camera_phase_hazard_off">Spegnere le LUCI DI EMERGENZA</string>
     <string name="settings_turn_camera_capture_seconds">Rimangono %1$d s</string>
     <string name="settings_turn_camera_capture_channel">Canale %1$d / %2$d</string>
-    <string name="settings_side_view_title">Turn side view · Han DM-i verified parameters</string>
-    <string name="settings_side_view_enable">Show side camera on turn signal</string>
+    <string name="settings_side_view_title">Turn side view · experimental, not verified on a car (parameters Han DM-i-verified)</string>
+    <string name="settings_side_view_experimental_suffix"> (experimental)</string>
+    <string name="settings_side_view_enable">Show side camera on turn signal (experimental)</string>
     <string name="settings_side_view_description">Blinker shows that side\'s camera; reverse and the factory 360 always win, the picture hides when the signal goes stale</string>
-    <string name="settings_side_view_warning">Reads turn signal, speed and gear through the head unit\'s ADB (the same one as the cluster song card) and opens the vendor AVM camera. Needs: ADB over network enabled once, Usage access and Display-over-apps permission. Reverse, the factory 360 view and stale readings hide the picture — never rely on it for driving; test parked first.</string>
+    <string name="settings_side_view_warning">Experimental, never verified on a real car. Reads turn signal, speed and gear through the head unit\'s ADB (the same one as the cluster song card) and opens the vendor AVM camera. Needs: ADB over network enabled once, Usage access and Display-over-apps permission. Reverse, the factory 360 view and stale readings hide the picture — never rely on it for driving; test parked first.</string>
     <string name="settings_side_view_confirm">Enable</string>
     <string name="settings_side_view_readiness">Check ADB / Usage / Overlay</string>
     <string name="settings_side_view_ok">OK</string>
