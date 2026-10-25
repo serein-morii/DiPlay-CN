@@ -66,6 +66,10 @@ internal class ClusterTurnCardView(context: Context) : View(context), ClusterOve
     private val infoPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.argb(224, 235, 235, 240); typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
     }
+    private val thenTextPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.argb(179, 199, 199, 204); textAlign = Paint.Align.CENTER
+        typeface = Typeface.create("sans-serif", Typeface.NORMAL)
+    }
     private val rect = RectF()
     init { applyPalette() }
 
@@ -73,10 +77,6 @@ internal class ClusterTurnCardView(context: Context) : View(context), ClusterOve
     private var glyphTag: Int = -1
     private var thenGlyph: Drawable? = null
     private var thenGlyphTag: Int = -1
-    private val thenTextPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.argb(179, 199, 199, 204); textAlign = Paint.Align.CENTER
-        typeface = Typeface.create("sans-serif", Typeface.NORMAL)
-    }
 
     fun setLayout(xPercent: Int, yPercent: Int, sizePercent: Int) {
         this.xPercent = xPercent
