@@ -11,7 +11,9 @@ jobs:
     # ubuntu-latest moved to Ubuntu 26 on 2026-10-19; pin the image the green
     # history was built on until the toolchain is validated on 26.
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
+    # 30 min cut off the diagnostics re-run on slow runners: the job died before failure.txt
+    # was pushed and the real failure stayed invisible.
+    timeout-minutes: 50
     steps:
       - uses: actions/checkout@v4
       - name: Reject credential files in public source
@@ -30,7 +32,10 @@ jobs:
         if: failure()
         run: |
           set -uo pipefail
-          ./gradlew :shared:testDebugUnitTest :common:testDebugUnitTest :home:testDebugUnitTest :mobile:lintDebug :home:lintDebug :maphost:lintDebug :mobile:assembleDebug :home:assembleDebug :maphost:assembleDebug --stacktrace > gradle.log 2>&1 || true
+          # Bounded re-run: the test XMLs of the failed run are already on disk, so this only
+          # needs to reproduce compile/lint errors — it must never eat the whole job budget
+          # again, or failure.txt never gets pushed.
+          timeout 900 ./gradlew :shared:testDebugUnitTest :common:testDebugUnitTest :home:testDebugUnitTest :mobile:lintDebug :home:lintDebug :maphost:lintDebug :mobile:assembleDebug :home:assembleDebug :maphost:assembleDebug --stacktrace > gradle.log 2>&1 || true
           {
             date
             echo '--- compile/lint errors ---'
