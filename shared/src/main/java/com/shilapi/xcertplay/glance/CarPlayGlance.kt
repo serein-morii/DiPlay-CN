@@ -20,6 +20,9 @@ object CarPlayGlance {
         val arrivalEpochSeconds: Long? = null,
         val remainingSeconds: Long? = null,
         val remainingMeters: Long? = null,
+        /** The turn after this one, when the iPhone sent its detail; null otherwise. */
+        val secondManeuverType: Int? = null,
+        val secondDrivingSide: Int = 0,
         val song: String? = null,
         val playing: Boolean = false,
     )
@@ -77,6 +80,8 @@ object CarPlayGlance {
             arrivalEpochSeconds = maneuver?.arrivalEpochSeconds,
             remainingSeconds = maneuver?.remainingSeconds,
             remainingMeters = maneuver?.remainingMeters,
+            secondManeuverType = maneuver?.second?.type,
+            secondDrivingSide = maneuver?.second?.drivingSide ?: 0,
             song = current?.text,
             playing = current?.playing ?: false,
         )
