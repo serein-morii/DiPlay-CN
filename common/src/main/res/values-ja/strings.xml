@@ -504,6 +504,7 @@
     <string name="turn_card_now">現在</string>
     <string name="turn_card_distance_m">%1$d m</string>
     <string name="turn_card_distance_km">%1$.1f km</string>
+    <string name="turn_card_then">その後</string>
     <string name="turn_card_exit">出口%1$d</string>
     <string name="center_map_follows_dashboard">ホーム画面の地図をメーターと同期</string>
     <string name="center_map_follows_dashboard_description">オン：ホーム画面の地図カードにメーターと同じ地図を表示します。オフ：ホーム画面のカードを隠し、メーターにだけ地図を表示します。CarPlayのメイン画面は変更されません。</string>

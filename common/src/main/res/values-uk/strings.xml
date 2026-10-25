@@ -557,6 +557,7 @@
     <string name="turn_card_now">Зараз</string>
     <string name="turn_card_distance_m">%1$d м</string>
     <string name="turn_card_distance_km">%1$.1f км</string>
+    <string name="turn_card_then">Потім</string>
     <string name="turn_card_exit">Зʼїзд %1$d</string>
     <string name="open_diplay_settings_hint">У CarPlay проведіть вниз %1$d пальцями, щоб відкрити швидке меню.</string>
     <string name="carplay_controls">Керування CarPlay</string>

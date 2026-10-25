@@ -543,6 +543,7 @@
     <string name="turn_card_now">الآن</string>
     <string name="turn_card_distance_m">%1$d م</string>
     <string name="turn_card_distance_km">%1$.1f كم</string>
+    <string name="turn_card_then">ثم</string>
     <string name="turn_card_exit">مخرج %1$d</string>
     <string name="open_diplay_settings_hint">في CarPlay، اسحب لأسفل بـ %1$d أصابع لفتح القائمة السريعة.</string>
     <string name="carplay_controls">تحكم CarPlay</string>

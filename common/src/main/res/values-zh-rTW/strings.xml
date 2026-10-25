@@ -463,6 +463,7 @@
     <string name="turn_card_now">即將轉向</string>
     <string name="turn_card_distance_m">%1$d 公尺</string>
     <string name="turn_card_distance_km">%1$.1f 公里</string>
+    <string name="turn_card_then">然後</string>
     <string name="turn_card_exit">出口 %1$d</string>
     <string name="center_map_follows_dashboard">主螢幕地圖與儀表板同步</string>
     <string name="center_map_follows_dashboard_description">開啟：主螢幕卡片鏡像儀表板地圖。關閉：主螢幕不顯示該卡片，儀表板地圖只出現在儀表板上。不會改變 CarPlay 主螢幕自己的畫面。</string>

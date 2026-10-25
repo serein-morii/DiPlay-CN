@@ -504,6 +504,7 @@
     <string name="turn_card_now">Now</string>
     <string name="turn_card_distance_m">%1$d m</string>
     <string name="turn_card_distance_km">%1$.1f km</string>
+    <string name="turn_card_then">Then</string>
     <string name="turn_card_exit">Exit %1$d</string>
     <string name="center_map_follows_dashboard">Keep the home-screen map in sync with the dashboard</string>
     <string name="center_map_follows_dashboard_description">On: the home-screen card mirrors the dashboard map. Off: hide the home-screen card so only the instrument cluster shows that map. This does not change CarPlay’s own main screen.</string>

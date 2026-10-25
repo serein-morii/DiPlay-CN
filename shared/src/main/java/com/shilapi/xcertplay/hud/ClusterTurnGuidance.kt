@@ -14,6 +14,13 @@ data class ClusterTurnGuidance(
     val laneHighlight: Int = -1,
     /** One entry per visible lane: 0 unused, 1 straight, 2 left, 3 right. */
     val lanes: List<Int> = emptyList(),
+    /**
+     * The turn after this one ("then" preview): 0 = not available. Same AMap NEW_ICON vocabulary
+     * as [icon]; a roundabout additionally carries its exit number. The iPhone sends no distance
+     * for it, so the card shows the glyph alone.
+     */
+    val secondIcon: Int = 0,
+    val secondExit: Int = 0,
 ) {
     companion object {
         internal fun from(frame: BydClusterFrame): ClusterTurnGuidance {

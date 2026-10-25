@@ -499,6 +499,7 @@
     <string name="turn_card_now">Ora</string>
     <string name="turn_card_distance_m">%1$d m</string>
     <string name="turn_card_distance_km">%1$.1f km</string>
+    <string name="turn_card_then">Poi</string>
     <string name="turn_card_exit">Uscita %1$d</string>
     <string name="center_map_follows_dashboard">Mantieni la mappa della schermata Home sincronizzata con il cruscotto</string>
     <string name="center_map_follows_dashboard_description">Attivo: la scheda nella schermata Home riflette la mappa del cruscotto. Disattivo: nasconde la scheda nella schermata Home, così solo il quadro strumenti mostra quella mappa. Non cambia la schermata principale di CarPlay.</string>

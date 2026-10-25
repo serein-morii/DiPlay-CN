@@ -276,4 +276,81 @@ class BydHudRouteStateTest {
     private fun tlvs(vararg values: ByteArray): ByteArray = ByteArrayOutputStream().apply {
         values.forEach(::write)
     }.toByteArray()
+
+    @Test
+    fun `second maneuver follows the current list entry`() {
+        val state = BydHudRouteState()
+        // Index 7: next turn. Index 3: the one after it.
+        state.accept(
+            BydHudRouteState.ROUTE_GUIDANCE_MANEUVER_UPDATE,
+            tlvs(tlv(0x01, 0, 7), tlv(0x03, 1), tlv(0x08, 0), tlv(0x04, *utf8z("Second Road"))),
+        )
+        state.accept(
+            BydHudRouteState.ROUTE_GUIDANCE_MANEUVER_UPDATE,
+            tlvs(tlv(0x01, 0, 3), tlv(0x03, 2), tlv(0x08, 0), tlv(0x04, *utf8z("Second Road"))),
+        )
+
+        val change = state.accept(
+            BydHudRouteState.ROUTE_GUIDANCE_UPDATE,
+            tlvs(tlv(0x01, 1), tlv(0x0a, 0, 0, 0, 150), tlv(0x0d, 0, 7, 0, 3)),
+        )
+
+        assertEquals(BydHudRouteChange.GUIDANCE, change)
+        val apple = state.currentApple()!!
+        assertEquals(1, apple.type)
+        assertEquals(2, apple.second?.type)
+        assertEquals("Second Road", apple.second?.road)
+    }
+
+    @Test
+    fun `second maneuver is absent without a list tail or its detail`() {
+        val state = BydHudRouteState()
+        state.accept(
+            BydHudRouteState.ROUTE_GUIDANCE_MANEUVER_UPDATE,
+            tlvs(tlv(0x01, 0, 7), tlv(0x03, 1), tlv(0x08, 0)),
+        )
+        state.accept(
+            BydHudRouteState.ROUTE_GUIDANCE_UPDATE,
+            tlvs(tlv(0x01, 1), tlv(0x0a, 0, 0, 0, 150), tlv(0x0d, 0, 7, 0, 3)),
+        )
+        // Index 3 has no detail yet.
+        assertNull(state.currentApple()?.second)
+
+        // Detail arrives: the preview appears.
+        state.accept(
+            BydHudRouteState.ROUTE_GUIDANCE_MANEUVER_UPDATE,
+            tlvs(tlv(0x01, 0, 3), tlv(0x03, 2), tlv(0x08, 0)),
+        )
+        assertEquals(2, state.currentApple()?.second?.type)
+
+        // A single-entry list has no tail.
+        state.accept(
+            BydHudRouteState.ROUTE_GUIDANCE_UPDATE,
+            tlvs(tlv(0x01, 1), tlv(0x0a, 0, 0, 0, 90), tlv(0x0d, 0, 7)),
+        )
+        assertNull(state.currentApple()?.second)
+    }
+
+    @Test
+    fun `second maneuver clears with the route`() {
+        val state = BydHudRouteState()
+        state.accept(
+            BydHudRouteState.ROUTE_GUIDANCE_MANEUVER_UPDATE,
+            tlvs(tlv(0x01, 0, 7), tlv(0x03, 1), tlv(0x08, 0)),
+        )
+        state.accept(
+            BydHudRouteState.ROUTE_GUIDANCE_MANEUVER_UPDATE,
+            tlvs(tlv(0x01, 0, 3), tlv(0x03, 2), tlv(0x08, 0)),
+        )
+        state.accept(
+            BydHudRouteState.ROUTE_GUIDANCE_UPDATE,
+            tlvs(tlv(0x01, 1), tlv(0x0a, 0, 0, 0, 150), tlv(0x0d, 0, 7, 0, 3)),
+        )
+        assertEquals(2, state.currentApple()?.second?.type)
+
+        state.clear()
+
+        assertNull(state.currentApple()?.second)
+        assertNull(state.currentApple())
+    }
 }

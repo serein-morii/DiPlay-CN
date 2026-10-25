@@ -543,6 +543,7 @@
     <string name="turn_card_now">Сейчас</string>
     <string name="turn_card_distance_m">%1$d м</string>
     <string name="turn_card_distance_km">%1$.1f км</string>
+    <string name="turn_card_then">Затем</string>
     <string name="turn_card_exit">Съезд %1$d</string>
     <string name="open_diplay_settings_hint">В CarPlay проведите вниз %1$d пальцами, чтобы открыть быстрое меню.</string>
     <string name="carplay_controls">Управление CarPlay</string>
