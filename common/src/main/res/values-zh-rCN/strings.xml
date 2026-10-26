@@ -898,6 +898,8 @@
     <string name="settings_cluster_menu_small_state_unknown">等待识别</string>
     <string name="settings_car_bluetooth_audio">CarPlay 音频走车机蓝牙（实验）</string>
     <string name="settings_car_bluetooth_audio_description">DiPlay 不向 iPhone 提供 CarPlay 音频，音乐、导航和通话会经由 iPhone 与车机的蓝牙连接播放。保持 iPhone 与车机配对，并将车机音源选为蓝牙。如果声音只在 iPhone 上播放，请关闭此项。更改后会重连 CarPlay。</string>
+    <string name="settings_media_over_bluetooth">音乐走车机蓝牙，导航仍走 CarPlay（实验）</string>
+    <string name="settings_media_over_bluetooth_description">DiPlay 不向 iPhone 提供音乐音频流，音乐经由 iPhone 与车机的蓝牙连接播放；导航语音、提示音、通话和 Siri 仍走 CarPlay。保持 iPhone 与车机配对，并将车机音源选为蓝牙。如果音乐暂停或从 iPhone 播放，请关闭此项。更改后会重连 CarPlay。</string>
     <string name="setup_guide">设置向导</string>
     <string name="setup_guide_description">识别你的 DiLink 版本，选择连接方式，并开启适合你车机的功能。</string>
     <string name="setup_step_of">第 %1$d 步，共 %2$d 步</string>

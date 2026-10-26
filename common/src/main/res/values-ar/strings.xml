@@ -775,6 +775,8 @@
     <string name="settings_cluster_menu_small_state_unknown">بانتظار لوحة العدادات</string>
     <string name="settings_car_bluetooth_audio">صوت CarPlay عبر بلوتوث السيارة (تجريبي)</string>
     <string name="settings_car_bluetooth_audio_description">لا يوفّر DiPlay صوت CarPlay للـ iPhone، فتذهب الموسيقى والتنقل والمكالمات عبر اتصال بلوتوث الـ iPhone بالسيارة. أبقِ الـ iPhone مقترنًا واختر البلوتوث كمصدر للصوت. إذا كان الصوت يخرج من الـ iPhone فأوقف هذا. يعيد اتصال CarPlay.</string>
+    <string name="settings_media_over_bluetooth">الموسيقى عبر بلوتوث السيارة والتنقل عبر CarPlay (تجريبي)</string>
+    <string name="settings_media_over_bluetooth_description">لا يوفّر DiPlay صوت الموسيقى للآيفون، فتُبثّ الموسيقى عبر اتصال البلوتوث بين الآيفون والسيارة، بينما تظل أصوات الملاحة والتنبيهات والمكالمات وSiri عبر CarPlay. أبقِ الآيفون مقترناً بالسيارة واختر البلوتوث كمصدر صوت للسيارة. إذا توقفت الموسيقى أو صدرت من الآيفون، أوقف هذا الخيار. يعيد الاتصال بـ CarPlay.</string>
     <string name="setup_guide">دليل الإعداد</string>
     <string name="setup_guide_description">اكتشف إصدار DiLink لديك واختر طريقة الاتصال وفعّل الميزات المناسبة لسيارتك.</string>
     <string name="setup_step_of">الخطوة %1$d من %2$d</string>

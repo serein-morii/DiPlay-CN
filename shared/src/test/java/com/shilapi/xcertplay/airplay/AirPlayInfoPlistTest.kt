@@ -443,4 +443,39 @@ class AirPlayInfoPlistTest {
         assertEquals(outputs(base, 100, "telephony"), outputs(on, 100, "telephony"))
         assertEquals(outputs(base, 100, "media"), outputs(on, 100, "media"))
     }
+
+    @Test
+    fun mediaOverBluetoothOmitsEveryMediaFormatButKeepsNavAndCalls() {
+        val base = AirPlayConfig(
+            deviceName = "test",
+            deviceId = "02:00:00:00:00:02",
+            btMac = "02:00:00:00:00:02",
+            sourceVersion = "366.0",
+            main = AirPlayDisplayConfig(widthPixels = 1280, heightPixels = 720),
+            mainBufferedAudio = true,
+        )
+
+        fun mediaTypes(config: AirPlayConfig): List<Int> =
+            (AirPlayInfoPlist.build(config)["audioFormats"] as List<*>)
+                .map { it as Map<*, *> }
+                .filter { it["audioType"] == "media" }
+                .map { (it["type"] as Number).toInt() }
+
+        assertTrue(mediaTypes(base).isNotEmpty())
+        assertTrue(AirPlayInfoPlist.build(base).containsKey("mainBufferedInfo"))
+
+        val split = base.copy(mediaOverBluetooth = true)
+        assertTrue(mediaTypes(split).isEmpty())
+        assertFalse(split.run { AirPlayInfoPlist.build(this) }.containsKey("mainBufferedInfo"))
+
+        // Navigation, alerts, calls and Siri stay offered.
+        val types = (AirPlayInfoPlist.build(split)["audioFormats"] as List<*>)
+            .map { it as Map<*, *> }
+            .map { (it["audioType"] as String) to (it["type"] as Number).toInt() }
+        assertTrue(types.contains("default" to 100))
+        assertTrue(types.contains("alert" to 100))
+        assertTrue(types.contains("telephony" to 100))
+        assertTrue(types.contains("speechRecognition" to 100))
+        assertTrue(types.contains("compatibility" to 101))
+    }
 }

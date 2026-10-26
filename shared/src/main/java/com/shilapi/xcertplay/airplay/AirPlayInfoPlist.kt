@@ -50,8 +50,10 @@ object AirPlayInfoPlist {
         )
         if (!config.disableAudioOutput) {
             info["audioLatencies"] = audioLatencies()
-            info["audioFormats"] = audioFormats(config.entertainmentSampleRate, config.microphone, config.mainBufferedAudio, config.microphoneOpus,
-                config.speechWithout8And16Khz)
+            // The buffered flag goes through the same gate as the feature: with music on the
+            // car's Bluetooth neither the unbuffered nor the buffered media format is offered.
+            info["audioFormats"] = audioFormats(config.entertainmentSampleRate, config.microphone, config.bufferedAudioOutputEnabled, config.microphoneOpus,
+                config.speechWithout8And16Khz, config.mediaOverBluetooth)
         }
         info["extendedFeatures"] = listOf("vocoderInfo", "enhancedRequestCarUI")
         info["displays"] = displays
@@ -125,6 +127,7 @@ object AirPlayInfoPlist {
         mainBuffered: Boolean = false,
         microphoneOpus: Boolean = true,
         speechWithout8And16Khz: Boolean = false,
+        mediaOverBluetooth: Boolean = false,
     ): List<Map<String, Any?>> {
         fun format(type: Int, audioType: String, outputFormats: Int, inputFormats: Int? = null): Map<String, Any?> {
             val entry = linkedMapOf<String, Any?>(
@@ -159,7 +162,8 @@ object AirPlayInfoPlist {
             format(100, "speechRecognition", pcmMono or opus, wirelessInput),
             format(101, "default", speech or opus),
             format(102, "media", aacLc),
-        ) + if (mainBuffered) {
+        ).filterNot { entry -> mediaOverBluetooth && entry["audioType"] == "media" } +
+            if (mainBuffered) {
             // The buffered music stream; the iPhone (iOS 27) opened it only with AAC-LC, not PCM or ALAC.
             listOf(format(BufferedAudioStream.STREAM_TYPE, "media", aacLc))
         } else emptyList()

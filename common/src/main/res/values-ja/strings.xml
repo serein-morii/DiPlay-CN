@@ -774,6 +774,8 @@
     <string name="main_buffered_audio_description">Apple Musicなど対応アプリでは音楽を最大約2分先まで受信し、短時間のWi-Fi途切れでも音声が止まらないようにします。非対応アプリでは通常どおり動作します。CarPlayを再接続します。</string>
     <string name="settings_car_bluetooth_audio">車のBluetoothでCarPlay音声を再生（実験的機能）</string>
     <string name="settings_car_bluetooth_audio_description">DiPlayがiPhoneにCarPlay音声の出力先を提供しないことで、音楽・ナビ・通話を車とiPhoneのBluetooth接続で再生します。iPhoneを車とペアリングしたまま、車の音声入力をBluetoothにしてください。音がiPhone本体から出る場合はオフにしてください。CarPlayを再接続します。</string>
+    <string name="settings_media_over_bluetooth">音楽は車のBluetooth、ナビはCarPlayのまま（実験的機能）</string>
+    <string name="settings_media_over_bluetooth_description">DiPlayがiPhoneに音楽音声の出力先を提供しないため、音楽は車とiPhoneのBluetooth接続で再生されます。ナビの音声・警告音・通話・Siriは引き続きCarPlay経由です。iPhoneを車とペアリングしたまま、車の音声入力をBluetoothにしてください。音楽が止まる・iPhoneから鳴る場合はオフにしてください。CarPlayを再接続します。</string>
     <string name="call_echo_cancellation">通話のエコーキャンセル（実験的機能）</string>
     <string name="call_echo_cancellation_description">CarPlay通話時に相手へ届くスピーカーの反響音を軽減します。効果は車載端末によって異なります。次回接続から有効です。</string>
     <string name="call_voice_filter">通話音声を聞き取りやすくする（実験的機能）</string>

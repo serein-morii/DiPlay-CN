@@ -5330,6 +5330,7 @@ class CarPlayHostActivity : ComponentActivity() {
             mainBufferedAudio = AirPlayPersistence.loadMainBufferedAudio(this),
             speechWithout8And16Khz = AirPlayPersistence.loadSpeechWithout8And16Khz(this),
             disableAudioOutput = carBluetoothAudio,
+            mediaOverBluetooth = AirPlayPersistence.loadMediaOverBluetooth(this),
         )
     }
 
@@ -5559,6 +5560,7 @@ class CarPlayHostActivity : ComponentActivity() {
             sink = sink,
             microphoneEnabled = microphoneAvailable,
             audioCaptureDirectory = audioCaptureDirectory(),
+            mediaOverBluetooth = AirPlayPersistence.loadMediaOverBluetooth(this),
         )
 
     private fun createSessionListener(controllerGeneration: Int): AirPlaySessionListener =

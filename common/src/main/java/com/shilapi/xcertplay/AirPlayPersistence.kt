@@ -77,6 +77,7 @@ object AirPlayPersistence {
     private const val KEY_MAIN_BUFFERED_AUDIO = "main_buffered_audio"
     private const val KEY_SPEECH_WITHOUT_8_16_KHZ = "speech_without_8_16_khz"
     private const val KEY_CAR_BLUETOOTH_AUDIO = "car_bluetooth_audio"
+    private const val KEY_MEDIA_OVER_BLUETOOTH = "media_over_bluetooth"
     private const val KEY_CALL_ECHO_CANCELLATION = "call_echo_cancellation"
     private const val KEY_CALL_VOICE_FILTER = "call_voice_filter"
     private const val KEY_CALL_SPEAKERPHONE = "call_speakerphone"
@@ -701,6 +702,14 @@ object AirPlayPersistence {
 
     fun saveCarBluetoothAudio(context: Context, enabled: Boolean) {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putBoolean(KEY_CAR_BLUETOOTH_AUDIO, enabled).apply()
+    }
+
+    /** Offer no media audio, so music stays on the iPhone's A2DP link while nav/calls use CarPlay; applies at reconnect. */
+    fun loadMediaOverBluetooth(context: Context): Boolean =
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getBoolean(KEY_MEDIA_OVER_BLUETOOTH, false)
+
+    fun saveMediaOverBluetooth(context: Context, enabled: Boolean) {
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putBoolean(KEY_MEDIA_OVER_BLUETOOTH, enabled).apply()
     }
 
     fun loadSmoothVideo(context: Context): Boolean =

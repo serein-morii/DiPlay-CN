@@ -775,6 +775,8 @@
     <string name="settings_cluster_menu_small_state_unknown">esperando al cuadro</string>
     <string name="settings_car_bluetooth_audio">Audio de CarPlay por el Bluetooth del coche (experimental)</string>
     <string name="settings_car_bluetooth_audio_description">DiPlay no ofrece audio de CarPlay al iPhone, así que la música, la navegación y las llamadas van por la conexión Bluetooth del iPhone con el coche. Mantén el iPhone emparejado y elige Bluetooth como fuente de audio del coche. Si el sonido sale por el iPhone, desactívalo. Reconecta CarPlay.</string>
+    <string name="settings_media_over_bluetooth">Música por el Bluetooth del coche, navegación por CarPlay (experimental)</string>
+    <string name="settings_media_over_bluetooth_description">DiPlay no ofrece audio de música al iPhone, así que la música va por la conexión Bluetooth del iPhone con el coche, mientras que los avisos de navegación, las alertas, las llamadas y Siri siguen usando el audio de CarPlay. Mantén el iPhone emparejado con el coche y elige Bluetooth como fuente de audio. Si la música se corta o suena en el iPhone, desactívalo. Reconecta CarPlay.</string>
     <string name="setup_guide">Guía de configuración</string>
     <string name="setup_guide_description">Descubre tu versión de DiLink, elige una conexión y activa las funciones adecuadas para tu coche.</string>
     <string name="setup_step_of">PASO %1$d DE %2$d</string>

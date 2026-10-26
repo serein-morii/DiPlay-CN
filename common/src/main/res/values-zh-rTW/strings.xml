@@ -718,6 +718,8 @@
     <string name="bt_suspend_during_carplay_description">手機與車機保持免提連線時，來電會同時彈出車機藍牙電話和 CarPlay 電話。開啟後：CarPlay 連線期間透過 ADB 暫停車機藍牙，來電只在 CarPlay 回應；藍牙關閉期間，CarPlay 通話改走中控喇叭和車機麥克風，不再走電話免提。CarPlay 結束或下次無線連線握手前會自動恢復藍牙。配對不受影響。變更在下次連線時生效。</string>
     <string name="settings_car_bluetooth_audio">透過車輛藍牙播放 CarPlay 音訊（實驗性）</string>
     <string name="settings_car_bluetooth_audio_description">DiPlay 不向 iPhone 提供 CarPlay 音訊，因此音樂、導航和通話應透過 iPhone 與車輛的藍牙連線傳輸。請保持 iPhone 與車輛配對，並將車輛音源設為藍牙。如果聲音改從 iPhone 播放，請關閉此選項。變更後會重新連線至 CarPlay。</string>
+    <string name="settings_media_over_bluetooth">音樂透過車輛藍牙，導航仍走 CarPlay（實驗性）</string>
+    <string name="settings_media_over_bluetooth_description">DiPlay 不向 iPhone 提供音樂音訊，音樂經由 iPhone 與車輛的藍牙連線傳輸；導航語音、提示音、通話和 Siri 仍走 CarPlay。請保持 iPhone 與車輛配對，並將車輛音源設為藍牙。如果音樂暫停或改從 iPhone 播放，請關閉此選項。變更後會重新連線 CarPlay。</string>
     <string name="call_echo_cancellation">通話回音消除（實驗性）</string>
     <string name="call_echo_cancellation_description">嘗試減少 CarPlay 通話中傳送給對方的喇叭回音。效果取決於車用主機。下次連線至 CarPlay 時生效。</string>
     <string name="call_voice_filter">更清晰的通話人聲（實驗性）</string>

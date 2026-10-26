@@ -775,6 +775,8 @@
     <string name="settings_cluster_menu_small_state_unknown">ожидание панели</string>
     <string name="settings_car_bluetooth_audio">Звук CarPlay через Bluetooth автомобиля (эксперимент)</string>
     <string name="settings_car_bluetooth_audio_description">DiPlay не отдаёт iPhone звук CarPlay, поэтому музыка, навигация и звонки идут через Bluetooth-связь iPhone с автомобилем. Держите iPhone сопряжённым и выберите Bluetooth источником звука. Если звук играет на iPhone, выключите это. Переподключает CarPlay.</string>
+    <string name="settings_media_over_bluetooth">Музыка через Bluetooth автомобиля, навигация через CarPlay (эксперимент)</string>
+    <string name="settings_media_over_bluetooth_description">DiPlay не отдаёт iPhone звук музыки, поэтому музыка идёт через Bluetooth-связь iPhone с автомобилем, а голоса навигации, предупреждения, звонки и Siri — через CarPlay. Держите iPhone сопряжённым и выберите Bluetooth источником звука. Если музыка прерывается или играет на iPhone, выключите это. Переподключает CarPlay.</string>
     <string name="setup_guide">Мастер настройки</string>
     <string name="setup_guide_description">Определите версию DiLink, выберите подключение и включите подходящие функции.</string>
     <string name="setup_step_of">ШАГ %1$d ИЗ %2$d</string>
