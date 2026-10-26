@@ -62,7 +62,7 @@ jobs:
           "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --print-certs "distribution/$apk" > distribution/signature.txt
           grep -q 'certificate SHA-256 digest: 565b69c780cef42eda42c6582cd14b10b28ed3fd4327be6b20f8a9972d71cb66' distribution/signature.txt
           "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "distribution/$apk" > distribution/package.txt
-          grep -q "name='com.shihab.diplay.cn'.*versionCode='119'.*versionName='0.2.21-cn.2-experimental.1'" distribution/package.txt
+          grep -q "name='com.shihab.diplay.cn'.*versionCode='120'.*versionName='0.2.21-cn.3-experimental.1'" distribution/package.txt
           if unzip -Z1 "distribution/$apk" | grep -E '^assets/(ZCODE|REFERENCE_|TURN_CAMERA_EXPERIMENT_CONTINUATION)'; then
             echo 'Internal handoff notes must not enter the APK'; exit 1
           fi

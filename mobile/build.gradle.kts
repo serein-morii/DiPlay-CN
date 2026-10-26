@@ -19,8 +19,8 @@ android {
         applicationId = "com.shihab.diplay.cn"
         minSdk = 25
         targetSdk = 37
-        versionCode = 119
-        versionName = "0.2.21-cn.2"
+        versionCode = 120
+        versionName = "0.2.21-cn.3"
 
     }
 
@@ -86,7 +86,7 @@ dependencies {
 androidComponents {
     onVariants(selector().all()) { variant ->
         if (experimentalTurnCameraBuild) {
-            variant.outputs.forEach { it.versionName.set("0.2.21-cn.2-experimental.1") }
+            variant.outputs.forEach { it.versionName.set("0.2.21-cn.3-experimental.1") }
         }
     }
 }
