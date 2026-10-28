@@ -1,0 +1,106 @@
+name: Experimental turn camera APK
+
+on:
+  push:
+    branches: [codex/experimental-turn-camera-cluster]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: experimental-turn-camera-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify_and_package:
+    if: github.repository == 'serein-morii/DiPlay-CN' && github.ref == 'refs/heads/codex/experimental-turn-camera-cluster'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools platforms;android-37.0 build-tools;36.0.0 ndk;28.2.13676358
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Source and delivery-script checks
+        run: |
+          python3 scripts/check_public_tree.py
+          python3 -m unittest discover -s scripts -p 'test_sync_gitee_experiment.py'
+          node scripts/test_settings_backup_page.cjs
+      - name: Original Android checks (no diagnostic rerun)
+        run: ./gradlew :shared:testDebugUnitTest :common:testDebugUnitTest :home:testDebugUnitTest :mobile:lintDebug :home:lintDebug :maphost:lintDebug :mobile:assembleDebug :home:assembleDebug :maphost:assembleDebug --stacktrace
+      - name: Provision the existing standalone runtime identity
+        run: |
+          curl -fsSL --retry 2 -o "$RUNNER_TEMP/official.apk" https://github.com/shihabal3amri/DiPlay/releases/download/v0.2.14/DiPlay-0.2.14.apk
+          python3 scripts/extract_official_identity.py "$RUNNER_TEMP/official.apk" "$RUNNER_TEMP/auth-assets" 62b31f79db32bc7c85013ae830460b697a5952fad571ed0030b97341dde0b2e3
+      - name: Build signed standalone experimental APK
+        env:
+          DIPLAY_AUTH_ASSETS_DIR: ${{ runner.temp }}/auth-assets
+          DIPLAY_EXPERIMENTAL_TURN_CAMERA: 'true'
+        run: ./gradlew :mobile:lintRelease :mobile:assembleStandaloneRelease --stacktrace
+      - name: Verify and prepare distribution
+        id: distribution
+        run: |
+          python3 scripts/check_public_tree.py
+          python3 scripts/verify_apk_identity.py mobile/build/outputs/apk/release/mobile-release.apk
+          tag="experiment-turn-camera-${GITHUB_SHA:0:12}"
+          mkdir distribution
+          apk="DiPlay-cn-$tag.apk"
+          cp mobile/build/outputs/apk/release/mobile-release.apk "distribution/$apk"
+          (cd distribution && sha256sum "$apk" > "$apk.sha256")
+          cp docs/EXPERIMENTAL_TURN_CAMERA.md distribution/release-notes.md
+          printf '\nSource commit: `%s`\n' "$GITHUB_SHA" >> distribution/release-notes.md
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --print-certs "distribution/$apk" > distribution/signature.txt
+          grep -q 'certificate SHA-256 digest: 565b69c780cef42eda42c6582cd14b10b28ed3fd4327be6b20f8a9972d71cb66' distribution/signature.txt
+          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "distribution/$apk" > distribution/package.txt
+          grep -q "name='com.shihab.diplay.cn'.*versionCode='120'.*versionName='0.2.21-cn.3-experimental.1'" distribution/package.txt
+          if unzip -Z1 "distribution/$apk" | grep -E '^assets/(ZCODE|REFERENCE_|TURN_CAMERA_EXPERIMENT_CONTINUATION)'; then
+            echo 'Internal handoff notes must not enter the APK'; exit 1
+          fi
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: experimental-standalone-apk
+          path: distribution/
+          if-no-files-found: error
+          retention-days: 30
+      - name: Publish immutable GitHub experimental prerelease
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.distribution.outputs.tag }}
+        run: |
+          if git ls-remote --exit-code origin "refs/tags/$TAG" >/dev/null 2>&1; then
+            echo 'Refusing to overwrite an existing experiment tag'; exit 1
+          fi
+          git tag "$TAG" "$GITHUB_SHA"
+          git push origin "refs/tags/$TAG"
+          gh release create "$TAG" distribution/*.apk distribution/*.sha256 distribution/signature.txt distribution/package.txt --verify-tag --prerelease --latest=false --title "DiPlay 转向影像与仪表联动（实验性） · ${GITHUB_SHA:0:12}" --notes-file distribution/release-notes.md
+      - name: Mirror the same bytes to Gitee (never rebuild)
+        env:
+          GITEE_TOKEN: ${{ secrets.GITEE_TOKEN }}
+          RELEASE_TAG: ${{ steps.distribution.outputs.tag }}
+          SOURCE_SHA: ${{ github.sha }}
+        run: python3 scripts/sync_gitee_experiment.py distribution
+      - name: Reports (also retained on failure)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: experimental-check-reports
+          path: |
+            shared/build/test-results/testDebugUnitTest/
+            common/build/test-results/testDebugUnitTest/
+            common/build/reports/turn-camera-settings/
+            common/build/reports/turn-camera-calibration/
+            mobile/build/reports/lint-results-*.html
+            samples/home/build/test-results/testDebugUnitTest/
+            samples/home/build/reports/lint-results-debug.html
+            samples/maphost/build/reports/lint-results-debug.html

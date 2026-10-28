@@ -20,6 +20,17 @@ internal data class BydAppleManeuver(
     val arrivalEpochSeconds: Long? = null,
     val laneHighlight: Int = -1,
     val lanes: List<Int> = emptyList(),
+    /**
+     * The maneuver after this one, when the iPhone has already sent both the list entry and the
+     * detail for it — the "then" preview on the turn card. Null while either is missing.
+     */
+    val second: BydAppleSecondTurn? = null,
+)
+
+internal data class BydAppleSecondTurn(
+    val type: Int,
+    val drivingSide: Int,
+    val road: String = "",
 )
 
 internal enum class BydHudRouteChange {
@@ -46,6 +57,8 @@ internal class BydHudRouteState(
     private data class Maneuver(val type: Int, val drivingSide: Int, val afterRoad: String)
 
     private val maneuvers = mutableMapOf<Int, Maneuver>()
+    /** Maneuver indices of the current list (TLV 0x0d): entry 0 is the next turn, entry 1 the one after. */
+    private var maneuverList: List<Int> = emptyList()
     private var routeActive = false
     private var activeIndex = -1
     private var distanceMeters = 0
@@ -89,7 +102,19 @@ internal class BydHudRouteState(
             distanceMeters, maneuver.type, maneuver.drivingSide,
             roadFor(maneuver), remainingSeconds, remainingMeters, arrivalEpochSeconds,
             laneHighlight, lanes,
+            secondManeuver(),
         )
+    }
+
+    /**
+     * The turn after the current one: the second entry of the maneuver list, whose detail must
+     * have arrived too. Gated by [activeManeuver] exactly like the primary instruction, so a
+     * stale/empty/torn-down route hides both.
+     */
+    private fun secondManeuver(): BydAppleSecondTurn? {
+        val index = maneuverList.getOrNull(1)?.takeIf { it != activeIndex } ?: return null
+        val maneuver = maneuvers[index] ?: return null
+        return BydAppleSecondTurn(maneuver.type, maneuver.drivingSide, maneuver.afterRoad)
     }
 
     fun clear(): Boolean {
@@ -103,6 +128,7 @@ internal class BydHudRouteState(
         remainingMeters = null
         laneHighlight = -1
         lanes = emptyList()
+        maneuverList = emptyList()
         emptyListSinceNs = null
         lastRouteUpdateNs = null
         noRouteSinceNs = null
@@ -181,7 +207,13 @@ internal class BydHudRouteState(
                 }
                 type == 0x0d -> {
                     listPresent = true
-                    if (valueLength >= 2) firstManeuver = u16(data, value)
+                    // The list is ordered: entry 0 is the next turn, entry 1 the one after it
+                    // (the "then" preview). Older builds read only the first entry.
+                    if (valueLength >= 2) {
+                        val entries = valueLength / 2
+                        maneuverList = List(entries) { u16(data, value + it * 2) }
+                        firstManeuver = maneuverList.first()
+                    }
                 }
             }
         }

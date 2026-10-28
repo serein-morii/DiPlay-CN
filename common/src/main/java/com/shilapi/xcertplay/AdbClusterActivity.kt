@@ -23,6 +23,10 @@ class AdbClusterActivity : Activity() {
     private var videoTexture: ClusterVideoTexture? = null
     private var turnCard: ClusterTurnCardView? = null
     private var safeAreaPreview: SafeAreaEditorView? = null
+    private var cameraRoot: FrameLayout? = null
+    private var cameraRegion: FrameLayout? = null
+    private var cameraResumed = false
+    private var cameraExperiment: com.shilapi.xcertplay.turncamera.ExperimentalTurnCameraAttachment? = null
     internal var routeStatus = ""
         private set
 
@@ -47,6 +51,8 @@ class AdbClusterActivity : Activity() {
         }.also { videoTexture = it }
         val legacy = AirPlayPersistence.loadLegacyClusterEnabled(this)
         val videoRegion = FrameLayout(this)
+        cameraRoot = root
+        cameraRegion = videoRegion
         videoRegion.addView(video, FrameLayout.LayoutParams(-1, -1))
         root.addView(videoRegion, FrameLayout.LayoutParams(-1, -1))
         if (legacy) root.addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ ->
@@ -94,6 +100,7 @@ class AdbClusterActivity : Activity() {
         waiting?.visibility = if (ClusterActivityOutput.streamActive) View.GONE else View.VISIBLE
         waiting?.text = ""
         updateTurnCard()
+        refreshCameraExperiment()
     }
 
     internal fun updateTurnCard() {
@@ -126,8 +133,32 @@ class AdbClusterActivity : Activity() {
 
     internal fun route() { ClusterActivityOutput.retry() }
 
+    override fun onResume() {
+        super.onResume()
+        cameraResumed = true
+        refreshCameraExperiment()
+    }
+    override fun onPause() {
+        cameraResumed = false
+        refreshCameraExperiment()
+        super.onPause()
+    }
+    internal fun refreshCameraExperiment() {
+        val visible = cameraResumed && ClusterActivityOutput.turnCameraHostForeground && ClusterActivityOutput.streamActive &&
+            ClusterActivityOutput.activity.get() === this && ClusterActivityOutput.hasConfirmedRoute() &&
+            cameraRoot?.display?.displayId?.let { it > 0 } == true && !isFinishing && !isDestroyed
+        if (!visible) { cameraExperiment?.close(); cameraExperiment = null; return }
+        val root = cameraRoot ?: return
+        val region = cameraRegion ?: return
+        if (cameraExperiment == null) cameraExperiment = com.shilapi.xcertplay.turncamera.ExperimentalTurnCameraAttachment(
+            this, root, { android.graphics.RectF(region.left.toFloat(), region.top.toFloat(), region.right.toFloat(), region.bottom.toFloat()) },
+            { cameraResumed && ClusterActivityOutput.turnCameraHostForeground && ClusterActivityOutput.streamActive && ClusterActivityOutput.activity.get() === this &&
+                ClusterActivityOutput.hasConfirmedRoute() && !isFinishing && !isDestroyed })
+    }
+
     // Losing focus must not detach stream 111. The texture owns the rendering lifetime.
     override fun onDestroy() {
+        cameraExperiment?.close(); cameraExperiment = null
         videoTexture?.close()
         videoTexture = null
         if (ClusterActivityOutput.activity.get() === this) {
@@ -195,6 +226,13 @@ internal object ClusterActivityOutput {
         private set
     private var surfaceOwner: Any? = null
     private var hostOwner: Any? = null
+    var turnCameraHostForeground = false
+        private set
+    fun setTurnCameraHostForeground(owner: Any, foreground: Boolean) {
+        if (hostOwner !== owner) return
+        turnCameraHostForeground = foreground
+        activity.get()?.refreshCameraExperiment()
+    }
     private var onSurface: ((Surface?) -> Unit)? = null
     var streamActive = false
         private set
@@ -258,6 +296,7 @@ internal object ClusterActivityOutput {
     }
 
     fun bind(owner: Any, taskId: Int, callback: (Surface?) -> Unit) {
+        if (hostOwner !== owner) turnCameraHostForeground = false
         if (hostOwner !== owner && !hasConfirmedRoute() && previewHost.get() == null) {
             ++generation
             launchToken = null

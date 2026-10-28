@@ -63,6 +63,8 @@ class CarPlayMediaEngine(
     private val sink: MediaSink,
     private val microphoneEnabled: Boolean = false,
     private val audioCaptureDirectory: File? = null,
+    /** Music over Bluetooth: decline every media SETUP so the iPhone keeps music on its A2DP link. */
+    private val mediaOverBluetooth: Boolean = false,
 ) : AirPlayMediaHandler {
     internal data class StreamKey(
         val session: AirPlaySession,
@@ -176,6 +178,13 @@ class CarPlayMediaEngine(
 
     override fun onAudio(session: AirPlaySession, type: Int, stream: Map<String, Any?>): Map<String, Any?>? {
         val audioType = stream["audioType"]?.toString()?.lowercase() ?: "default"
+        // Music over Bluetooth: no media stream is advertised, but if the iPhone offers one anyway
+        // it must be declined here too, or music would play twice — once here, once over A2DP.
+        if (mediaOverBluetooth && audioType == "media") {
+            // runCatching: the plain-JVM tests have no android.util.Log; refusing must not depend on it.
+            runCatching { session.logDebug("Audio: media SETUP declined (music over Bluetooth)") }
+            return null
+        }
         // Concurrent streams may share a type (e.g. music, guidance and Siri can all arrive as
         // type 100); only the same (type, audioType) pair replaces a previous stream.
         val streamKey = StreamKey(session, type, audioType)
@@ -277,6 +286,10 @@ class CarPlayMediaEngine(
     }
 
     override fun onBufferedAudio(session: AirPlaySession, stream: Map<String, Any?>): Map<String, Any?>? {
+        if (mediaOverBluetooth) {
+            runCatching { session.logDebug("Audio: buffered media SETUP declined (music over Bluetooth)") }
+            return null
+        }
         if (!synchronized(bufferedOwnershipLock) { mayInstallBufferedLocked(session) }) return null
         val type = BufferedAudioStream.STREAM_TYPE
         val streamKey = StreamKey(session, type, "media")

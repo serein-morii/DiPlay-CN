@@ -25,7 +25,17 @@ import com.shilapi.xcertplay.hud.ClusterTurnGuidance
      * Maneuver glyphs are Material Symbols (Apache 2.0), tinted white; the roundabout
  * exit number sits in a small badge on the glyph.
  */
-internal class ClusterTurnCardView(context: Context) : View(context) {
+internal class ClusterTurnCardView(context: Context) : View(context), ClusterOverlayBounds {
+    override fun occupiedBounds(): RectF? {
+        if (guidance == null || width <= 0 || height <= 0) return null
+        val area = ClusterTurnCardOverlay.card(width, height, xPercent, yPercent, sizePercent)
+        return RectF(area.left.toFloat(), area.top.toFloat(), (area.left + area.width).toFloat(), (area.top + area.height).toFloat())
+    }
+
+    private fun invalidateMusic() {
+        val siblings = parent as? android.view.ViewGroup ?: return
+        for (index in 0 until siblings.childCount) (siblings.getChildAt(index) as? ClusterMusicView)?.invalidate()
+    }
     private var guidance: ClusterTurnGuidance? = null
     private var night = false
     private var xPercent = ClusterTurnCardOverlay.DEFAULT_X_PERCENT
@@ -56,16 +66,23 @@ internal class ClusterTurnCardView(context: Context) : View(context) {
     private val infoPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.argb(224, 235, 235, 240); typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
     }
+    private val thenTextPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.argb(179, 199, 199, 204); textAlign = Paint.Align.CENTER
+        typeface = Typeface.create("sans-serif", Typeface.NORMAL)
+    }
     private val rect = RectF()
     init { applyPalette() }
 
     private var glyph: Drawable? = null
     private var glyphTag: Int = -1
+    private var thenGlyph: Drawable? = null
+    private var thenGlyphTag: Int = -1
 
     fun setLayout(xPercent: Int, yPercent: Int, sizePercent: Int) {
         this.xPercent = xPercent
         this.yPercent = yPercent
         this.sizePercent = sizePercent
+        invalidateMusic()
         invalidate()
     }
 
@@ -105,6 +122,7 @@ internal class ClusterTurnCardView(context: Context) : View(context) {
             infoPaint.color = Color.WHITE
             badgePaint.color = accent
         }
+        thenTextPaint.color = roadPaint.color
     }
 
     fun setShowArrival(enabled: Boolean) {
@@ -114,6 +132,7 @@ internal class ClusterTurnCardView(context: Context) : View(context) {
     }
 
     fun setGuidance(next: ClusterTurnGuidance?) {
+        invalidateMusic()
         if (guidance == next) {
             visibility = if (next == null) GONE else VISIBLE
             return
@@ -153,7 +172,11 @@ internal class ClusterTurnCardView(context: Context) : View(context) {
         drawGlyph(canvas, next, chipLeft, chipTop, chip, exit)
 
         val textLeft = chipLeft + chip + h * 0.14f
-        val textWidth = card.left + w - h * 0.10f - textLeft
+        var textWidth = card.left + w - h * 0.10f - textLeft
+        // The following-turn preview takes the card's right edge, Apple-banner style, once there
+        // is room for it beside the distance and road; on a cramped card it yields.
+        val showThen = next.secondIcon != 0 && textWidth > h * 1.6f
+        if (showThen) textWidth -= h * 0.64f
         if (textWidth <= 0f) return
         distancePaint.textSize = h * 0.30f
         roadPaint.textSize = h * 0.17f
@@ -168,7 +191,48 @@ internal class ClusterTurnCardView(context: Context) : View(context) {
                 textLeft, card.top + h * 0.72f, roadPaint,
             )
         }
+        if (showThen) drawThen(canvas, next, card.left + w, card.top.toFloat(), h)
         drawInfoStrip(canvas, next, card.left, (card.top + h).toInt(), w.toInt(), h.toInt())
+    }
+
+    /**
+     * The following-turn preview on the card's right edge: a hairline divider, the small maneuver
+     * glyph (roundabout exit badge included) and the word "then". The iPhone sends no distance for
+     * the second turn, so — like the stock CarPlay banner — the block shows the glyph alone.
+     */
+    private fun drawThen(canvas: Canvas, next: ClusterTurnGuidance, cardRight: Float, cardTop: Float, h: Float) {
+        val blockWidth = h * 0.52f
+        val blockRight = cardRight - h * 0.04f
+        val blockLeft = blockRight - blockWidth
+        val dividerX = blockLeft - h * 0.06f
+        canvas.drawLine(dividerX, cardTop + h * 0.24f, dividerX, cardTop + h * 0.76f, strokePaint)
+        val glyphSide = h * 0.38f
+        val centreX = blockLeft + blockWidth / 2f
+        val resId = glyphRes(next.secondIcon)
+        if (resId != thenGlyphTag) {
+            thenGlyph = ContextCompat.getDrawable(context, resId)?.mutate()?.apply { setTint(Color.WHITE) }
+            thenGlyphTag = resId
+        }
+        val glyphTop = cardTop + h * 0.13f
+        thenGlyph?.setBounds(
+            (centreX - glyphSide / 2f).toInt(), glyphTop.toInt(),
+            (centreX + glyphSide / 2f).toInt(), (glyphTop + glyphSide).toInt(),
+        )
+        thenGlyph?.draw(canvas)
+        val exit = next.secondExit.takeIf { it in 1..9 }
+        if (exit != null) {
+            val d = glyphSide * 0.46f
+            val badgeCx = centreX + glyphSide / 2f - d / 2f
+            val badgeCy = glyphTop + glyphSide - d / 2f
+            canvas.drawCircle(badgeCx, badgeCy, d / 2f, badgePaint)
+            badgeTextPaint.textSize = d * 0.62f
+            val textY = badgeCy - (badgeTextPaint.descent() + badgeTextPaint.ascent()) / 2f
+            canvas.drawText(exit.toString(), badgeCx, textY, badgeTextPaint)
+        }
+        val label = context.getString(R.string.turn_card_then)
+        thenTextPaint.textSize = h * 0.14f
+        val labelWidth = thenTextPaint.measureText(label)
+        canvas.drawText(label, centreX - labelWidth / 2f, cardTop + h * 0.88f, thenTextPaint)
     }
 
     /** The arrival/duration/distance pill that hangs under the card, like the stock nav bar. */

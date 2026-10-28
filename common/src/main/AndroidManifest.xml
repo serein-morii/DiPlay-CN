@@ -24,6 +24,8 @@
         <package android:name="com.byd.carsettings" />
         <!-- Read-only visibility for the turn camera probe's OEM AVM presence hint. -->
         <package android:name="com.byd.avm" />
+        <!-- The side-view feature watches for the factory 360 surface taking the screen. -->
+        <package android:name="com.byd.avc" />
         <intent>
             <action android:name="android.intent.action.VIEW" />
             <data android:scheme="content" android:mimeType="application/vnd.android.package-archive" />

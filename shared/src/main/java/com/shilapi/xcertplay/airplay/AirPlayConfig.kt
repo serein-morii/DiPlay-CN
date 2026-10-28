@@ -75,6 +75,13 @@ data class AirPlayConfig(
     val entertainmentSampleRate: Int = 48000,
     val hevc: Boolean = false,
     val disableAudioOutput: Boolean = false,
+    /**
+     * Media over Bluetooth: the /info declaration omits every media audio format and the media
+     * handler declines any media SETUP, so the iPhone keeps music on its A2DP link with the car
+     * while navigation prompts, alerts, calls and Siri still stream through CarPlay. Inert when
+     * [disableAudioOutput] removes CarPlay audio entirely.
+     */
+    val mediaOverBluetooth: Boolean = false,
     val microphone: Boolean = false,
     /**
      * Whether to offer Opus alongside PCM for the microphone. Both platform and bundled software
@@ -109,4 +116,4 @@ data class AirPlayConfig(
 
 /** The offer, SETUP and controls must all honor the user's audio-output setting. */
 internal val AirPlayConfig.bufferedAudioOutputEnabled: Boolean
-    get() = mainBufferedAudio && !disableAudioOutput
+    get() = mainBufferedAudio && !disableAudioOutput && !mediaOverBluetooth

@@ -129,12 +129,21 @@ object BydNavigationOutputs {
 
     private fun currentOverlay(): ClusterTurnGuidance? = synchronized(overlayLock) {
         overlayRoute.currentApple()?.let { apple ->
+            // The following-turn preview: same icon mapping as the primary, no straight fallback
+            // (0 = "not sent yet", and the card hides the block then).
+            val second = apple.second
+            val secondIcon = second?.let {
+                BydClusterFrame.iconFor(it.type, it.drivingSide == 1)
+            }?.takeIf { it != 0 } ?: 0
+            val secondExit = second?.type?.takeIf { type -> type in 28..46 }?.let { type -> type - 27 } ?: 0
             ClusterTurnGuidance.from(BydClusterFrame.from(apple)).copy(
                 arrivalEpochSeconds = apple.arrivalEpochSeconds,
                 remainingSeconds = apple.remainingSeconds,
                 remainingMeters = apple.remainingMeters,
                 laneHighlight = apple.laneHighlight,
                 lanes = apple.lanes,
+                secondIcon = secondIcon,
+                secondExit = secondExit,
             )
         }
     }

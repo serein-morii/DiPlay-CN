@@ -84,6 +84,23 @@ class CarPlayMediaEngineTest {
         }
     }
 
+    @Test
+    fun mediaSetupsAreDeclinedWhenMusicGoesOverBluetooth() {
+        val sink = object : MediaSink {}
+        val session = testSession()
+        val engine = CarPlayMediaEngine(sink, mediaOverBluetooth = true)
+        try {
+            assertNull(engine.onAudio(session, 100, mapOf("audioType" to "media", "audioFormat" to 0L)))
+            assertNull(
+                engine.onBufferedAudio(session, mapOf("shk" to ByteArray(32), "audioFormat" to 0L)),
+            )
+            // That non-media streams are still offered is covered by AirPlayInfoPlistTest; the
+            // accept path needs a fully negotiated session (output key), not available here.
+        } finally {
+            session.close()
+        }
+    }
+
     private fun testSession(videoInCar: Boolean = false): AirPlaySession = AirPlaySession(
         socket = Socket(),
         config = AirPlayConfig(

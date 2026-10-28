@@ -106,7 +106,13 @@ object SettingsBackupCodec {
         return root.toString(2).toByteArray(Charsets.UTF_8)
     }
 
-    fun import(context: Context, document: ByteArray): SettingsImportOutcome {
+    /** Executes the exact validation/type-coercion path without persisting any values. */
+    fun preview(context: Context, document: ByteArray): SettingsImportOutcome = read(context, document, apply = false)
+
+    fun import(context: Context, document: ByteArray): SettingsImportOutcome = read(context, document, apply = true)
+
+    private fun read(context: Context, document: ByteArray, apply: Boolean): SettingsImportOutcome {
+        if (document.size > MAX_DOCUMENT_BYTES) return SettingsImportOutcome(0, 0, invalid = true)
         val root = runCatching { JSONObject(document.toString(Charsets.UTF_8)) }.getOrNull()
             ?: return SettingsImportOutcome(0, 0, invalid = true)
         if (root.optString("format") != FORMAT || root.optInt("version", Int.MIN_VALUE) !in 1..VERSION) {
@@ -145,10 +151,12 @@ object SettingsBackupCodec {
                 }
                 if (stored) applied++ else skipped++
             }
-            editor.apply()
+            if (apply) editor.apply()
         }
         return SettingsImportOutcome(applied, skipped, invalid = false)
     }
+
+    private const val MAX_DOCUMENT_BYTES = 512 * 1024
 
     private fun storeTyped(editor: Editor, key: String, value: Any?, type: KeyType): Boolean = when (type) {
         KeyType.BOOLEAN -> if (value is Boolean) { editor.putBoolean(key, value); true } else false

@@ -153,6 +153,9 @@ class TurnCameraCapabilities(
             appendLine("  7f0c4c392dc7fa27ad5ddaf49078462fd4d261df, AGPL-3.0): stalk device 1004")
             appendLine("  FID 321912876, blinker device 1004 FID 950009900; left/right/hazard value")
             appendLine("  encoding unpublished. Do not treat these as this car's configuration.")
+            appendLine("  Additional static research: BYDAutoLightDevice getTurnLightState(),")
+            appendLine("  getTurnLightFlashState(), getDoubleFlashLightState(). Metadata only;")
+            appendLine("  no getter is invoked and no value encoding is assumed.")
             appendLine("camera_paths_researched: vendor AVMCamera reflection (BYD Extend); Qualcomm")
             appendLine("  AIS /vendor/lib64/libais_client.so + qcarcam_* (OverDrive DILINK5 doc).")
             appendLine("This report proves no streaming capability. Phase B needs on-car evidence:")
@@ -257,7 +260,7 @@ class TurnCameraCapabilities(
                     }
                     result = try {
                         val (status, detail) = future.get(sliceNanos, TimeUnit.NANOSECONDS)
-                        ProbeItem(key, status, redact(detail))
+                        ProbeItem(key, status, redactDetail(key, detail))
                     } catch (_: TimeoutException) {
                         if (cancelled) {
                             future.cancel(true)
@@ -293,7 +296,7 @@ class TurnCameraCapabilities(
                 Pair(
                     if (displays.isEmpty()) Status.UNCONFIRMED else Status.OK,
                     displays.joinToString("; ").ifEmpty { "no presentation displays visible to this app" } +
-                        (chosen?.let { " · projection target: ${it.name}" } ?: " · projection target: none"),
+                        (chosen?.let { " · projection target: ${it.name.take(48)}" } ?: " · projection target: none"),
                 )
             }
             item("camera_permission") {
@@ -306,21 +309,44 @@ class TurnCameraCapabilities(
                 // Enumerates ids and static metadata only; opening any camera is phase B.
                 val manager = appContext.getSystemService(Context.CAMERA_SERVICE) as CameraManager
                 val ids = manager.cameraIdList
-                val described = ids.joinToString(", ") { id ->
-                    val characteristics = manager.getCameraCharacteristics(id)
-                    val facing = when (characteristics.get(CameraCharacteristics.LENS_FACING)) {
-                        CameraCharacteristics.LENS_FACING_FRONT -> "front"
-                        CameraCharacteristics.LENS_FACING_BACK -> "back"
-                        CameraCharacteristics.LENS_FACING_EXTERNAL -> "external"
-                        else -> "unknown-facing"
+                val described = ids.take(16).joinToString("\n") { id ->
+                    try {
+                        val characteristics = manager.getCameraCharacteristics(id)
+                        val facing = when (characteristics.get(CameraCharacteristics.LENS_FACING)) {
+                            CameraCharacteristics.LENS_FACING_FRONT -> "front"
+                            CameraCharacteristics.LENS_FACING_BACK -> "back"
+                            CameraCharacteristics.LENS_FACING_EXTERNAL -> "external"
+                            else -> "unknown-facing"
+                        }
+                        val level = characteristics.get(CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL)?.toString() ?: "?"
+                        val orientation = characteristics.get(CameraCharacteristics.SENSOR_ORIENTATION)
+                        val pixels = characteristics.get(CameraCharacteristics.SENSOR_INFO_PIXEL_ARRAY_SIZE)
+                        val zoom = characteristics.get(CameraCharacteristics.SCALER_AVAILABLE_MAX_DIGITAL_ZOOM)
+                        val fps = characteristics.get(CameraCharacteristics.CONTROL_AE_AVAILABLE_TARGET_FPS_RANGES)
+                            ?.take(8)?.joinToString { "${it.lower}-${it.upper}" }
+                        val sizes = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP)
+                            ?.getOutputSizes(android.graphics.SurfaceTexture::class.java)
+                        val physical = if (Build.VERSION.SDK_INT >= 28) {
+                            characteristics.physicalCameraIds.take(16).joinToString { it.take(128) }
+                        } else null
+                        "${id.take(128)}=$facing (hardware-level=$level; not a camera count or side identity); " +
+                            "sensor-orientation=${orientation ?: "?"}; pixels=${pixels ?: "?"}; " +
+                            "max-digital-zoom=${zoom ?: "?"}; AE-fps-ranges=${fps ?: "?"}; " +
+                            "SurfaceTexture-sizes=${sizes?.take(12)?.joinToString() ?: "?"} " +
+                            "(${sizes?.size ?: 0} listed); physical-ids=${physical ?: "?"}"
+                    } catch (e: Exception) {
+                        // One inaccessible ID must not hide other visible cameras. Do not
+                        // echo arbitrary vendor exception messages into an exportable report.
+                        "${id.take(128)}: metadata unconfirmed (${e.javaClass.simpleName})"
                     }
-                    val level = characteristics.get(CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL)?.toString() ?: "?"
-                    "$id=$facing/$level"
                 }
                 // An empty list is what this app can see, not proof the car has no cameras.
                 Pair(
                     if (ids.isEmpty()) Status.UNCONFIRMED else Status.OK,
-                    described.ifEmpty { "no ids visible to this app" },
+                    "${ids.size} visible ids; at most 16 ids / 12 sizes / 8 fps ranges per id, " +
+                        "report text capped at 8000 characters. " +
+                        "Static metadata only, not measured FPS or verified vendor AVM side identities.\n" +
+                        described.ifEmpty { "no ids visible to this app" },
                 )
             }
             for (name in VENDOR_CLASSES) {
@@ -338,6 +364,14 @@ class TurnCameraCapabilities(
                         if (present) "loadable (hint)" else "not loadable from this app's ClassLoader; presence unconfirmed",
                     )
                 }
+            }
+            item("turn_signal_getter_metadata") {
+                val type = try {
+                    Class.forName(LIGHT_DEVICE_CLASS, false, TurnCameraCapabilities::class.java.classLoader)
+                } catch (_: ClassNotFoundException) {
+                    return@item Status.UNCONFIRMED to "candidate class not visible; getters and values unconfirmed"
+                }
+                inspectTurnGetterMetadata(type)
             }
             for (path in AIS_FILES) {
                 item("vendor_file:$path") {
@@ -399,6 +433,7 @@ class TurnCameraCapabilities(
         private const val MAX_STREAM_BYTES = 64 * 1_024
         private const val REDACT_MAX = 400
         private val WHITELISTED_PROPERTIES = setOf("apps.setting.product.outswver")
+        private val DISPLAY_TOKEN = Regex("«[^»]*»")
         const val BUSY_ITEM_KEY = "probe_busy"
 
         /** Process-wide probe worker budget and its current occupancy (Rework S4). */
@@ -406,11 +441,30 @@ class TurnCameraCapabilities(
         private val liveProbeWorkers = AtomicInteger(0)
         fun activeProbeWorkers(): Int = liveProbeWorkers.get()
 
-        /** Reflection names researched from BYD Extend (DiLink ≤4 path), verified naming only. */
+        private const val LIGHT_DEVICE_CLASS = "android.hardware.bydauto.light.BYDAutoLightDevice"
+        private val TURN_GETTER_NAMES = listOf("getTurnLightState", "getTurnLightFlashState", "getDoubleFlashLightState")
+
+        /** Static metadata only: never obtains a device, invokes a getter, or registers a listener. */
+        internal fun inspectTurnGetterMetadata(type: Class<*>): Pair<Status, String> {
+            val visible = TURN_GETTER_NAMES.filter { name ->
+                try {
+                    type.getMethod(name).returnType == Int::class.javaPrimitiveType
+                } catch (_: NoSuchMethodException) {
+                    false
+                }
+            }
+            return Status.UNCONFIRMED to (
+                "public int getters visible=${visible.joinToString(",").ifEmpty { "none" }}; " +
+                    "metadata only, never invoked; firmware values and semantics unconfirmed"
+                )
+        }
+
+        /** Presence candidates: BYD Extend camera names and user-supplied APK light metadata. */
         val VENDOR_CLASSES = listOf(
             "android.hardware.AVMCamera",
             "android.hardware.BmmCameraInfo",
             "com.ts.avm.AvmAndroidService",
+            LIGHT_DEVICE_CLASS,
         )
 
         /** Qualcomm AIS path names from the OverDrive DiLink 5 capture discovery doc. */
@@ -424,7 +478,8 @@ class TurnCameraCapabilities(
         private const val CONTROLLER_VERSION_PROPERTY = "apps.setting.product.outswver"
 
         /** `service list` line format: `42\tname: [interface]`; header `Found N services:`. */
-        private val SERVICE_LINE = Regex("""\d+\s+([\w.$-]+):\s*\[.*?]""")
+        // Binder instance names may contain '/', e.g. android.hardware.camera.provider/legacy.
+        private val SERVICE_LINE = Regex("""\d+\s+([\w.$/-]+):\s*\[.*?]""")
         private val SERVICE_HEADER = Regex("""Found (\d+) services:?""")
 
         /**
@@ -449,11 +504,23 @@ class TurnCameraCapabilities(
             if (header == null) {
                 return Status.UNCONFIRMED to "unexpected output format; presence not adjudicated"
             }
-            val expected = header.groupValues[1].toInt()
-            val services = lines.drop(1)
-                .mapNotNull { line -> SERVICE_LINE.matchEntire(line.trim())?.groupValues?.get(1) }
+            val expected = header.groupValues[1].toIntOrNull()
+                ?: return Status.UNCONFIRMED to "invalid service count; presence not adjudicated"
+            val services = mutableListOf<String>()
+            val unparsed = mutableListOf<String>()
+            for (line in lines.drop(1)) {
+                val name = SERVICE_LINE.matchEntire(line.trim())?.groupValues?.get(1)
+                if (name != null) services += name else unparsed += line.trim()
+            }
             if (services.size != expected) {
-                return Status.UNCONFIRMED to "header lists $expected services but ${services.size} parsed; not adjudicated"
+                // A real head unit answered with 7 lines the strict pattern does not match
+                // (on-car 2026-10-25: header 277, parsed 270). Keep failing closed, but
+                // carry the offending shapes out so the format can be adapted with evidence.
+                return Status.UNCONFIRMED to "header lists $expected services but ${services.size} parsed; " +
+                    "unparsed shapes: " + unparsed.take(3).joinToString(" | ") { it.take(60) } + "; not adjudicated"
+            }
+            if (lines.size - 1 != expected || services.distinct().size != services.size) {
+                return Status.UNCONFIRMED to "malformed or duplicate service listing; presence not adjudicated"
             }
             val hits = services.filter { name ->
                 listOf("camera", "avm", "ais", "qcarcam", "bmm").any { it in name.lowercase() }
@@ -472,13 +539,39 @@ class TurnCameraCapabilities(
          * — "redacted" here is a claim about sensitive patterns, not about encoding
          * (Rework S5).
          */
-        internal fun redact(text: String): String {
+        // Metadata lists need more room than ordinary shell/property snippets. Keep the
+        // same sanitizer and a separate fixed bound, including when saving a report again.
+        /**
+         * A firmware display name wrapped for the report: machine-generated strings (often
+         * long opaque tokens) are trimmed and marked so [redact] keeps them verbatim.
+         */
+        internal fun displayToken(name: String): String = "«" + name.take(48) + "»"
+
+        internal fun redactDetail(key: String, text: String): String =
+            redact(text, if (key == "camera2_ids") 8_000 else REDACT_MAX)
+
+        internal fun redact(text: String): String = redact(text, REDACT_MAX)
+
+        private fun redact(text: String, maxChars: Int): String {
             var cleaned = text.replace(Regex("[\\x00-\\x08\\x0B\\x0C\\x0E-\\x1F\\x7F]"), "")
             cleaned = Regex("(?i)\\b(token|secret|password|passwd|authorization|auth|key|session)[=: ]+(?:(bearer|basic|mac)\\s+)?\\S+")
                 .replace(cleaned) { it.groupValues[1] + "=<redacted>" }
             cleaned = Regex("\\b[A-HJ-NPR-Z0-9]{17}\\b").replace(cleaned, "<vin>")
-            cleaned = Regex("[A-Za-z0-9+/=_-]{32,}").replace(cleaned, "<opaque>")
-            return if (cleaned.length > REDACT_MAX) cleaned.take(REDACT_MAX) + "…" else cleaned
+            // Firmware display names arrive as «…» tokens and must survive verbatim (on-car
+            // 2026-10-25 the projection target was exactly such an opaque-looking machine
+            // string). Lookarounds are not enough — a long run can start INSIDE a token —
+            // so the tokens are lifted out, the opaque mask runs on the rest, then restored.
+            val displayTokens = DISPLAY_TOKEN.findAll(cleaned).map { it.value }.toList()
+            var masked = cleaned
+            displayTokens.forEachIndexed { index, token ->
+                masked = masked.replace(token, "\u2063$index\u2063")
+            }
+            masked = Regex("[A-Za-z0-9+/=_-]{32,}").replace(masked, "<opaque>")
+            displayTokens.forEachIndexed { index, token ->
+                masked = masked.replace("\u2063$index\u2063", token)
+            }
+            cleaned = masked
+            return if (cleaned.length > maxChars) cleaned.take(maxChars) + "…" else cleaned
         }
 
         /**

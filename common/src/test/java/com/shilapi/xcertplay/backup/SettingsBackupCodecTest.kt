@@ -21,6 +21,18 @@ class SettingsBackupCodecTest {
 
     private fun prefs(name: String) = context.getSharedPreferences(name, Context.MODE_PRIVATE)
 
+    @Test fun previewUsesImportValidationWithoutWritingAndOversizeInputIsRejected() {
+        prefs("xcertplay_airplay").edit().putInt("display_fps", 60).commit()
+        val document = """{"format":"diplay-settings","version":1,"settings":{"xcertplay_airplay":{"display_fps":48,"pairing.other":"secret"}}}""".toByteArray()
+        val preview = SettingsBackupCodec.preview(context, document)
+        assertEquals(SettingsImportOutcome(1, 1, false), preview)
+        assertEquals(60, prefs("xcertplay_airplay").getInt("display_fps", 0))
+        assertEquals(preview, SettingsBackupCodec.import(context, document))
+        assertEquals(48, prefs("xcertplay_airplay").getInt("display_fps", 0))
+        assertFalse(prefs("xcertplay_airplay").contains("pairing.other"))
+        assertTrue(SettingsBackupCodec.preview(context, ByteArray(512 * 1024 + 1)).invalid)
+    }
+
     @Test
     fun navigationPromptAudioFocusTravelsWithTheAudioFocusSettings() {
         AirPlayPersistence.saveNavigationPromptAudioFocus(context, true)

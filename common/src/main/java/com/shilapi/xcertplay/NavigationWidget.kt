@@ -81,12 +81,14 @@ internal object NavigationWidgetUpdater {
                 views.setTextViewText(R.id.widget_distance, "DiPlay")
                 views.setTextViewText(R.id.widget_road, context.getString(R.string.widget_not_connected))
                 views.setViewVisibility(R.id.widget_eta, View.GONE)
+                hideThen(views)
             }
             type == null -> {
                 views.setImageViewResource(R.id.widget_arrow, R.drawable.ic_dp_navigation)
                 views.setTextViewText(R.id.widget_distance, "CarPlay")
                 views.setTextViewText(R.id.widget_road, context.getString(R.string.widget_no_route))
                 views.setViewVisibility(R.id.widget_eta, View.GONE)
+                hideThen(views)
             }
             else -> {
                 views.setImageViewResource(R.id.widget_arrow, arrow(type, glance.drivingSide))
@@ -99,12 +101,28 @@ internal object NavigationWidgetUpdater {
                 ).joinToString(" · ")
                 views.setTextViewText(R.id.widget_eta, eta)
                 views.setViewVisibility(R.id.widget_eta, if (eta.isEmpty()) View.GONE else View.VISIBLE)
+                // The following-turn preview: same grouping as the main arrow, with the localized
+                // "then" under it. Hidden while the iPhone has not sent the second detail.
+                val secondType = glance.secondManeuverType
+                if (secondType != null) {
+                    views.setImageViewResource(R.id.widget_then_arrow, arrow(secondType, glance.secondDrivingSide))
+                    views.setTextViewText(R.id.widget_then_label, context.getString(R.string.turn_card_then))
+                    views.setViewVisibility(R.id.widget_then, View.VISIBLE)
+                    views.setViewVisibility(R.id.widget_then_divider, View.VISIBLE)
+                } else {
+                    hideThen(views)
+                }
             }
         }
         val song = glance.song?.takeIf { glance.connected }
         views.setTextViewText(R.id.widget_song, song?.let { (if (glance.playing) "♪ " else "❚❚ ") + it }.orEmpty())
         views.setViewVisibility(R.id.widget_song, if (song == null) View.GONE else View.VISIBLE)
         return views
+    }
+
+    private fun hideThen(views: RemoteViews) {
+        views.setViewVisibility(R.id.widget_then, View.GONE)
+        views.setViewVisibility(R.id.widget_then_divider, View.GONE)
     }
 
     /** Apple's RouteGuidanceManeuverType, grouped as DiPlay's BYD outputs group it. */
