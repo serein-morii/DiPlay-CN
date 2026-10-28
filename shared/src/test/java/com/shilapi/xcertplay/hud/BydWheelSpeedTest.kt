@@ -31,4 +31,31 @@ class BydWheelSpeedTest {
         assertEquals(VehicleGear.DRIVE, BydWheelSpeed.gear("Result: Parcel(00000000 00000006   '........')"))
         assertNull(BydWheelSpeed.gear("Result: Parcel(00000000 00000000   '........')"))
     }
+
+    // #807: a DiLink 4.0 read nothing in default mode for a whole drive; the report has to say which read failed.
+    @Test
+    fun describesWhichReadGaveNothing() {
+        val reads = WheelSpeedReads()
+        reads.speed("Result: Parcel(ffffffff 00000000   '........')", null)
+        reads.speed(null, null)
+        reads.gear("Result: Parcel(00000000 00000000   '........')", null)
+        assertEquals("adb=READY speed=0/2 gear=none speedReply=\"Result: Parcel(ffffffff 00000000 '........')\" " +
+            "gearReply=\"Result: Parcel(00000000 00000000 '........')\"", reads.describe("READY", null))
+    }
+
+    @Test
+    fun aReadableGearAndSpeedNeedNoReplies() {
+        val reads = WheelSpeedReads()
+        reads.speed("Result: Parcel(00000000 42100000   '.......B')", 10.0)
+        reads.gear("Result: Parcel(00000000 00000004   '........')", VehicleGear.DRIVE)
+        assertEquals("adb=READY speed=1/1 gear=D", reads.describe("READY", VehicleGear.DRIVE))
+    }
+
+    @Test
+    fun aReplyIsShortAndOnOneLine() {
+        val reads = WheelSpeedReads()
+        reads.speed("service: Service autoservice does not exist\n" + "x".repeat(200), null)
+        val reply = reads.describe("READY", VehicleGear.PARK).substringAfter("speedReply=")
+        assertEquals("\"service: Service autoservice does not exist " + "x".repeat(36) + "\"", reply)
+    }
 }

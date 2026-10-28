@@ -84,7 +84,7 @@ internal object CarPlayCallKeys {
             if (!BydOutputSettings.carPlayCallControls(app) || !currentController().hasSession()) return@postDelayed
             runCatching {
                 app.startActivity(
-                    Intent(app, CarPlayHostActivity::class.java)
+                    CarPlayScreen.intent(app)
                         .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_REORDER_TO_FRONT),
                 )
             }.onFailure { Log.w(TAG, "could not bring CarPlay back after the call key", it) }

@@ -9,6 +9,7 @@
     </queries>
 
     <application
+        android:allowBackup="false"
         android:label="DiPlay map host"
         android:theme="@android:style/Theme.DeviceDefault.NoActionBar">
         <activity

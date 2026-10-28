@@ -5,6 +5,7 @@ import android.widget.TextView
 import com.shilapi.xcertplay.host.R
 import com.shilapi.xcertplay.network.WirelessStartupFailure
 import com.shilapi.xcertplay.orchestration.CarPlayStatus
+import com.shilapi.xcertplay.orchestration.ConnectionFailureCause
 import com.shilapi.xcertplay.orchestration.WirelessHotspotMode
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -31,6 +32,40 @@ class ConnectionFailureGuidanceTest {
             guide("unknown", startup = WirelessStartupFailure.HOTSPOT_CONFIGURATION))
         assertEquals(R.string.connection_help_iphone_wifi,
             guide("unknown", startup = WirelessStartupFailure.FIRST_TCP_TIMEOUT))
+    }
+
+    @Test fun aKnownCauseNamesItsOwnHelp() {
+        assertEquals(R.string.connection_help_chosen_iphone_not_paired, guide(
+            "The selected iPhone is no longer paired. Choose it again in DiPlay.", known = ConnectionFailureCause.CHOSEN_IPHONE_NOT_PAIRED))
+        assertEquals(R.string.on_your_iphone_open_settings_bluetooth_and_pair_with_the_c, guide(
+            "No unambiguous bonded iPhone found; pair one iPhone and retry", known = ConnectionFailureCause.NO_PAIRED_IPHONE))
+        assertEquals(R.string.connection_help_choose_iphone, guide(
+            "No unambiguous bonded iPhone found; pair one iPhone and retry", known = ConnectionFailureCause.IPHONE_NOT_CHOSEN))
+        assertEquals(R.string.connection_help_wifi_direct_channel, guide(channelRejected,
+            known = ConnectionFailureCause.WIFI_DIRECT_CHANNEL_UNAVAILABLE, mode = WirelessHotspotMode.WIFI_P2P))
+    }
+
+    @Test fun aHotspotCauseNamesItsOwnHelp() {
+        assertEquals(R.string.connection_help_car_hotspot_off, guide(carHotspotOff,
+            startup = WirelessStartupFailure.HOTSPOT_CONFIGURATION, known = ConnectionFailureCause.CAR_HOTSPOT_OFF))
+        assertEquals(R.string.connection_help_car_hotspot_details_differ,
+            guide("Manual hotspot SSID does not match the active local AP configuration: 'Other'",
+                startup = WirelessStartupFailure.HOTSPOT_CONFIGURATION, known = ConnectionFailureCause.CAR_HOTSPOT_DETAILS_DIFFER))
+        assertEquals(R.string.connection_help_hotspot_interface_not_found, guide(hotspotNotReady,
+            startup = WirelessStartupFailure.HOTSPOT_NOT_READY, known = ConnectionFailureCause.HOTSPOT_INTERFACE_NOT_FOUND))
+        assertEquals(R.string.connection_help_hotspot, guide("Timed out waiting for the car hotspot",
+            startup = WirelessStartupFailure.HOTSPOT_NOT_READY, known = ConnectionFailureCause.CAR_HOTSPOT_START_TIMED_OUT))
+        assertEquals(R.string.connection_help_hotspot, guide("The car could not start its hotspot",
+            startup = WirelessStartupFailure.HOTSPOT_NOT_READY, known = ConnectionFailureCause.CAR_HOTSPOT_START_FAILED))
+    }
+
+    @Test fun aResetComesFirstAndAKnownCauseBeforeAStartupFailure() {
+        assertEquals(R.string.connection_help_reset_wifi,
+            guide(channelRejected, reset = true, known = ConnectionFailureCause.WIFI_DIRECT_CHANNEL_UNAVAILABLE))
+        assertEquals(R.string.connection_help_hotspot,
+            guide(carHotspotOff, startup = WirelessStartupFailure.HOTSPOT_CONFIGURATION))
+        assertEquals(R.string.connection_help_car_hotspot_off, guide(carHotspotOff,
+            startup = WirelessStartupFailure.HOTSPOT_CONFIGURATION, known = ConnectionFailureCause.CAR_HOTSPOT_OFF))
     }
 
     @Test fun messageHintsAreTransportAwareAndSafeForUnknownErrors() {
@@ -96,11 +131,17 @@ class ConnectionFailureGuidanceTest {
         }
     }
 
+    private val channelRejected = "Could not establish WIFI_P2P hotspot: Wi-Fi Direct could not use channel 149. " +
+        "Choose Auto or another channel. Wi-Fi P2P createGroup failed: ERROR (code=0)"
+    private val carHotspotOff = "The car hotspot is off. Turn it on in the car settings and connect again."
+    private val hotspotNotReady = "Could not establish MANUAL hotspot: Hotspot network is not ready"
+
     private fun guide(
         message: String,
         wireless: Boolean = true,
         reset: Boolean = false,
         startup: WirelessStartupFailure? = null,
         mode: WirelessHotspotMode = WirelessHotspotMode.MANUAL,
-    ): Int = ConnectionFailureGuidance.message(CarPlayStatus.Failed(message, reset, startup), wireless, mode)
+        known: ConnectionFailureCause? = null,
+    ): Int = ConnectionFailureGuidance.message(CarPlayStatus.Failed(message, reset, startup, known), wireless, mode)
 }

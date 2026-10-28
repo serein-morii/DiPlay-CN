@@ -173,12 +173,17 @@ class WifiP2pGroupManager(
                     throw P2pResetRequiredException()
                 }
                 diagnostic("Wi-Fi P2P reclaiming retained owned group")
+                val reclaimStarted = System.nanoTime()
                 removeGroupBlocking(p2pChannel, existing.networkName)
                 val removalDeadline = minOf(deadlineNanos, deadlineAfter(REMOVE_GROUP_TIMEOUT_MILLIS))
-                while (requestGroupInfo(attempt, p2pChannel, REQUEST_POLL_NANOS, requireResponse = true) != null) {
+                // The framework can hold group info back until the old interface is down: about
+                // 0.6 s on a Galaxy Note20 (Android 13), longer than one poll. Wait up to the
+                // removal deadline for each answer instead of calling the wait a failure.
+                while (requestGroupInfo(attempt, p2pChannel, remainingNanos(removalDeadline), requireResponse = true) != null) {
                     if (remainingNanos(removalDeadline) == 0L) throw IOException("Wi-Fi Direct reset did not finish")
                     synchronized(stateLock) { waitNanos(TimeUnit.MILLISECONDS.toNanos(100)) }
                 }
+                diagnostic("Wi-Fi P2P retained group removed afterMs=${(System.nanoTime() - reclaimStarted) / NANOS_PER_MILLISECOND}")
             }
 
             val creation = P2pStartupRecovery.create(

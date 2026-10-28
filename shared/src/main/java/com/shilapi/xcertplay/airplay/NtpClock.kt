@@ -24,7 +24,8 @@ class NtpClock : Closeable {
     private var socket: DatagramSocket? = null
     private var receiver: Thread? = null
     private var sender: Thread? = null
-    private var peer: InetSocketAddress? = null
+    // Written by the session thread, read by the receive thread.
+    @Volatile private var peer: InetSocketAddress? = null
 
     private var clockOffsetNs = wallClockNtpOffsetNs(System.nanoTime())
     private val delays = DoubleArray(DELAY_WINDOW) { Double.POSITIVE_INFINITY }
@@ -116,7 +117,7 @@ class NtpClock : Closeable {
     private fun handleMessage(message: ByteArray, source: InetSocketAddress) {
         when (message[1].toInt() and 0xff) {
             PT_REQUEST -> respondToRequest(message, source)
-            PT_RESPONSE -> handleResponse(message)
+            PT_RESPONSE -> if (source.address == peer?.address) handleResponse(message)
         }
     }
 

@@ -59,6 +59,22 @@ class CarPlayMediaCallbackTest {
         assertEquals(listOf(CarPlayMediaButton.PLAY_PAUSE), sent)
     }
 
+    // #610: a car's own code for a wheel key must show in the report, not look like no key at all.
+    @Test fun aButtonCarPlayDoesNotUseIsNotedOncePerPress() {
+        val notUsed = mutableListOf<String>()
+        val callback = CarPlayMediaCallback(notUsed = { notUsed += it }) { index, _ -> sent += index }
+        val skip = KeyEvent.KEYCODE_MEDIA_SKIP_FORWARD
+        callback.onMediaButtonEvent(button(KeyEvent(0, 0, KeyEvent.ACTION_DOWN, skip, 0)))
+        callback.onMediaButtonEvent(button(KeyEvent(0, 0, KeyEvent.ACTION_DOWN, skip, 1)))
+        callback.onMediaButtonEvent(button(KeyEvent(0, 0, KeyEvent.ACTION_UP, skip, 0)))
+        callback.onMediaButtonEvent(button(KeyEvent(0, 0, KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_MEDIA_FAST_FORWARD, 0)))
+        callback.onMediaButtonEvent(button(KeyEvent(0, 0, KeyEvent.ACTION_DOWN, 331, 0)))
+        callback.onMediaButtonEvent(button(KeyEvent(0, 0, KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_MEDIA_NEXT, 0)))
+
+        assertEquals(listOf(skip, KeyEvent.KEYCODE_MEDIA_FAST_FORWARD, 331).map(KeyEvent::keyCodeToString), notUsed)
+        assertEquals(listOf(CarPlayMediaButton.NEXT), sent)
+    }
+
     @Test
     fun aHeldKeySendsOnePress() {
         press(KeyEvent.KEYCODE_MEDIA_NEXT, repeat = 1)

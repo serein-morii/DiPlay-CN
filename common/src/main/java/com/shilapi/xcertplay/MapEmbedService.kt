@@ -72,13 +72,13 @@ class MapEmbedService : Service() {
         val client = message.replyTo ?: return
         val caller = packageManager.getNameForUid(message.sendingUid) ?: "uid ${message.sendingUid}"
         when (message.what) {
-            MSG_ATTACH -> attach(client, caller, message.data)
+            MSG_ATTACH -> attach(client, caller, message.sendingUid, message.data)
             MSG_RESIZE -> embeds[client.binder]?.resize(message.data.getInt(KEY_WIDTH), message.data.getInt(KEY_HEIGHT))
             MSG_DETACH -> embeds.remove(client.binder)?.release()
         }
     }
 
-    private fun attach(client: Messenger, caller: String, data: Bundle) {
+    private fun attach(client: Messenger, caller: String, uid: Int, data: Bundle) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
             refuse(client, caller, ERROR_UNSUPPORTED)
             return
@@ -93,13 +93,17 @@ class MapEmbedService : Service() {
             return
         }
         embeds.remove(client.binder)?.release()
+        if (embeds.size >= MAX_EMBEDS || embeds.values.count { it.uid == uid } >= MAX_EMBEDS_PER_UID) {
+            refuse(client, caller, ERROR_TOO_MANY)
+            return
+        }
         val display = getSystemService(DisplayManager::class.java)?.getDisplay(data.getInt(KEY_DISPLAY_ID))
         if (display == null) {
             send(client, MSG_ERROR, Bundle().apply { putString(KEY_ERROR, ERROR_BAD_REQUEST) })
             return
         }
         val embed = Embed(
-            createDisplayContext(display), client, "launcher:${nextId++}",
+            createDisplayContext(display), client, uid, "launcher:${nextId++}",
             data.getBinder(KEY_HOST_TOKEN)!!, display, data.getInt(KEY_WIDTH), data.getInt(KEY_HEIGHT),
         )
         embeds[client.binder] = embed
@@ -129,6 +133,7 @@ class MapEmbedService : Service() {
     private inner class Embed(
         context: Context,
         private val client: Messenger,
+        val uid: Int,
         private val key: String,
         hostToken: IBinder,
         display: android.view.Display,
@@ -177,7 +182,7 @@ class MapEmbedService : Service() {
             addView(waiting, FrameLayout.LayoutParams(-1, -1))
             // A tap opens CarPlay, as a tap on the dashboard card does.
             setOnClickListener {
-                context.startActivity(Intent(context, CarPlayHostActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                context.startActivity(CarPlayScreen.intent(context).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
             }
         }
 
@@ -213,6 +218,11 @@ class MapEmbedService : Service() {
         private const val TAG = "DiPlay-MapEmbed"
         private const val RELEASE_DELAY_MILLIS = 1_000L
 
+        // Each embed holds a decoder surface and a view host. Any app can bind once the driver allows sharing,
+        // and an app can bind with many Messengers; a launcher uses one view (docs/LAUNCHER_INTEGRATION.md).
+        private const val MAX_EMBEDS_PER_UID = 4
+        private const val MAX_EMBEDS = 8
+
         /** Bind to DiPlay's service with this action (the package differs between builds). */
         const val ACTION = "com.shihab.diplay.action.EMBED_MAP"
 
@@ -237,6 +247,7 @@ class MapEmbedService : Service() {
         const val ERROR_DISABLED = "disabled" // the driver has not allowed sharing in DiPlay
         const val ERROR_UNSUPPORTED = "unsupported" // Android 10 or older
         const val ERROR_BAD_REQUEST = "bad_request"
+        const val ERROR_TOO_MANY = "too_many" // this app or all apps already show the most maps allowed
 
         /** Keeps the stream's shape (8:3 or 16:9) and fills the view, cutting the edges that do not fit. */
         internal fun cropToFill(view: TextureView, width: Int, height: Int) {

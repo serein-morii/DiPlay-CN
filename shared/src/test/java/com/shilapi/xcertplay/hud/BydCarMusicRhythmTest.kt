@@ -81,6 +81,38 @@ class BydCarMusicRhythmTest {
         assertEquals(0, direct.starts + helper.starts)
     }
 
+    @Test fun theTangStopTakesTheTokenAndTheHanStopTakesOnlyThePackage() {
+        val token = android.os.Binder()
+        val tang = FakeTangAudio()
+        BydCarMusicRhythmTool.find(tang).apply { startRhythm(token); stopRhythm(token) }
+        assertEquals(listOf("start com.byd.mediacenter", "stop com.byd.mediacenter token"), tang.calls)
+
+        val han = FakeHanAudio()
+        BydCarMusicRhythmTool.find(han).apply { startRhythm(token); stopRhythm(token) }
+        assertEquals(listOf("start com.byd.mediacenter", "stop com.byd.mediacenter"), han.calls)
+    }
+
+    @Test fun aServiceWithoutBothCallsIsNotSupported() {
+        assertFalse(runCatching { BydCarMusicRhythmTool.find(Any()) }.isSuccess)
+        assertFalse(runCatching { BydCarMusicRhythmTool.find(StartOnlyAudio()) }.isSuccess)
+    }
+
+    class FakeTangAudio {
+        val calls = mutableListOf<String>()
+        fun startAudioOutput(pkg: String, callback: android.os.IBinder?) { calls += "start $pkg" }
+        fun stopAudioOutput(pkg: String, callback: android.os.IBinder?) { calls += "stop $pkg token" }
+    }
+
+    class FakeHanAudio {
+        val calls = mutableListOf<String>()
+        fun startAudioOutput(pkg: String, callback: android.os.IBinder?) { calls += "start $pkg" }
+        fun stopAudioOutput(pkg: String) { calls += "stop $pkg" }
+    }
+
+    class StartOnlyAudio {
+        fun startAudioOutput(pkg: String, callback: android.os.IBinder?) = Unit
+    }
+
     @Test fun bandsReachTheHelperOnlyWhileTheRhythmRuns() {
         val bands = IntArray(16) { 1 + it % 15 }
         BydCarMusicRhythm.sendBands(context, bands)

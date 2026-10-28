@@ -9,6 +9,7 @@ import com.shilapi.xcertplay.update.UpdateAvailability
 import com.shilapi.xcertplay.update.UpdateRelease
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -59,6 +60,22 @@ class UpdateHomeAvailabilityTest {
 
         assertTrue(update.minHeight >= (48 * activity.resources.displayMetrics.density).toInt())
         assertTrue(update.isClickable)
+        controller.pause().stop().destroy()
+    }
+
+    @Test fun anUpdateFoundWhileDiPlayWasInTheBackgroundShowsWhenHomeReturns() {
+        val controller = Robolectric.buildActivity(DiPlayActivity::class.java).setup()
+        val activity = controller.get()
+        val text = activity.getString(R.string.update_available_home)
+        fun shown() = descendants(activity.window.decorView).filterIsInstance<TextView>().any { it.text == text }
+        assertFalse(shown())
+
+        // The check after opening finds a release while CarPlay is in front.
+        controller.pause().stop()
+        UpdateAvailability.save(application, release())
+        controller.start().resume()
+
+        assertTrue(shown())
         controller.pause().stop().destroy()
     }
 

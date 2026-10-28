@@ -5,7 +5,7 @@
     <string name="contrib_audio_home_nav_channel_label">导航音频流</string>
     <string name="contrib_audio_home_nav_channel_note">0 表示自动路由。1–20 用于选择传统音频流编号，包括车机支持的厂商扩展输出。点选数值可试听。更改在重新连接后生效。</string>
     <string name="contrib_audio_home_toggle_audio_focus">音频焦点</string>
-    <string name="contrib_audio_home_toggle_audio_focus_desc">CarPlay 媒体向系统申请音频焦点；导航播报不会压低音乐。若开启后没有声音（部分车机焦点处理异常），请关闭本开关。更改在重新连接后生效。</string>
+    <string name="contrib_audio_home_toggle_audio_focus_desc">CarPlay 媒体向系统申请音频焦点；导航播报默认不会压低音乐。若开启后没有声音（部分车机焦点处理异常），请关闭本开关。更改在重新连接后生效。</string>
     <string name="audio_focus_auto_yield">暂时失去音频焦点时静音媒体</string>
     <string name="audio_focus_auto_yield_desc">启用音频焦点后，在 Android 音频被打断（包括来电）时静音媒体，重新获得焦点后恢复。如果车机不恢复音频焦点，请关闭此选项。更改在重新连接后生效。</string>
 </resources>

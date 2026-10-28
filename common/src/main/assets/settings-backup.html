@@ -102,7 +102,14 @@ var L = {
     picking:"ファイルを読み込んでいます…",invalid:"このファイルは DiPlay の設定バックアップではありません。",
     open:"ファイルを選んでインポート",
     done:"%1 件の設定をインポートし、%2 件をスキップしました。",fail:"インポートできませんでした。接続を確認してもう一度お試しください。",
-    reportTitle:"診断レポート",reportText:"この車載端末の診断レポートをテキストファイルとして保存します。プロトコルのデータと認証情報は含まれません。",report:"レポートをダウンロード"}
+    reportTitle:"診断レポート",reportText:"この車載端末の診断レポートをテキストファイルとして保存します。プロトコルのデータと認証情報は含まれません。",report:"レポートをダウンロード"},
+  it: {title:"Impostazioni DiPlay",sub:"Esegui il backup o ripristina le impostazioni di DiPlay su questo telefono.",
+    exportTitle:"Esporta",exportText:"Salva in un file le impostazioni attuali di questa head unit.",export:"Esporta impostazioni",
+    importTitle:"Importa",importText:"Carica un file di impostazioni esportato da una head unit DiPlay. Le impostazioni assenti dal file mantengono il valore attuale.",
+    picking:"Lettura del file…",invalid:"Questo file non è un backup delle impostazioni di DiPlay.",
+    open:"Scegli il file e importa",
+    done:"Importate %1 impostazioni, saltate %2.",fail:"Importazione non riuscita. Controlla la connessione e riprova.",
+    reportTitle:"Report diagnostico",reportText:"Salva il report diagnostico di questa head unit come file di testo. I dati del protocollo e le credenziali sono esclusi.",report:"Scarica report"}
 };
 var lang = (navigator.language || "en").toLowerCase();
 var key = lang in L ? lang
@@ -111,7 +118,8 @@ var key = lang in L ? lang
   : lang.indexOf("ru") === 0 ? "ru"
   : lang.indexOf("uk") === 0 ? "uk"
   : lang.indexOf("ar") === 0 ? "ar"
-  : lang.indexOf("ja") === 0 ? "ja" : "en";
+  : lang.indexOf("ja") === 0 ? "ja"
+  : lang.indexOf("it") === 0 ? "it" : "en";
 var t = L[key];
 var $ = function(id) { return document.getElementById(id); };
 document.title = t.title;

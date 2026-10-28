@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- DiPlay CN additions for the Turkish locale. -->
+<resources>
+    <string name="settings_save_notice">Değişiklikler Kaydet\'e dokunup yeniden bağlandıktan sonra uygulanır</string>
+    <string name="settings_swipe_target_label">Aşağı kaydırma şunu açar</string>
+    <string name="settings_swipe_target_overlay">Oturum içi ayarlar</string>
+    <string name="settings_swipe_target_full">Ana ayarlar sayfası</string>
+    <string name="settings_swipe_target_hint">CarPlay\'de aşağı kaydırmanın hangi ayarları açacağını seçer. Oturum içi menü kullanılabilir kalır; DiPlay tam ayarlarını aç düğmesi her zaman ana ayarlar sayfasını açar.</string>
+    <string name="settings_launcher_returns_to_carplay">DiPlay simgesi CarPlay\'ye döner</string>
+    <string name="settings_launcher_returns_to_carplay_description">CarPlay zaten çalışırken arabanın uygulama listesindeki DiPlay simgesine dokunmak CarPlay\'ye döner. Kapatırsanız bunun yerine DiPlay ana ekranı açılır.</string>
+    <string name="settings_cluster_menu_small_title">Küçük pencere navigasyonu</string>
+    <string name="settings_cluster_menu_small_state_small">küçük pencere etkin</string>
+    <string name="settings_cluster_menu_small_state_full">tam pencere</string>
+    <string name="settings_cluster_menu_small_state_unknown">gösterge bekleniyor</string>
+    <string name="settings_turn_camera">Dönüş yan kamerası (deneysel)</string>
+    <string name="settings_turn_camera_status">Uyumluluk</string>
+    <string name="settings_turn_camera_status_unprobed">Henüz denenmedi. Tanılama bölümünde salt-okunur denemeyi çalıştırın.</string>
+    <string name="settings_turn_camera_status_hints">Deneme tamamlandı: yalnızca salt-okunur ipuçları, bu araçta doğrulanmadı</string>
+    <string name="settings_turn_camera_enable">Dönüş yan kamerasını etkinleştir</string>
+    <string name="settings_turn_camera_enable_blocked">Bu sürümde kullanılamaz. Önce bu ekran ünitesinde üretici yazılımı denemesi, park halinde kalibrasyon ve gerçek araç doğrulaması gerekir.</string>
+    <string name="settings_turn_camera_probe">Dönüş kamerası denemesini çalıştır (salt-okunur)</string>
+    <string name="settings_turn_camera_probe_running">Deneleniyor…</string>
+    <string name="settings_turn_camera_probe_cancel">Denemeyi iptal et</string>
+    <string name="settings_turn_camera_probe_busy">Önceki bir deneme takılan bir adımı hâlâ bitiriyor. Birazdan tekrar deneyin.</string>
+    <string name="settings_turn_camera_probe_title">Dönüş kamerası deneme raporu</string>
+    <string name="settings_turn_camera_probe_copy">Kopyala</string>
+    <string name="settings_turn_camera_probe_failed">Deneme başarısız oldu. Tekrar deneyin.</string>
+</resources>

@@ -2,7 +2,10 @@ package com.shilapi.xcertplay.network
 
 import android.net.wifi.WifiConfiguration
 import android.util.Base64
+import com.shilapi.xcertplay.adb.FakeAdbd
+import com.shilapi.xcertplay.adb.LocalAdb
 import com.shilapi.xcertplay.orchestration.ManualHotspotSecurity
+import java.security.KeyPairGenerator
 import org.junit.Assert.*
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -18,6 +21,29 @@ class CarHotspotConfigReadTest {
     private fun reply(ssid: String, passphrase: String, security: Int): String {
         val b64 = { value: String -> Base64.encodeToString(value.toByteArray(), Base64.NO_WRAP) }
         return "ok|${b64(ssid)}|${b64(passphrase)}|$security"
+    }
+
+    private val key by lazy { KeyPairGenerator.getInstance("RSA").apply { initialize(2048) }.generateKeyPair() }
+
+    // The import switch is the driver's own tap. Without asking, a car that had never seen DiPlay's
+    // key answered "not approved" and showed no prompt (Galaxy Note20, Android 13).
+    @Test fun aReadThatMayAskOffersTheKeyAndReadsTheCarHotspot() {
+        val adbd = FakeAdbd(key, knowsKey = false, approves = true,
+            output = "DIPLAY_HOTSPOT_APCONFIG_READ_V1|${reply("Car-Hotspot", "secret-pass", 1)}\n")
+        val outcome = CarHotspotConfigRead.readWithAdb(LocalAdb(key, port = adbd.port), "/data/app/diplay.apk",
+            mayAsk = true, log = ::log)
+        assertTrue(adbd.offeredKey)
+        assertEquals(CarHotspotSavedCredentials("Car-Hotspot", "secret-pass", ManualHotspotSecurity.WPA2), outcome.credentials)
+        assertEquals(1, adbd.opened.size)
+    }
+
+    @Test fun aReadThatMayNotAskLeavesAnUnknownKeyUnapproved() {
+        val adbd = FakeAdbd(key, knowsKey = false, approves = true)
+        val outcome = CarHotspotConfigRead.readWithAdb(LocalAdb(key, port = adbd.port), "/data/app/diplay.apk",
+            mayAsk = false, log = ::log)
+        assertFalse(adbd.offeredKey)
+        assertEquals(CarHotspotConfigRead.Reason.ADB_UNAVAILABLE, outcome.reason)
+        assertEquals(LocalAdb.Access.NOT_APPROVED, outcome.access)
     }
 
     @Test fun adbReadCarriesTheSavedCredentials() {

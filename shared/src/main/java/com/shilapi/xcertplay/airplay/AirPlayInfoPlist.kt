@@ -51,7 +51,7 @@ object AirPlayInfoPlist {
         if (!config.disableAudioOutput) {
             info["audioLatencies"] = audioLatencies()
             info["audioFormats"] = audioFormats(config.entertainmentSampleRate, config.microphone, config.mainBufferedAudio, config.microphoneOpus,
-                config.speechWithout8And16Khz)
+                config.speechWithout8And16Khz, config.callAtCallRate)
         }
         info["extendedFeatures"] = listOf("vocoderInfo", "enhancedRequestCarUI")
         info["displays"] = displays
@@ -125,6 +125,7 @@ object AirPlayInfoPlist {
         mainBuffered: Boolean = false,
         microphoneOpus: Boolean = true,
         speechWithout8And16Khz: Boolean = false,
+        callAtCallRate: Boolean = false,
     ): List<Map<String, Any?>> {
         fun format(type: Int, audioType: String, outputFormats: Int, inputFormats: Int? = null): Map<String, Any?> {
             val entry = linkedMapOf<String, Any?>(
@@ -144,10 +145,15 @@ object AirPlayInfoPlist {
         val pcmMono = 0x154 or (if (is48) 0x4000 else 0x400)
         val opus = 0x70000000
         val aacLc = if (is48) 0x800000 else 0x400000
+        // Calls at their own rate: PCM mono at the vocoder rates (8, 16, 24, 32 kHz), no Opus and no 44.1/48 kHz.
+        val telephonyOutput = if (callAtCallRate) 0x154 else pcmMono or opus
         val pcmInput = if (microphone) pcmMono else null
         // Retain Opus whenever platform or bundled software encoding is usable. PCM-only wireless
         // negotiation is not a universal fallback; a missing MediaCodec encoder is insufficient.
         val wirelessInput = if (microphone) (if (microphoneOpus) pcmMono or opus else pcmMono) else null
+        // The iPhone picks one audioFormat for both directions of the call stream, so the call microphone is offered
+        // at the same rates; otherwise a 48 kHz microphone offer let it keep choosing 48 kHz.
+        val telephonyInput = if (callAtCallRate && microphone) 0x154 else wirelessInput
 
         return listOf(
             format(100, "compatibility", pcm, pcmInput),
@@ -155,7 +161,7 @@ object AirPlayInfoPlist {
             format(100, "default", speech or opus, wirelessInput),
             format(100, "alert", speech or opus),
             format(100, "media", pcm),
-            format(100, "telephony", pcmMono or opus, wirelessInput),
+            format(100, "telephony", telephonyOutput, telephonyInput),
             format(100, "speechRecognition", pcmMono or opus, wirelessInput),
             format(101, "default", speech or opus),
             format(102, "media", aacLc),

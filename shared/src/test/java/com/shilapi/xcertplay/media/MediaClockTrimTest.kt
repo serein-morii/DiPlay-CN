@@ -53,6 +53,61 @@ class MediaClockTrimTest {
         }
     }
 
+    /**
+     * Wireless CarPlay: the iPhone sends about 0.4 s of music at once, every 0.4 s by its clock give or take
+     * 30 ms (#807, #976). The head unit's clock is accurate; playback starts once the target, and at least one
+     * burst, is queued.
+     */
+    private class BurstDrive(targetMs: Int, seed: Int = 7) {
+        val target = 48L * targetMs
+        val trim = MediaClockTrim(48_000, target)
+        val random = Random(seed)
+        var queued = maxOf(target, 19_200L).toDouble()
+        val starvedSeconds = mutableListOf<Int>()
+        val ratesAfterAMinute = mutableListOf<Int>()
+
+        fun run(seconds: Int) {
+            var rate = 48_000
+            var burst = 1
+            var nextBurstMs = 400.0
+            var played = 0.0
+            for (ms in 0 until seconds * 1000) {
+                val nowNs = ms * 1_000_000L
+                if (ms >= nextBurstMs) {
+                    queued += 19_200
+                    burst++
+                    nextBurstMs = burst * 400 + (random.nextDouble() - 0.5) * 60
+                    trim.sample(queued.toLong(), nowNs)
+                    trim.rateDue(nowNs)?.let { rate = it }
+                    if (ms >= 60_000) ratesAfterAMinute += rate
+                }
+                played += rate / 1000.0
+                while (played >= 1024) {
+                    played -= 1024
+                    if (queued >= 1024) queued -= 1024 else { starvedSeconds += ms / 1000; queued = 0.0 }
+                }
+            }
+        }
+    }
+
+    @Test fun overWiFiTheDefaultBufferIsNotPlayedFast() {
+        for (seed in 1..3) {
+            MediaClockTrim.learnedTrim = 0.0
+            val drive = BurstDrive(300, seed)
+            drive.run(300)
+            assertEquals("seed $seed starved at ${drive.starvedSeconds}", 0, drive.starvedSeconds.count { it >= 60 })
+            assertEquals("seed $seed", 48_000.0, drive.ratesAfterAMinute.average(), 20.0)
+            assertTrue("seed $seed max ${drive.ratesAfterAMinute.max()}", drive.ratesAfterAMinute.max() < 48_200)
+        }
+    }
+
+    @Test fun overWiFiALongerBufferAlsoSettlesAtTheIphonesClock() {
+        val drive = BurstDrive(1000)
+        drive.run(300)
+        assertEquals(emptyList<Int>(), drive.starvedSeconds)
+        assertEquals(48_000.0, drive.ratesAfterAMinute.average(), 20.0)
+    }
+
     @Test fun withoutTheTrimA076PercentFastHeadUnitRunsDryEveryMinuteOrSo() {
         val drive = Drive(0.0076, trimmed = false)
         drive.run(300)

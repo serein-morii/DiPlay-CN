@@ -18,6 +18,7 @@ import org.junit.runner.RunWith
 import org.robolectric.Robolectric
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.Shadows.shadowOf
+import org.robolectric.shadows.ShadowBinder
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.Implementation
 import org.robolectric.annotation.Implements
@@ -95,5 +96,62 @@ class MapEmbedServiceTest {
             controller.destroy()
             MapMirrors.streamAspect = MapMirrors.PHYSICAL_STREAM_ASPECT
         }
+    }
+    private class Launcher(val service: MapEmbedService) {
+        val replies = mutableListOf<Message>()
+        val endpoint = Messenger(service.onBind(Intent(MapEmbedService.ACTION)))
+        val embeds = service.javaClass.getDeclaredField("embeds").apply { isAccessible = true }
+            .get(service) as Map<*, *>
+
+        fun attach(client: Messenger = Messenger(Handler(Looper.getMainLooper()) { replies += Message.obtain(it); true })) {
+            endpoint.send(Message.obtain(null, MapEmbedService.MSG_ATTACH).apply {
+                replyTo = client
+                data = Bundle().apply {
+                    putBinder(MapEmbedService.KEY_HOST_TOKEN, Binder())
+                    putInt(MapEmbedService.KEY_DISPLAY_ID, Display.DEFAULT_DISPLAY)
+                    putInt(MapEmbedService.KEY_WIDTH, 1200)
+                    putInt(MapEmbedService.KEY_HEIGHT, 450)
+                }
+            })
+            shadowOf(Looper.getMainLooper()).idle()
+        }
+    }
+
+    private fun withService(test: (Launcher) -> Unit) {
+        val controller = Robolectric.buildService(MapEmbedService::class.java).create()
+        try {
+            AirPlayPersistence.saveLauncherMapSharing(controller.get(), true)
+            test(Launcher(controller.get()))
+        } finally {
+            controller.destroy()
+            ShadowBinder.reset()
+        }
+    }
+
+    @Test fun oneAppCannotHoldManyMaps() = withService { launcher ->
+        repeat(40) { launcher.attach() }
+        assertEquals("One app holds ${launcher.embeds.size} decoders", 4, launcher.embeds.size)
+        assertEquals(MapEmbedService.MSG_ERROR, launcher.replies.last().what)
+    }
+
+    @Test fun manyAppsCannotHoldManyMapsTogether() = withService { launcher ->
+        repeat(40) { index ->
+            ShadowBinder.setCallingUid(10_000 + index)
+            launcher.attach()
+        }
+        assertEquals("All apps hold ${launcher.embeds.size} decoders", 8, launcher.embeds.size)
+    }
+
+    @Test fun aLauncherStillGetsItsMapAndCanReplaceOrFreeIt() = withService { launcher ->
+        val client = Messenger(Handler(Looper.getMainLooper()) { launcher.replies += Message.obtain(it); true })
+        launcher.attach(client)
+        launcher.attach(client)
+        assertEquals(1, launcher.embeds.size)
+        assertEquals(MapEmbedService.MSG_ATTACHED, launcher.replies.last().what)
+        launcher.attach()
+        assertEquals(2, launcher.embeds.size)
+        launcher.endpoint.send(Message.obtain(null, MapEmbedService.MSG_DETACH).apply { replyTo = client })
+        shadowOf(Looper.getMainLooper()).idle()
+        assertEquals(1, launcher.embeds.size)
     }
 }

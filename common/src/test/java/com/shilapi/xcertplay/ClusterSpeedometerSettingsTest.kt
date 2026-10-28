@@ -33,6 +33,7 @@ class ClusterSpeedometerSettingsTest {
 
     @Test fun defaultsPersistAndAttachedViewUpdatesWithoutReconnection() {
         assertFalse(AirPlayPersistence.loadClusterSpeedometerEnabled(context))
+        assertFalse(AirPlayPersistence.loadClusterSpeedometerAlbumColor(context))
         val controller = Robolectric.buildActivity(Activity::class.java).setup().visible()
         var changed: ((Int?) -> Unit)? = null
         var stopped = 0
@@ -88,38 +89,119 @@ class ClusterSpeedometerSettingsTest {
             Intent(context, DiPlayActivity::class.java).putExtra("page", "settings")).setup()
         val activity = controller.get()
         ReflectionHelpers.setField(activity, "settingsCategory", SettingsCategory.NAVIGATION)
-        fun hasToggle(): Boolean {
+        fun hasToggle(id: Int = com.shilapi.xcertplay.host.R.string.settings_cluster_speedometer): Boolean {
             fun texts(view: View): List<String> = if (view is android.view.ViewGroup)
                 (0 until view.childCount).flatMap { texts(view.getChildAt(it)) }
                 else if (view is android.widget.TextView) listOf(view.text.toString()) else emptyList()
-            return texts(activity.window.decorView).contains(activity.getString(com.shilapi.xcertplay.host.R.string.settings_cluster_speedometer))
+            return texts(activity.window.decorView).contains(activity.getString(id))
         }
         ReflectionHelpers.callInstanceMethod<Unit>(activity, "render")
         assertFalse(hasToggle())
         AirPlayPersistence.saveClusterMapEnabled(context, true)
         ReflectionHelpers.callInstanceMethod<Unit>(activity, "render")
         assertTrue(hasToggle())
+        val colorSetting = com.shilapi.xcertplay.host.R.string.settings_cluster_speedometer_album_color
+        assertFalse(hasToggle(colorSetting))
+        AirPlayPersistence.saveClusterSpeedometerEnabled(context, true)
+        ReflectionHelpers.callInstanceMethod<Unit>(activity, "render")
+        assertTrue(hasToggle(colorSetting))
+        AirPlayPersistence.saveClusterSpeedometerEnabled(context, false)
+        ReflectionHelpers.callInstanceMethod<Unit>(activity, "render")
+        assertFalse(hasToggle(colorSetting))
         AirPlayPersistence.saveClusterMapEnabled(context, false)
         ReflectionHelpers.callInstanceMethod<Unit>(activity, "render")
         assertFalse(hasToggle())
         controller.pause().stop().destroy()
     }
 
-    @Test fun speedCardRendersCenteredAtDifferentSizes() {
-        for (size in listOf(50, 75)) {
-            val view = ClusterSpeedometerView(context) { { } }
-            view.setLayout(82, 30, size)
-            view.setSpeedKmh(72)
-            view.measure(View.MeasureSpec.makeMeasureSpec(1920, View.MeasureSpec.EXACTLY),
-                View.MeasureSpec.makeMeasureSpec(720, View.MeasureSpec.EXACTLY))
-            view.layout(0, 0, 1920, 720)
-            val bitmap = Bitmap.createBitmap(1920, 720, Bitmap.Config.ARGB_8888)
-            view.draw(Canvas(bitmap))
-            val directory = File("build/reports/cluster-speedometer-ui").apply { mkdirs() }
-            File(directory, "card-$size.png").outputStream().use {
-                assertTrue(bitmap.compress(Bitmap.CompressFormat.PNG, 100, it))
+    @Test fun albumBackgroundFadesRetainsOpacityAndRestoresDefaultWithoutRestartingSpeed() {
+        ClusterMusicState.publish(com.shilapi.xcertplay.media.CarPlayNowPlaying(), null)
+        shadowOf(Looper.getMainLooper()).idle()
+        AirPlayPersistence.saveClusterSpeedometerEnabled(context, true)
+        AirPlayPersistence.saveClusterSpeedometerOpacity(context, 40)
+        val controller = Robolectric.buildActivity(Activity::class.java).setup().visible()
+        var subscriptions = 0
+        val view = ClusterSpeedometerView(controller.get()) { subscriptions++; { } }
+        controller.get().setContentView(view)
+        shadowOf(Looper.getMainLooper()).idle()
+        view.layout(0, 0, 1280, 480)
+        view.setSpeedKmh(188)
+        val output = Bitmap.createBitmap(1280, 480, Bitmap.Config.ARGB_8888)
+        fun color(): Int {
+            view.draw(Canvas(output))
+            return ReflectionHelpers.getField<android.graphics.Paint>(view, "backgroundPaint").color
+        }
+        val original = color()
+        val red = Bitmap.createBitmap(24, 24, Bitmap.Config.ARGB_8888).apply { eraseColor(Color.RED) }
+        val blue = Bitmap.createBitmap(24, 24, Bitmap.Config.ARGB_8888).apply { eraseColor(Color.BLUE) }
+        fun publish(art: Bitmap?) {
+            ClusterMusicState.publish(com.shilapi.xcertplay.media.CarPlayNowPlaying(title = "Track"), art)
+            shadowOf(Looper.getMainLooper()).idle()
+        }
+        publish(red)
+        assertEquals(original, color()) // opt-in only
+        AirPlayPersistence.saveClusterSpeedometerAlbumColor(context, true)
+        shadowOf(Looper.getMainLooper()).idle()
+        shadowOf(Looper.getMainLooper()).idleFor(java.time.Duration.ofMillis(400))
+        assertEquals(ClusterMusicView.coverFrameColor(red) and 0xffffff, color() and 0xffffff)
+        assertEquals(102, Color.alpha(color()))
+        publish(blue)
+        shadowOf(Looper.getMainLooper()).idleFor(java.time.Duration.ofMillis(200))
+        val middle = color()
+        assertTrue(Color.red(middle) > 0 && Color.blue(middle) > 0)
+        publish(null) // metadata-only update must not reset the transition
+        shadowOf(Looper.getMainLooper()).idleFor(java.time.Duration.ofMillis(200))
+        assertEquals(ClusterMusicView.coverFrameColor(blue) and 0xffffff, color() and 0xffffff)
+        AirPlayPersistence.saveClusterSpeedometerAlbumColor(context, false)
+        shadowOf(Looper.getMainLooper()).idle()
+        shadowOf(Looper.getMainLooper()).idleFor(java.time.Duration.ofMillis(400))
+        assertEquals(original, color())
+        assertEquals(1, subscriptions)
+        assertEquals(Color.WHITE, ReflectionHelpers.getField<android.graphics.Paint>(view, "speedPaint").color)
+        AirPlayPersistence.saveClusterSpeedometerAlbumColor(context, true)
+        shadowOf(Looper.getMainLooper()).idle()
+        ClusterMusicState.publish(com.shilapi.xcertplay.media.CarPlayNowPlaying(), null)
+        shadowOf(Looper.getMainLooper()).idle()
+        shadowOf(Looper.getMainLooper()).idleFor(java.time.Duration.ofMillis(400))
+        assertEquals(original, color())
+        controller.pause().stop().destroy()
+        assertNull(ReflectionHelpers.getField<Any?>(view, "stopObservingArtwork"))
+        output.recycle()
+    }
+
+    @Test fun squareSpeedCardFitsThreeDigitsAtEverySize() {
+        val directory = File("build/reports/cluster-speedometer-ui").apply { mkdirs() }
+        for ((width, height) in listOf(1280 to 480, 1920 to 720, 60 to 200)) {
+            for (size in listOf(30, 50, 75, 95)) {
+                val view = ClusterSpeedometerView(context) { { } }
+                view.setLayout(82, 30, size)
+                view.layout(0, 0, width, height)
+                val rect = com.shilapi.xcertplay.airplay.ClusterSpeedometerOverlay.rect(width, height, 82, 30, size)
+                assertEquals(rect.width, rect.height)
+                assertTrue(rect.left >= 0 && rect.top >= 0)
+                assertTrue(rect.left + rect.width <= width && rect.top + rect.height <= height)
+                for (speed in listOf(8, 88, 188, 300)) {
+                    view.setSpeedKmh(speed)
+                    val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+                    view.draw(Canvas(bitmap))
+                    val paint = ReflectionHelpers.getField<android.graphics.Paint>(view, "speedPaint")
+                    val unit = ReflectionHelpers.getField<android.graphics.Paint>(view, "unitPaint")
+                    assertTrue("$speed must fit with 5% clearance on each side at size $size",
+                        paint.measureText(speed.toString()) <= rect.width * .90f)
+                    assertTrue(unit.measureText("km/h") < rect.width * .8f)
+                    val numberBounds = android.graphics.Rect()
+                    val unitBounds = android.graphics.Rect()
+                    paint.getTextBounds(speed.toString(), 0, speed.toString().length, numberBounds)
+                    unit.getTextBounds("km/h", 0, 4, unitBounds)
+                    assertTrue(numberBounds.height() + unitBounds.height() + rect.height * .06f < rect.height * .8f)
+                    if (width == 1280 && size in listOf(30, 50, 95) && speed in listOf(188, 300)) {
+                        File(directory, "square-$size-$speed.png").outputStream().use {
+                            assertTrue(bitmap.compress(Bitmap.CompressFormat.PNG, 100, it))
+                        }
+                    }
+                    bitmap.recycle()
+                }
             }
-            bitmap.recycle()
         }
     }
 
@@ -144,7 +226,7 @@ class ClusterSpeedometerSettingsTest {
             card.measure(View.MeasureSpec.makeMeasureSpec(px, View.MeasureSpec.EXACTLY),
                 View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED))
             card.layout(0, 0, card.measuredWidth, card.measuredHeight)
-            assertEquals(5, card.childCount)
+            assertEquals(6, card.childCount)
             for (i in 0 until card.childCount) assertTrue(card.getChildAt(i).height > 0)
             val bitmap = Bitmap.createBitmap(card.width, card.height, Bitmap.Config.ARGB_8888)
             card.draw(Canvas(bitmap))

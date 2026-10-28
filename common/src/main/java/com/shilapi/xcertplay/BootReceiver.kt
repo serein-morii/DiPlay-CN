@@ -16,7 +16,11 @@ class BootReceiver : BroadcastReceiver() {
         StartupDiagnosticSnapshot.received(context, launchEnabled)
         if (!launchEnabled) return
 
+        // Shaped like the launcher icon's intent: a USB authenticator or iPhone plugged in can open CarPlay
+        // before this broadcast, and DiPlayActivity then returns to that session instead of showing Home over it.
         val launch = Intent(context, DiPlayActivity::class.java).apply {
+            action = Intent.ACTION_MAIN
+            addCategory(Intent.CATEGORY_LAUNCHER)
             addFlags(
                 Intent.FLAG_ACTIVITY_NEW_TASK or
                     Intent.FLAG_ACTIVITY_CLEAR_TOP or

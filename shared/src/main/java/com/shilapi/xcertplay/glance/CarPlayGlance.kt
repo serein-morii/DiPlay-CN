@@ -2,6 +2,8 @@ package com.shilapi.xcertplay.glance
 
 import com.shilapi.xcertplay.hud.BydHudRouteState
 import com.shilapi.xcertplay.hud.ClusterSongState
+import com.shilapi.xcertplay.iap2.message.Iap2LaneGuidance
+import com.shilapi.xcertplay.iap2.message.LaneGuidanceLane
 import com.shilapi.xcertplay.iap2.wire.Iap2Frame
 
 /**
@@ -24,6 +26,9 @@ object CarPlayGlance {
         val playing: Boolean = false,
     )
 
+    private const val LANE_GUIDANCE_UPDATE = 0x5204
+    private const val TAG = "DiPlay-Lane"
+
     private val route = BydHudRouteState()
     private val song = ClusterSongState()
     private var connected = false
@@ -31,6 +36,12 @@ object CarPlayGlance {
 
     /** Called with each new snapshot, on the thread that changed it. */
     @Volatile var listener: ((Snapshot) -> Unit)? = null
+
+    /** Lane guidance from 0x5204, on the iAP2 thread; empty when the lane strip goes away. */
+    @Volatile var laneListener: ((List<LaneGuidanceLane>) -> Unit)? = null
+
+    /** The last strip written to the log: Apple Maps repeats it while the overlap lasts. */
+    private var loggedLanes: List<LaneGuidanceLane>? = null
 
     /** Refresh time-dependent guidance even when no new metadata frame has arrived. */
     fun snapshot(): Snapshot {
@@ -40,6 +51,17 @@ object CarPlayGlance {
     }
 
     fun onFrame(frame: Iap2Frame) {
+        if (frame.messageId == LANE_GUIDANCE_UPDATE) {
+            // Lane guidance is a side channel: log it, hand it to whoever draws lanes, and leave
+            // the route/now-playing state alone.
+            val lanes = runCatching { Iap2LaneGuidance.parse(frame.payload) }.getOrDefault(emptyList())
+            if (lanes != loggedLanes) {
+                loggedLanes = lanes
+                android.util.Log.i(TAG, "0x5204 " + describeLanes(lanes, frame.payload))
+            }
+            laneListener?.invoke(lanes)
+            return
+        }
         val changed = synchronized(this) {
             when (frame.messageId) {
                 BydHudRouteState.ROUTE_GUIDANCE_UPDATE, BydHudRouteState.ROUTE_GUIDANCE_MANEUVER_UPDATE ->
@@ -63,6 +85,20 @@ object CarPlayGlance {
             publishLocked()
         }
         changed?.let { listener?.invoke(it) }
+    }
+
+    /**
+     * One line per lane strip for the diagnostic report: the parsed fields, and the raw payload once,
+     * so a report from a car we cannot test still shows what the phone actually sent.
+     */
+    private fun describeLanes(lanes: List<LaneGuidanceLane>, payload: ByteArray): String {
+        if (lanes.isEmpty()) return "lane strip cleared"
+        val strip = lanes.joinToString("; ") {
+            "i=${it.index} st=${it.status} a=${it.angle} h=${it.highlightAngle}"
+        }
+        return "lanes=${lanes.size} [$strip] raw=" + payload.joinToString("") {
+            "%02x".format(it.toInt() and 0xff)
+        }
     }
 
     private fun publishLocked(): Snapshot? {

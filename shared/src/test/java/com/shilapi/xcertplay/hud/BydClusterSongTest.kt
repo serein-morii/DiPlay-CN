@@ -2,11 +2,26 @@ package com.shilapi.xcertplay.hud
 
 import com.shilapi.xcertplay.iap2.message.Iap2Messages
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class BydClusterSongTest {
+    @Test
+    fun theGateReturnsToCarPlayInItsOwnTaskOrOnTopOfDiPlays() {
+        val own = "com.shilapi.xcertplay.CarPlayHostActivity"
+        val shared = "com.shilapi.xcertplay.SameTaskCarPlayHostActivity"
+        val home = "com.shilapi.xcertplay.DiPlayActivity"
+
+        assertTrue(BydClusterSong.isCarPlayTask(own, own))
+        // "Keep CarPlay in the launcher card" (#463): CarPlay on top of DiPlay's own task.
+        assertTrue(BydClusterSong.isCarPlayTask(home, shared))
+        assertTrue(BydClusterSong.isCarPlayTask(shared, null))
+        assertFalse(BydClusterSong.isCarPlayTask(home, home))
+        assertFalse(BydClusterSong.isCarPlayTask(null, null))
+    }
+
     private fun update(block: com.shilapi.xcertplay.iap2.body.Iap2BodyBuilder.() -> Unit) =
         Iap2Messages.buildRaw(ClusterSongState.NOW_PLAYING_UPDATE, block)
 

@@ -108,6 +108,10 @@ class IphoneUsbHost(
     fun listedDevices(): List<String> =
         usbManager.deviceList.values.map(Ch341UsbHost::describe).sorted()
 
+    fun listsNonHubDevice(): Boolean = usbManager.deviceList.values.any { device ->
+        !isHub(device.deviceClass, (0 until device.interfaceCount).map { device.getInterface(it).interfaceClass })
+    }
+
     @Throws(IphoneUsbException::class)
     fun requestPermission(device: UsbDevice, allowAdbFallback: Boolean = true): PermissionRequest {
         requireConfiguredDevice(device)
@@ -150,7 +154,7 @@ class IphoneUsbHost(
 
     /** Register once for this host instance and close the returned handle to unregister it. */
     fun registerPermissionReceiver(onResult: (PermissionResult) -> Unit): Closeable =
-        registerReceiver(IntentFilter(permissionAction)) { parsePermissionResult(it)?.let(onResult) }
+        registerReceiver(IntentFilter(permissionAction), guarded = true) { parsePermissionResult(it)?.let(onResult) }
 
     /** Register once for this host instance and close the returned handle to unregister it. */
     fun registerAttachReceiver(onAttached: (UsbDevice) -> Unit): Closeable =
@@ -366,11 +370,13 @@ class IphoneUsbHost(
         )
     }
 
-    private fun registerReceiver(filter: IntentFilter, onReceive: (Intent) -> Unit): Closeable {
+    private fun registerReceiver(filter: IntentFilter, guarded: Boolean = false, onReceive: (Intent) -> Unit): Closeable {
         val receiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context, intent: Intent) = onReceive(intent)
         }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        if (guarded) {
+            UsbPermissionBroadcast.register(appContext, receiver, filter)
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             appContext.registerReceiver(receiver, filter, Context.RECEIVER_NOT_EXPORTED)
         } else {
             appContext.registerReceiver(receiver, filter)
@@ -421,6 +427,10 @@ class IphoneUsbHost(
             return "CarPlay USB mode request rejected; current mode=$current " +
                 "usbVersion=${deviceVersion ?: "unknown"} configurations=$configurations"
         }
+
+        internal fun isHub(deviceClass: Int, interfaceClasses: List<Int>): Boolean =
+            deviceClass == UsbConstants.USB_CLASS_HUB ||
+                interfaceClasses.isNotEmpty() && interfaceClasses.all { it == UsbConstants.USB_CLASS_HUB }
     }
 
 }

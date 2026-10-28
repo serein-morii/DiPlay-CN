@@ -259,9 +259,10 @@ class LocalAdb(
         nextStreamId = 1
     }
 
-    private companion object {
+    internal companion object {
         const val CONNECT_TIMEOUT_MS = 2_000
         const val READ_TIMEOUT_MS = 5_000
+        /** How long an asking connect waits for the driver to approve DiPlay on the car's screen. */
         const val APPROVAL_TIMEOUT_MS = 60_000
         const val APPROVAL_RECHECK_MS = 1_000
         const val MAX_COMMAND_TIMEOUT_MS = 30_000

@@ -1,5 +1,6 @@
 package com.shilapi.xcertplay.update
 
+import java.net.URI
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -13,6 +14,17 @@ internal data class UpdateRelease(
 
 internal object UpdateCatalog {
     internal const val CHECKSUMS_FILE = "SHA256SUMS.txt"
+    // CN releases are mirrored on Gitee; the acceleration mirrors prefix a github.com URL at download time.
+    private val DOWNLOAD_HOSTS = setOf("github.com", "gitee.com")
+    // The name becomes a file in the cache folder, so it can hold no path.
+    private val APK_NAME = Regex("[A-Za-z0-9][A-Za-z0-9._-]*\\.apk")
+
+    private fun isDownloadUrl(url: String): Boolean {
+        val uri = runCatching { URI(url) }.getOrNull() ?: return false
+        val host = uri.host ?: return false
+        return uri.scheme.equals("https", ignoreCase = true) && host.lowercase() in DOWNLOAD_HOSTS &&
+            uri.rawUserInfo == null && uri.port == -1
+    }
 
     /** Returns the first published release that carries an APK and its checksums, or null. */
     internal fun parse(json: String): UpdateRelease? {
@@ -32,7 +44,8 @@ internal object UpdateCatalog {
                 val asset = assets.optJSONObject(assetIndex) ?: continue
                 val name = asset.optString("name")
                 val url = asset.optString("browser_download_url")
-                if (name == expectedApkName && url.isNotEmpty()) {
+                if (!isDownloadUrl(url)) continue
+                if (name == expectedApkName && APK_NAME.matches(name)) {
                     apkName = name
                     apkUrl = url
                 }

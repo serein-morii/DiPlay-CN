@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="ambient_delay_title">Geçiş gecikmesi</string>
+    <string name="ambient_delay_hint">0–60 saniye arası girin. Sıfır anında geçiş yapar.</string>
+    <string name="custom_number_error">%1$d ile %2$d arasında bir tam sayı girin.</string>
+    <string name="ambient_delay_summary">%1$d sn</string>
+</resources>

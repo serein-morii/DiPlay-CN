@@ -56,6 +56,10 @@
     <string name="preview_oem_label">OEM label:\u0020</string>
     <string name="preview_empty">(empty)</string>
     <string name="preview_frame_rate">Frame rate:\u0020</string>
+    <string name="preview_transport_hevc">HEVC (H.265, %1$s)</string>
+    <string name="preview_decoder_hardware">hardware</string>
+    <string name="preview_decoder_software">software</string>
+    <string name="preview_list_separator">,\u0020</string>
     <string name="preview_detected_maximum">Detected maximum:\u0020</string>
     <string name="preview_physical_reference">Physical reference:\u0020</string>
     <string name="basis_widest_width">widest width</string>
@@ -89,7 +93,7 @@
     <string name="resolution_handshake_prefix">Handshake resolution:\u0020</string>
     <string name="safe_area_full_screen_at">Safe area: full screen at\u0020</string>
     <string name="safe_area_mapping_summary">Safe area: %1$d x %2$d at (%3$d, %4$d) in %5$d x %6$d</string>
-    <string name="settings_android9_compat">The following settings are unavailable and hidden on Android 9 (API 28):\n• Wi-Fi P2P (5 GHz) — LocalOnlyHotspot is used instead.\n• HEVC software decoder — hardware decoding is used instead.</string>
+    <string name="settings_android9_compat">The following settings are unavailable and hidden on Android 9 (API 28):\n• HEVC software decoder — hardware decoding is used instead.</string>
     <string name="settings_mfi_address_hint">Address must start with http:// or https://. Token is optional and sent as an Authorization bearer token.</string>
     <string name="app_name">DiPlay</string>
     <string name="language_section_title">Language</string>
@@ -204,7 +208,7 @@
     <string name="rect_fill_disable_safe_area_description">Asks the iPhone for a full-screen picture with square corners. Try it when CarPlay leaves a strip at an edge or shows the wallpaper color in its rounded corners. The safe area above is not used while this is on. Applies after Save and reconnect.</string>
     <string name="safe_area_disabled_rect_fill_summary">Safe area: off (square corners, full screen)</string>
     <string name="driving_side">Driving side</string>
-    <string name="efficient_video">Efficient video</string>
+    <string name="efficient_video">Efficient video (HEVC)</string>
     <string name="enable_the_car_s_bluetooth_and_pair_your_iphone_first">Enable the car’s Bluetooth and pair your iPhone first.</string>
     <string name="error">Error</string>
     <string name="exit_application">EXIT APPLICATION</string>
@@ -281,6 +285,7 @@
     <string name="open_connection_setup">Open connection setup</string>
     <string name="open_this_setting_from_your_car_s_settings_app">Open this setting from your car’s Settings app.</string>
     <string name="opening_carplay">Opening CarPlay…</string>
+    <string name="iphone_sent_no_picture">The iPhone has not sent a picture since CarPlay started. Restart the iPhone (turn it off and on), then connect again.</string>
     <string name="opening_usb_data_paths">Opening USB data paths</string>
     <string name="pair_another">Pair another</string>
     <string name="pair_your_iphone">Pair your iPhone</string>
@@ -435,6 +440,10 @@
     <string name="use_software_hevc_decoder">Use software HEVC decoder</string>
     <string name="use_usage_content_type_routing_instead_of_stream_type">Use usage / content-type routing instead of stream type</string>
     <string name="use_your_last_connection_type_and_selected_iphone">Use your last connection type and selected iPhone.</string>
+    <string name="vpn_authorization_adb_unusable">This head unit cannot open VPN authorization, and DiPlay cannot use its ADB over network to allow the VPN itself.</string>
+    <string name="vpn_authorization_adb_not_approved">This head unit cannot open VPN authorization, and its ADB has not approved DiPlay, so DiPlay cannot allow the VPN itself.</string>
+    <string name="vpn_authorization_adb_did_not_allow">This head unit cannot open VPN authorization, and allowing the VPN over its ADB did not work.</string>
+    <string name="vpn_authorization_adb_command">Run this ADB command once from a computer connected to the head unit, then plug in the iPhone again:\nadb shell appops set %1$s ACTIVATE_VPN allow</string>
     <string name="vpn_authorization_unavailable">This head unit cannot open VPN authorization. Return to DiPlay to check connection permissions or use wireless.</string>
     <string name="vpn_consent_was_denied">VPN consent was denied</string>
     <string name="waiting_for_iphone_over_usb">Waiting for iPhone over USB</string>
@@ -465,6 +474,8 @@
     <string name="option_size_large">Large</string>
     <string name="option_size_medium">Medium</string>
     <string name="option_size_small">Small</string>
+    <string name="option_size_custom">Custom</string>
+    <string name="size_option_millimeters">%1$s · %2$d mm</string>
     <string name="option_theme_scenario">Scenario · side map</string>
     <string name="option_theme_map">Map · full map</string>
     <string name="option_theme_simple">Simple · side map</string>
@@ -518,6 +529,7 @@
     <string name="adb_dashboard_does_not_send_map">Dashboard: %1$s, so the iPhone does not send the map.</string>
     <string name="adb_not_approved">DiPlay is not approved yet. Tap Check ADB access, then allow DiPlay on the car screen.</string>
     <string name="adb_off">ADB over network is off. Turn it on in the head unit’s developer options.</string>
+    <string name="adb_network_not_answering">USB debugging is on, but ADB over network does not answer. Turn ADB over network on in the head unit’s developer options. If it is already on, turn it off and on again.</string>
     <string name="adb_pairing_only">This head unit offers only wireless debugging with pairing, which DiPlay does not support yet.</string>
     <string name="navi_mode_off">Off</string>
     <string name="navi_mode_turn_on_by_navi">Turn on by navi</string>
@@ -575,6 +587,8 @@
     <string name="video_while_parked_description">iOS 27: a video you send to CarPlay on the iPhone plays on the car screen while the car is in P. The player closes when you shift out of P; without ADB video stays off and the iPhone plays audio only. Plain HTTPS video (for example from Safari) plays; video protected with FairPlay, such as Apple TV+, needs a licensed receiver and does not play here. Reconnects CarPlay. Needs ADB over network on the head unit.</string>
     <string name="cluster_song">Song on the dashboard</string>
     <string name="cluster_song_description">The CarPlay song title and artist appear in the music card on the instrument cluster, with play and pause. The card shows as BYD’s “Other” music source, because the dashboard does not draw CarPlay’s own source. Applies at once. Needs ADB over network on the head unit.</string>
+    <string name="cluster_song_gate">Auto-activate music card</string>
+    <string name="cluster_song_gate_description">The card stays hidden until the car’s media stack has been opened. Opening the gate does that, which briefly brings the media screen to the front and then returns to DiPlay. Leave it off to skip the screen flash. Applies at once.</string>
     <string name="video_back_to_carplay">Back to CarPlay</string>
     <string name="video_play">Play</string>
     <string name="video_pause">Pause</string>
@@ -961,6 +975,7 @@
     <string name="setup_iphone_none">No iPhone chosen yet</string>
     <string name="setup_features_title">Features</string>
     <string name="setup_features_description">Suggested for %1$s. Turn on what you want now; everything stays in Settings and can be changed later.</string>
+    <string name="setup_features_description_unknown">Turn on what you want now; everything stays in Settings and can be changed later.</string>
     <string name="setup_cluster_route_conflict">The DiLink 4 cluster route is on. On DiLink 3 it stops the CarPlay map on the dashboard.</string>
     <string name="setup_cluster_route_turn_off">Turn it off</string>
     <string name="setup_badge_tested">Tested on some cars</string>
@@ -977,6 +992,8 @@
     <string name="cluster_small_window_card_opacity">Small-window turn card · opacity</string>
     <string name="settings_disable_media_key_audio_focus">Disable media-key audio focus (experimental)</string>
     <string name="settings_disable_media_key_audio_focus_description">Stops DiPlay from requesting media audio focus while CarPlay music is active. Enable this if your head unit routes its physical volume buttons to DiPlay and they no longer adjust volume. Steering-wheel play, pause and track controls may stop working on head units that require focus. Applies at the next CarPlay connection.</string>
+    <string name="settings_navigation_prompt_audio_focus">Navigation prompts ask for audio focus</string>
+    <string name="settings_navigation_prompt_audio_focus_description">During each CarPlay navigation prompt, DiPlay requests temporary audio focus that lets other sound duck, and releases it after the prompt. Try this if prompts are silent until music plays, or if music should get quieter during prompts. The head unit’s own audio may get quieter or pause during prompts. Applies at the next CarPlay connection.</string>
     <string name="settings_ambient_album">Follow album cover</string>
     <string name="settings_ambient_album_description">Use the cover’s color or nearby available car colors. Grey, black or missing covers use all 31 colors; mostly white covers can use white or cold white.</string>
     <string name="settings_cluster_speedometer">Cluster speedometer (experimental)</string>
@@ -987,9 +1004,13 @@
     <string name="settings_cluster_speedometer_opacity">Speedometer opacity</string>
     <string name="settings_harman_fullscreen_experimental">Harman head-unit full screen (experimental)</string>
     <string name="settings_harman_fullscreen_experimental_description">Let CarPlay occupy the OEM side-panel area on supported Harman head units. Applies when the CarPlay window next opens; other firmware may display incorrectly.</string>
+    <string name="settings_carplay_same_task">Keep CarPlay in the launcher card (experimental)</string>
+    <string name="settings_carplay_same_task_description">For launchers that show DiPlay in a card or picture-in-picture window, such as BYD\'s DiYou desktop. CarPlay opens in DiPlay\'s own window, as in 0.2.11 and earlier, instead of a separate full-screen one. Applies the next time CarPlay opens, without disconnecting.</string>
     <string name="settings_hotspot_name_non_english">Names with Chinese or other non-English characters can leave CarPlay on “Getting CarPlay ready…”: some head units broadcast them in a form the iPhone doesn’t find. If that happens, rename the car hotspot with English letters and digits.</string>
     <string name="settings_speech_without_low_rates">Clearer navigation voice over USB (experimental)</string>
     <string name="settings_speech_without_low_rates_description">Over USB the iPhone can send navigation prompts and Siri’s spoken replies as 8 kHz phone-quality audio. This stops offering 8 and 16 kHz for that audio so the iPhone picks a higher rate. If prompts go silent, turn it off. Reconnects CarPlay.</string>
+    <string name="settings_call_at_call_rate">Calls at the call\'s own rate (experimental)</string>
+    <string name="settings_call_at_call_rate_description">Offer calls as PCM at the call\'s own rate (8, 16, 24 or 32 kHz) instead of 48 kHz Opus, as the stock CarPlay receiver does. Takes effect at the next connection. If a call has no sound, turn this off.</string>
     <string name="bluetooth_connections_not_real">This head unit’s Android Bluetooth reports a connection, but nothing reaches the iPhone: even a connection to a service that does not exist succeeds. Bluetooth here is handled by the maker’s own module, which apps cannot use, so wireless CarPlay cannot work on this head unit. Try a USB connection.</string>
     <string name="bluetooth_cannot_open_connections">This head unit’s Android Bluetooth cannot open connections for apps: its firmware leaves out the part that apps connect through. Calls and music over the car’s own Bluetooth are not affected, but wireless CarPlay cannot work on this head unit. Try a USB connection.</string>
     <string name="bluetooth_will_not_stay_on_hint">If Bluetooth will not stay on there, this head unit keeps Bluetooth for its own calls and music, and apps cannot use it. Wireless CarPlay cannot work in that case: use a USB cable.</string>
@@ -1021,6 +1042,21 @@
     <string name="connection_help_bluetooth_unusable">This head unit cannot send Bluetooth data to the iPhone. Wireless CarPlay cannot work here. Use a USB data cable.</string>
     <string name="connection_help_wifi_direct_beside_hotspot">Turn the car hotspot off and retry, or choose Built-in car hotspot in Connection setup and save its name and password.</string>
     <string name="wifi_direct_refused_beside_hotspot">The car hotspot is on, and Wi-Fi Direct cannot start beside it</string>
+    <string name="chosen_iphone_not_paired">The iPhone chosen in DiPlay is no longer paired with the car</string>
+    <string name="connection_help_chosen_iphone_not_paired">Pair the iPhone with the car\'s Bluetooth again, or return to DiPlay and tap Choose iPhone to pick another one. Then retry.</string>
+    <string name="connection_help_choose_iphone">Several devices are paired with the car. Return to DiPlay, tap Choose iPhone and pick yours, then retry.</string>
+    <string name="wifi_direct_channel_unavailable">Wi-Fi Direct cannot use the preferred channel</string>
+    <string name="connection_help_wifi_direct_channel">Set Preferred Wi-Fi Direct channel to Auto in Connection setup, then retry.</string>
+    <string name="car_sees_no_usb_device">The car doesn\'t see any USB device yet</string>
+    <string name="car_sees_usb_device_not_iphone">The car sees a USB device, but not an iPhone</string>
+    <string name="connection_help_no_usb_device">Use a USB data cable (some cables only charge), plug it into the car\'s data or CarPlay USB port, and unlock the iPhone.</string>
+    <string name="connection_help_usb_device_not_iphone">Use a USB data cable in the car\'s data or CarPlay USB port, unplug other USB devices, and unlock the iPhone.</string>
+    <string name="car_hotspot_details_differ">The car hotspot settings differ from those saved in DiPlay</string>
+    <string name="connection_help_car_hotspot_details_differ">In Connection setup, tap Edit saved hotspot and copy the name and password from the car\'s hotspot settings, then retry.</string>
+    <string name="hotspot_interface_not_found">The hotspot interface saved in DiPlay does not exist on this car</string>
+    <string name="connection_help_hotspot_interface_not_found">In Connection setup, tap Edit saved hotspot, clear Hotspot interface (optional), then retry.</string>
+    <string name="connection_help_car_hotspot_off">Turn on the car hotspot in the car settings, then retry.</string>
+    <string name="last_connection_attempt">Last connection attempt (%1$s): %2$s</string>
     <string name="connection_help_hotspot">Check that the car hotspot is on and its name and password match DiPlay settings. If available, use 5 GHz, then retry.</string>
     <string name="connection_help_iphone_wifi">Keep Wi-Fi and Bluetooth on. On the iPhone, join the car hotspot and enable Auto-Join, then retry. Save a diagnostic report if it still fails.</string>
     <string name="connection_help_permissions">Allow the requested USB, Nearby devices or Location permissions for DiPlay on the head unit, then retry.</string>
@@ -1065,4 +1101,12 @@
 
     <string name="settings_hotspot_interface">Hotspot interface (optional)</string>
     <string name="settings_hotspot_interface_description">Only for head units that run their hotspot on a network interface Android does not report as a Wi-Fi hotspot, for example eth0.3 on some Geely, Lynk &amp; Co and other Qualcomm units. Leave empty to find it automatically.</string>
+    <string name="settings_existing_wifi_interface">Network interface (optional)</string>
+    <string name="settings_existing_wifi_interface_description">Only for units whose LAN connection runs on an interface Android does not report as Wi-Fi, for example a USB network card on eth1. Leave empty to pick it automatically.</string>
+    <string name="cluster_projection_shape">Dashboard map shape</string>
+    <string name="cluster_projection_shape_half">Half screen</string>
+    <string name="cluster_projection_shape_full">Full screen</string>
+    <string name="cluster_projection_shape_description">Half screen keeps the speed and status readouts the cluster normally shows beside the map; full screen lets the map fill the cluster. DiPlay sets the shape whenever the CarPlay map appears, which otherwise overrides the shape picked on the car. Needs ADB over network on the head unit.</string>
+    <string name="settings_cluster_speedometer_album_color">Use album color for speedometer background</string>
+    <string name="settings_cluster_speedometer_album_color_description">Match the album frame color with smooth transitions. Keeps the selected opacity.</string>
 </resources>

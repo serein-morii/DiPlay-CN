@@ -23,7 +23,7 @@ class UpdateReleaseLookupTest {
 
         assertEquals(listOf(UpdateClient.GITEE_RELEASES_URL), calls)
         assertEquals("v0.2.17-cn.3", release?.tagName)
-        assertEquals("https://gitee.example/DiPlay-cn-v0.2.17-cn.3.apk", release?.apkUrl)
+        assertEquals("https://gitee.com/oneeyear/DiPlay-CN/releases/download/DiPlay-cn-v0.2.17-cn.3.apk", release?.apkUrl)
     }
 
     @Test fun fallsBackToCnGithubWhenGiteeIsBehind() {
@@ -41,8 +41,8 @@ class UpdateReleaseLookupTest {
     private fun gitee(tag: String): String = """{
         "tag_name":"$tag",
         "assets":[
-          {"name":"DiPlay-cn-$tag.apk","browser_download_url":"https://gitee.example/DiPlay-cn-$tag.apk"},
-          {"name":"DiPlay-cn-$tag.apk.sha256","browser_download_url":"https://gitee.example/DiPlay-cn-$tag.apk.sha256"}
+          {"name":"DiPlay-cn-$tag.apk","browser_download_url":"https://gitee.com/oneeyear/DiPlay-CN/releases/download/DiPlay-cn-$tag.apk"},
+          {"name":"DiPlay-cn-$tag.apk.sha256","browser_download_url":"https://gitee.com/oneeyear/DiPlay-CN/releases/download/DiPlay-cn-$tag.apk.sha256"}
         ]
     }"""
 

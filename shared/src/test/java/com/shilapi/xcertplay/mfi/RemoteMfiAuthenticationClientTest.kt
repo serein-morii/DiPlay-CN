@@ -173,6 +173,98 @@ class RemoteMfiAuthenticationClientTest {
         assertEquals(1, requests.get())
     }
 
+    @Test
+    fun rejectsCleartextHttpToPublicHosts() {
+        val wronglyAccepted = mutableListOf<String>()
+        listOf(
+            "http://example.com",
+            "http://8.8.8.8:8080",
+            "http://172.32.0.1",
+            "http://192.168.1.1.example.com",
+            "http://192.168.1.1@example.com",
+            "http://[2001:db8::1]",
+            "http://134744072",
+            "http://0x08080808",
+            "http://8",
+            "http://1.2.3",
+            "http://127.1",
+            "http://010.8.8.8",
+            "http://192.168.01.5",
+            "http://[::ffff:8.8.8.8]",
+            "http://localhost.evil.com",
+            "http://127.0.0.1.evil.com",
+            "http://evil.com#@192.168.1.5",
+            "http://localhost.",
+        ).forEach { address ->
+            val accepted = runCatching { RemoteMfiAuthenticationClient(address, token = "secret") }.isSuccess
+            if (accepted) wronglyAccepted += address
+        }
+        assertEquals(
+            "cleartext http accepted for hosts that are not on a private network",
+            emptyList<String>(),
+            wronglyAccepted,
+        )
+    }
+
+    @Test
+    fun allowsCleartextHttpOnPrivateAndLoopbackHosts() {
+        listOf(
+            "http://127.0.0.1:8080",
+            "http://localhost:8080",
+            "http://[::1]:8080",
+            "http://10.1.2.3",
+            "http://172.16.0.5",
+            "http://172.31.255.1",
+            "http://192.168.1.10:8000",
+            "http://169.254.10.20",
+            "http://100.64.0.1",
+            "http://[fd00::1]",
+            "http://[fe80::1]",
+            "http://mfi-pi",
+            "http://mfi-pi.local:8000",
+            "http://[::ffff:192.168.1.5]",
+        ).forEach { address ->
+            RemoteMfiAuthenticationClient(address, token = "secret")
+        }
+    }
+
+    @Test
+    fun allowsHttpsToPublicHosts() {
+        RemoteMfiAuthenticationClient("https://mfi.example.com", token = "secret")
+        RemoteMfiAuthenticationClient("https://8.8.8.8")
+    }
+
+    @Test
+    fun sendsBearerTokenToLoopbackHttpServer() {
+        var authorization: String? = null
+        server.createContext("/mfi/reset") { exchange ->
+            authorization = exchange.requestHeaders.getFirst("Authorization")
+            exchange.respond(200, "{}")
+        }
+        RemoteMfiAuthenticationClient(serverAddress(), token = "test-token").reset()
+        assertEquals("Bearer test-token", authorization)
+    }
+
+    @Test
+    fun doesNotFollowRedirects() {
+        val followed = AtomicInteger()
+        server.createContext("/mfi/reset") { exchange ->
+            exchange.responseHeaders.set("Location", "http://127.0.0.1:${server.address.port}/elsewhere")
+            exchange.sendResponseHeaders(302, -1)
+            exchange.close()
+        }
+        server.createContext("/elsewhere") { exchange ->
+            followed.incrementAndGet()
+            exchange.respond(200, "{}")
+        }
+
+        val error = assertThrows(RemoteMfiHttpException::class.java) {
+            RemoteMfiAuthenticationClient(serverAddress(), token = "secret").reset()
+        }
+        assertEquals(302, error.statusCode)
+        assertEquals(0, followed.get())
+    }
+
     private fun serverAddress(): String = "http://127.0.0.1:${server.address.port}"
 
     private fun HttpExchange.respond(statusCode: Int, body: String) {

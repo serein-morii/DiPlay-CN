@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="carplay_night_mode">CarPlay gündüz/gece modu</string>
+    <string name="settings_app_appearance">Uygulama görünümü</string>
+    <string name="settings_app_appearance_dark">Koyu</string>
+    <string name="settings_app_appearance_light">Açık</string>
+    <string name="settings_app_appearance_auto">Otomatik</string>
+    <string name="settings_app_appearance_description">Otomatik, kaydedilen CarPlay gündüz/gece ayarını takip eder; CarPlay açıkken canlı sonucu takip eder. Açık ve Koyu sabit kalır ve yeniden bağlanmayı gerektirmez.</string>
+    <string name="settings_switch_to_light_appearance">Açık görünüme geç</string>
+    <string name="settings_switch_to_dark_appearance">Koyu görünüme geç</string>
+    <string name="carplay_night_system">Android sistemini takip et</string>
+    <string name="carplay_night_ambient">Ortam ışığını takip et</string>
+    <string name="carplay_night_day">Her zaman gündüz</string>
+    <string name="carplay_night_night">Her zaman gece</string>
+    <string name="carplay_night_schedule">Zamanlanmış</string>
+    <string name="carplay_night_start">Gece başlangıcı</string>
+    <string name="carplay_night_end">Gece bitişi</string>
+    <string name="carplay_night_schedule_hint">Ana ünitenin yerel saatini kullanır. Farklı başlangıç ve bitiş saatleri ayarlayın; gece yarısını aşan aralıklar desteklenir.</string>
+    <string name="carplay_night_schedule_same_time">Başlangıç ve bitiş saatleri farklı olmalıdır.</string>
+    <string name="carplay_night_hint">Uygulamak için kaydedip CarPlay\'e dönün.</string>
+    <string name="carplay_night_ambient_hint">Aşağıdaki eşik ve gecikmeyi kullanır. Işık sensörü olmadığında Android\'i takip eder.</string>
+    <string name="carplay_night_time_note">CarPlay ayarlarında görünüm Otomatik olarak ayarlandığında, CarPlay iPhone saatini de dikkate alır. Her zaman gündüz seçseniz bile CarPlay geceleri karanlık görünebilir.</string>
+</resources>

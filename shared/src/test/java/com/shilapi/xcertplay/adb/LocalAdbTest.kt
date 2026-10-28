@@ -6,10 +6,8 @@ import java.net.ServerSocket
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.security.KeyPairGenerator
-import java.security.Signature
 import java.security.interfaces.RSAPublicKey
 import java.util.Base64
-import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import kotlin.concurrent.thread
@@ -56,7 +54,7 @@ class LocalAdbTest {
 
     @Test
     fun knownKeyRunsShellCommands() {
-        val adbd = FakeAdbd(knowsKey = true, output = "Result: Parcel(00000000 00000002   '........')")
+        val adbd = FakeAdbd(key, knowsKey = true, output = "Result: Parcel(00000000 00000002   '........')")
         LocalAdb(key, port = adbd.port).use { adb ->
             assertEquals(LocalAdb.Access.READY, adb.connect(mayAsk = false))
             assertEquals("Result: Parcel(00000000 00000002   '........')", adb.shell("service call autoservice 5"))
@@ -66,11 +64,11 @@ class LocalAdbTest {
 
     @Test
     fun unknownKeyIsOfferedOnlyWhenAsking() {
-        val quiet = FakeAdbd(knowsKey = false, approves = true)
+        val quiet = FakeAdbd(key, knowsKey = false, approves = true)
         LocalAdb(key, port = quiet.port).use { assertEquals(LocalAdb.Access.NOT_APPROVED, it.connect(mayAsk = false)) }
         assertFalse(quiet.offeredKey)
 
-        val asking = FakeAdbd(knowsKey = false, approves = true)
+        val asking = FakeAdbd(key, knowsKey = false, approves = true)
         LocalAdb(key, port = asking.port).use { assertEquals(LocalAdb.Access.READY, it.connect(mayAsk = true)) }
         assertTrue(asking.offeredKey)
     }
@@ -114,50 +112,5 @@ class LocalAdbTest {
     private fun littleEndian(buffer: ByteBuffer, size: Int): BigInteger {
         val bytes = ByteArray(size).also { buffer.get(it) }
         return BigInteger(1, bytes.reversedArray())
-    }
-
-    /** One-connection adbd: token auth with [key], then answers each OPEN with [output]. */
-    private inner class FakeAdbd(knowsKey: Boolean, approves: Boolean = false, output: String = "") {
-        private val server = ServerSocket(0)
-        val port = server.localPort
-        val opened = CopyOnWriteArrayList<String>()
-        @Volatile var offeredKey = false
-
-        init {
-            thread(isDaemon = true) {
-                server.accept().use { socket ->
-                    val input = socket.getInputStream()
-                    val out = socket.getOutputStream()
-                    fun send(packet: AdbPacket) = out.write(packet.encode())
-                    AdbPacket.read(input) // CNXN
-                    val token = ByteArray(20) { it.toByte() }
-                    send(AdbPacket(AdbPacket.AUTH, AdbPacket.AUTH_TOKEN, 0, token))
-                    val signature = AdbPacket.read(input)
-                    val valid = Signature.getInstance("NONEwithRSA").run {
-                        initVerify(key.public)
-                        update(byteArrayOf(0x30, 0x21, 0x30, 0x09, 0x06, 0x05, 0x2b, 0x0e, 0x03, 0x02, 0x1a, 0x05, 0x00, 0x04, 0x14) + token)
-                        verify(signature.payload)
-                    }
-                    if (!(valid && knowsKey)) {
-                        send(AdbPacket(AdbPacket.AUTH, AdbPacket.AUTH_TOKEN, 0, token))
-                        val offer = runCatching { AdbPacket.read(input) }.getOrNull() ?: return@use
-                        offeredKey = offer.arg0 == AdbPacket.AUTH_PUBLIC_KEY
-                        if (!approves) return@use
-                    }
-                    send(AdbPacket(AdbPacket.CNXN, AdbPacket.VERSION, AdbPacket.MAX_PAYLOAD, "device::\u0000".toByteArray()))
-                    while (true) {
-                        val open = runCatching { AdbPacket.read(input) }.getOrNull() ?: break
-                        if (open.command != AdbPacket.OPEN) continue
-                        opened += String(open.payload, Charsets.UTF_8).trimEnd('\u0000')
-                        send(AdbPacket(AdbPacket.OKAY, 77, open.arg0, ByteArray(0)))
-                        send(AdbPacket(AdbPacket.WRTE, 77, open.arg0, output.toByteArray()))
-                        AdbPacket.read(input) // OKAY
-                        send(AdbPacket(AdbPacket.CLSE, 77, open.arg0, ByteArray(0)))
-                        AdbPacket.read(input) // CLSE
-                    }
-                }
-                server.close()
-            }
-        }
     }
 }

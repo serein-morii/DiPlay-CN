@@ -7,6 +7,7 @@ import java.net.URL
 import java.util.concurrent.atomic.AtomicReference
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -56,17 +57,31 @@ class SettingsBackupServerTest {
         return status to text
     }
 
+    // The port is not proof on its own: the accept() the loop thread waits in can hold it for one poll
+    // after the server lets go, and on a busy machine another listener may take a freed port. So ask
+    // what the driver asks: does the page still come back?
+    private fun pageStillAnswered(port: Int, token: String): Boolean = runCatching {
+        Socket("127.0.0.1", port).use { socket ->
+            socket.soTimeout = 1_000
+            socket.getOutputStream().apply {
+                write("GET /b/$token/ HTTP/1.1\r\nHost: 127.0.0.1\r\nConnection: close\r\n\r\n".toByteArray())
+                flush()
+            }
+            socket.getInputStream().readBytes().toString(Charsets.UTF_8)
+        }
+    }.getOrNull()?.contains("backup-page") == true
+
     @Test
     fun stopsByItselfWhenNobodyUsesThePage() {
         val idle = java.util.concurrent.CountDownLatch(1)
-        val quiet = SettingsBackupServer(page = ByteArray(0), export = { ByteArray(0) },
+        val quiet = SettingsBackupServer(page = "<html>backup-page</html>".toByteArray(), export = { ByteArray(0) },
             import = { SettingsImportOutcome(0, 0, invalid = false) })
         quiet.idleTimeoutMillis = 200
         quiet.onIdle = { idle.countDown() }
         val started = quiet.start()!!
         try {
             assertTrue(idle.await(5, java.util.concurrent.TimeUnit.SECONDS))
-            assertTrue(runCatching { Socket("127.0.0.1", started.port).close() }.isFailure)
+            assertTrue("the page still answered after the idle stop", !pageStillAnswered(started.port, started.token))
         } finally {
             quiet.stop()
         }
@@ -427,10 +442,17 @@ class SettingsBackupServerTest {
     @Test
     fun stopClosesTheListener() {
         server.stop()
-        val failure = runCatching {
-            Socket("127.0.0.1", endpoint.port).use { it.getOutputStream().write(1) }
-        }.exceptionOrNull()
-        assertNotNull(failure)
+        assertTrue("the page still answered after stop", !pageStillAnswered(endpoint.port, endpoint.token))
+    }
+
+    // The listener can outlive close() until the accept loop wakes; once stop() returns it is gone, so the
+    // next start() can take the same typed port again.
+    @Test
+    fun stopReturnsOnlyOnceTheAcceptLoopHasEnded() {
+        val accepting = SettingsBackupServer::class.java.getDeclaredField("thread").apply { isAccessible = true }
+            .get(server) as Thread
+        server.stop()
+        assertFalse(accepting.isAlive)
     }
 
     @Test

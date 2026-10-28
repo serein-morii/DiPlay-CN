@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_hide_byd_call_popup">BYD 통화 팝업 숨기기 (실험 기능)</string>
+    <string name="settings_hide_byd_call_popup_description">Android 10 이상을 실행하는 BYD 헤드 유닛 전용입니다. 승인된 로컬 ADB가 필요합니다. 연결된 CarPlay가 포그라운드에 있을 때 기본 통화 팝업을 숨기고 백그라운드에서는 다시 표시합니다. Bluetooth 오디오를 변경하거나 전체 전화 앱을 숨기지 않습니다.</string>
+</resources>

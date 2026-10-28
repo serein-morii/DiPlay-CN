@@ -1,0 +1,4 @@
+<resources>
+    <string name="settings_force_full_settings">Tam Ayarlar düzenini zorla</string>
+    <string name="settings_force_full_settings_hint">Yatay modda kategori kenar çubuğu olan tam Ayarlar düzenini, dikey modda ise otomatik düzeni kullanır. Ana ekranı veya CarPlay\'i değiştirmez.</string>
+</resources>

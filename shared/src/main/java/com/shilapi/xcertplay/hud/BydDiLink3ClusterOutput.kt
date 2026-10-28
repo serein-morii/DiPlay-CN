@@ -28,7 +28,11 @@ internal object BydDiLink3ClusterOutput {
 
     fun setDesired(appContext: Context, mapShown: Boolean, guidanceActive: Boolean) {
         desiredMode = when {
-            mapShown -> BydDiLink3ClusterMode.Mode.PROJECTION
+            mapShown -> if (BydOutputSettings.clusterProjectionShape(appContext) == BydClusterProjectionShape.FULL) {
+                BydDiLink3ClusterMode.Mode.FULL_PROJECTION
+            } else {
+                BydDiLink3ClusterMode.Mode.PROJECTION
+            }
             guidanceActive -> BydDiLink3ClusterMode.Mode.SIMPLE_NAVIGATION
             else -> null
         }
@@ -95,7 +99,7 @@ internal object BydDiLink3ClusterOutput {
             loadRecovery = { journal.pending },
             saveRecovery = journal::save,
             projectionStillWanted = {
-                desiredMode == BydDiLink3ClusterMode.Mode.PROJECTION && !adbClusterRouteSelected(app)
+                desiredMode?.showsMap == true && !adbClusterRouteSelected(app)
             },
         ).also { session = it }
     }

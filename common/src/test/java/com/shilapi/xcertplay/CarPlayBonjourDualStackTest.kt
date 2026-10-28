@@ -47,6 +47,27 @@ class CarPlayBonjourDualStackTest {
         `when`(lock.isHeld).thenReturn(true)
     }
 
+    @Test fun localHostNamesAreAvailableBeforeJmDnsStartsForBothFamilies() {
+        setup()
+        val hostName = "carplay-020000000002"
+        val received = mutableListOf<InetAddress>()
+        mockStatic(JmDNS::class.java).use { factory ->
+            factory.`when`<JmDNS> { JmDNS.create(any(InetAddress::class.java), eq(hostName)) }
+                .thenAnswer { invocation ->
+                    val address = invocation.getArgument<InetAddress>(0)
+                    // toString does not query DNS; check the cached name before reading hostName.
+                    assertEquals("$hostName/${address.hostAddress}", address.toString())
+                    assertEquals(hostName, address.hostName)
+                    received.add(address)
+                    mock(JmDNS::class.java)
+                }
+            CarPlayBonjour(context, config, identity, ipv4.hostAddress, true,
+                additionalAddresses = listOf(ipv6)).use { it.start() }
+        }
+        assertEquals(listOf(ipv4, ipv6), received)
+        assertEquals(ipv6.scopeId, (received[1] as Inet6Address).scopeId)
+    }
+
     @Test fun publishesAndBrowsesBothFamiliesAndClosesBothRegistries() {
         setup()
         val v4 = mock(JmDNS::class.java)

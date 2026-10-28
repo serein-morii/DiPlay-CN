@@ -1,5 +1,6 @@
 package com.shilapi.xcertplay.transport
 
+import android.hardware.usb.UsbConstants
 import com.shilapi.xcertplay.network.CarPlayVpnService
 import java.io.IOException
 import org.junit.Assert.assertEquals
@@ -37,6 +38,16 @@ class UsbSetupDiagnosticsTest {
         // iOS 12 and 15 reply with three bytes.
         assertTrue(IphoneUsbHost.usbModeDiagnostic(3, byteArrayOf(1, 2, 3, 0), "7.01", emptyList())
             .contains("current mode=1:2:3 (short:3) usbVersion=7.01"))
+    }
+
+    @Test
+    fun onlyAHubCountsAsNoDeviceInThePort() {
+        assertTrue(IphoneUsbHost.isHub(UsbConstants.USB_CLASS_HUB, emptyList()))
+        assertTrue(IphoneUsbHost.isHub(UsbConstants.USB_CLASS_PER_INTERFACE, listOf(UsbConstants.USB_CLASS_HUB)))
+        assertFalse(IphoneUsbHost.isHub(UsbConstants.USB_CLASS_PER_INTERFACE,
+            listOf(UsbConstants.USB_CLASS_HUB, UsbConstants.USB_CLASS_MASS_STORAGE)))
+        assertFalse(IphoneUsbHost.isHub(UsbConstants.USB_CLASS_PER_INTERFACE,
+            listOf(UsbConstants.USB_CLASS_STILL_IMAGE, UsbConstants.USB_CLASS_VENDOR_SPEC)))
     }
 
     @Test

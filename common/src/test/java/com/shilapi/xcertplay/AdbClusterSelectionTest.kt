@@ -54,12 +54,13 @@ class AdbClusterSelectionTest {
         assertFalse(AdbClusterRouter.enabled(app))
     }
 
-    @Test fun absentPrivateTargetKeepsTheVirtualStreamEvenWhenAdbIsEnabled() {
+    @Test fun enabledAdbRoutePreparesItsNativeStreamBeforeTheWindowAppears() {
         AirPlayPersistence.saveAdbClusterEnabled(app, true)
         val host = Robolectric.buildActivity(CarPlayHostActivity::class.java).get()
         val config = CarPlayHostActivity::class.java.getDeclaredMethod("clusterDisplayConfig")
             .apply { isAccessible = true }.invoke(host) as AirPlayDisplayConfig
-        assertEquals(1280, config.widthPixels)
+        assertFalse(ClusterActivityOutput.hasConfirmedRoute())
+        assertEquals(1920, config.widthPixels)
         assertEquals(720, config.heightPixels)
     }
     @Test fun legacyRouteIsOptInAndBothDirectRoutesAreMutuallyExclusive() {

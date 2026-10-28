@@ -1,5 +1,6 @@
 package com.shilapi.xcertplay.network
 
+import com.shilapi.xcertplay.orchestration.ConnectionFailureCause
 import java.io.InterruptedIOException
 import java.net.Inet4Address
 import java.net.Inet6Address
@@ -74,17 +75,21 @@ internal class ManualHotspotReadiness(
     private val pause: (Long) -> Unit,
     private val nowMillis: () -> Long = { System.nanoTime() / 1_000_000 },
     private val log: (String) -> Unit = {},
+    private val configuredInterface: String? = null,
 ) {
     fun await(timeoutMillis: Long): HotspotSelection {
         val deadline = nowMillis() + timeoutMillis
         var previous: HotspotSelection? = null
         var stable = 0
+        var last: HotspotNetworkSnapshot? = null
         while (true) {
             if (cancelled()) throw InterruptedIOException("Hotspot readiness cancelled")
             if (nowMillis() >= deadline) throw WirelessStartupException(
                 WirelessStartupFailure.HOTSPOT_NOT_READY, "Hotspot network is not ready",
+                if (last != null && lacksConfiguredInterface(last)) ConnectionFailureCause.HOTSPOT_INTERFACE_NOT_FOUND else null,
             )
-            val selected = selectHotspotInterface(sample(), log)
+            last = sample()
+            val selected = selectHotspotInterface(last, log)
             if (cancelled()) throw InterruptedIOException("Hotspot readiness cancelled")
             stable = if (selected != null && previous?.sameAddress(selected) == true) stable + 1 else 1
             previous = selected
@@ -94,5 +99,10 @@ internal class ManualHotspotReadiness(
             }
             pause(minOf(WirelessStartupPolicy.INTERFACE_POLL_MILLIS, (deadline - nowMillis()).coerceAtLeast(1)))
         }
+    }
+
+    private fun lacksConfiguredInterface(snapshot: HotspotNetworkSnapshot): Boolean {
+        val name = configuredInterface?.trim()?.takeIf { it.isNotEmpty() } ?: return false
+        return snapshot.apEnabled == true && snapshot.interfaces.isNotEmpty() && snapshot.interfaces.none { it.name == name }
     }
 }

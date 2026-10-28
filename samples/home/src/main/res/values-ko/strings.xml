@@ -1,0 +1,23 @@
+<resources>
+    <string name="home_apps">앱</string>
+    <string name="home_byd_home">BYD 홈</string>
+    <string name="home_edit">편집</string>
+    <string name="home_done">완료</string>
+    <string name="home_widgets">위젯</string>
+    <string name="home_add">＋ 추가</string>
+    <string name="home_close">닫기</string>
+    <string name="home_byd_unavailable">BYD 홈을 사용할 수 없습니다</string>
+    <string name="home_no_widgets">설치된 위젯이 없습니다</string>
+    <string name="home_add_widget">위젯 추가</string>
+    <string name="home_allow_widgets">위젯 허용</string>
+    <string name="home_allow_widgets_description">이 헤드 유닛에는 위젯을 허용하는 화면이 없습니다. ADB를 통해 DiPlay 홈을 한 번 허용하세요.\n\nadb shell appwidget grantbind --package %1$s --user 0</string>
+    <string name="home_remove_widget">위젯 삭제</string>
+    <string name="home_map_stopped">DiPlay가 중지되었습니다</string>
+    <string name="home_map_not_installed">DiPlay가 설치되지 않았습니다</string>
+    <string name="home_map_connecting">DiPlay에 연결하는 중…</string>
+    <string name="home_map_refused">DiPlay에서 연결을 거부했습니다</string>
+    <string name="home_map_missing">DiPlay에서 지도를 보내지 않았습니다</string>
+    <string name="home_map_disabled">DiPlay에서 다음 옵션을 켜세요.\n\"실시간 지도를 다른 런처와 공유\"</string>
+    <string name="home_map_unsupported">이 헤드 유닛은 실시간 지도를 지원하기에 너무 오래되었습니다</string>
+    <string name="home_map_error">DiPlay에서 지도를 표시하지 못했습니다</string>
+</resources>

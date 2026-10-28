@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="custom_resolution_hint">30~160퍼센트를 입력하세요. CarPlay를 다시 연결해야 적용됩니다.</string>
+    <string name="resolution_number_error">%1$d에서 %2$d 사이의 정수를 입력하세요.</string>
+    <string name="custom_resolution_summary">%1$d%%</string>
+    <string name="resolution_reset_defaults">기본값으로 초기화</string>
+    <string name="resolution_canvas_unsupported" formatted="false">이 헤드 유닛은 확대된 해상도를 디코딩할 수 없습니다. 100%를 사용합니다.</string>
+</resources>

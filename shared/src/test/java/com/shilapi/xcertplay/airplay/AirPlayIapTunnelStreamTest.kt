@@ -13,7 +13,7 @@ class AirPlayIapTunnelStreamTest {
         val session = testSession()
         val bridge = AirPlayIapTunnelStream(
             session = session,
-            tunnel = IapTunnel(ByteArray(32)),
+            tunnel = IapTunnel(ByteArray(32), InetAddress.getByName("127.0.0.1")),
             sendCommand = { data, _ ->
                 sent += data.copyOf()
                 true
@@ -41,6 +41,7 @@ class AirPlayIapTunnelStreamTest {
             session = testSession(),
             tunnel = IapTunnel(
                 readKey = ByteArray(32),
+                expectedPeer = InetAddress.getByName("::1"),
                 bindAddress = InetAddress.getByName("::"),
             ),
             sendCommand = { _, _ -> true },

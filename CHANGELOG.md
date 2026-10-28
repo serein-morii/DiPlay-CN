@@ -1,3 +1,14 @@
+# DiPlay 0.2.22 — 2026-10-28
+
+- Fix the two 0.2.21 regressions: connect wireless CarPlay over the car hotspot again on BYD DiLink 3.0/4.0 and other units where 0.2.21 took a mobile-data interface for the hotspot, and keep wireless music at the iPhone's speed from the first second instead of 1.5 % fast with stutter (#936, #950, #993, #1070, #1080).
+- Record the driver's voice in WeChat voice messages, Voice Memos and dictation over USB by sending 48 kHz microphone audio in packets that fit the link, and hear music and navigation again after calls on head units that were already in their call state (#1148, #994).
+- Connect wired CarPlay on the first attempt after a replug or reconnect, start wireless up to 20 s sooner on slow resolvers, reconnect after Wi-Fi drops on Android 8–9, retry as soon as Bluetooth turns on, and bring CarPlay to the front when auto-start finds it already connecting (#962, #1057, #972, #1042, #914, #1085).
+- Name known connection problems on the CarPlay screen and Home, including an unpaired or unchosen iPhone, car hotspot problems, a car that sees no USB device, a VPN that cannot be allowed and an iPhone that sends no picture (#1058, #1060, #1062, #1066, #1096, #1097, #1045).
+- Fix two-finger gestures, stop the quick-menu swipe tapping CarPlay, coalesce drags behind a slow connection, show the saved CarPlay size and frame rate, and add the dashboard map on the Denza N9 and Lynk & Co 03, a full-screen DiLink 3.0 dashboard map and steadier cluster album art (#912, #922, #1134, #1032, #934, #1049, #843, #956, #1033).
+- Add Korean and Turkish, and options that are off by default: keep CarPlay in the launcher card, navigation prompts that ask for audio focus, calls at the call's own rate and an interface for Existing Wi-Fi; send ECARX wheel speed and gear; accept lane guidance; and harden DiPlay against oversized or forged input from other devices and apps (#1105, #999, #1052, #1051, #898, #1113, #1089, #1028, #1122, #1123, #1125–#1129, #1131–#1144).
+
+See [0.2.22 release notes](docs/RELEASE-NOTES-0.2.22.md) for contribution links and limits, and [validation](docs/VALIDATION.md) for checks. Full-release vehicle acceptance is not claimed.
+
 # DiPlay 0.2.21 — 2026-10-17
 
 - Fix the 0.2.20 music lag by counting the music still waiting to be decoded in the clock adjustment, and bring music back after an interruption when the iPhone plays again (#814, #804).

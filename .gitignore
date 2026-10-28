@@ -41,3 +41,6 @@ release-signing.properties
 *.key
 *.apk
 *.aab
+
+# Written by scripts/download_count.py when the site is deployed
+site/assets/downloads.json

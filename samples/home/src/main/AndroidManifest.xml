@@ -8,6 +8,7 @@
         tools:ignore="QueryAllPackagesPermission" />
 
     <application
+        android:allowBackup="false"
         android:label="DiPlay Home"
         android:theme="@android:style/Theme.DeviceDefault.NoActionBar">
         <activity

@@ -1,5 +1,6 @@
 package com.shilapi.xcertplay.media
 
+import android.media.MediaRecorder
 import com.shilapi.xcertplay.airplay.MicrophoneConfig
 
 internal enum class MicrophoneFailureStage {
@@ -37,8 +38,12 @@ internal class MicrophoneCaptureStats(
         emit("Microphone: start $metadata routedDeviceType=${routeType ?: "unknown"}")
     }
 
-    /** Call before the capture thread starts; [metadata] is not volatile. */
-    fun useVoiceCommunicationSource() { metadata = "type=$type source=VOICE_COMMUNICATION $format" }
+    /**
+     * The source the recorder is built with: a call in the car's phone state records from VOICE_RECOGNITION,
+     * not the VOICE_COMMUNICATION its audio type suggests (#987). Call before the capture thread starts;
+     * [metadata] is not volatile.
+     */
+    fun useSource(source: Int) { metadata = "type=$type source=${sourceName(source)} $format" }
 
     fun reading() { readStart = nowNs() }
 
@@ -88,15 +93,20 @@ internal class MicrophoneCaptureStats(
         emit(failureMessage(metadata, stage, error, code))
     }
 
-    fun flush(ended: Boolean = false, routeType: (() -> Int?)? = null) {
+    /**
+     * [silence] is asked only for a window with no sound in it, for what else might explain it: a silent source
+     * alone cannot tell a head unit that mutes it from another app holding the microphone (#987).
+     */
+    fun flush(ended: Boolean = false, routeType: (() -> Int?)? = null, silence: (() -> String)? = null) {
         val now = nowNs()
         if (!ended && now - windowStart < REPORT_INTERVAL_NS) return
         if (routeType != null) routedDeviceType = runCatching { routeType() }.getOrNull()
+        val silenceDetail = if (peakSample <= 0 && silence != null) runCatching { " " + silence() }.getOrDefault("") else ""
         emit("Microphone: stats $metadata routedDeviceType=${routedDeviceType ?: "unknown"} " +
             "captureBytes=$capturedBytes reads=$reads zeroReads=$zeroReads readErrors=$readErrors " +
             "readMaxMs=${readMaxNs / 1_000_000} encodedFrames=$encodedFrames " +
             "emptyEncodedFrames=$emptyEncodedFrames udpSent=$udpSent sendErrors=$sendErrors " +
-            "sendGapMaxMs=${sendGapMaxNs / 1_000_000} peakDbfs=${peakDbfs(peakSample)} ended=$ended")
+            "sendGapMaxMs=${sendGapMaxNs / 1_000_000} peakDbfs=${peakDbfs(peakSample)}$silenceDetail ended=$ended")
         windowStart = now
         capturedBytes = 0
         reads = 0
@@ -119,6 +129,23 @@ internal class MicrophoneCaptureStats(
         /** Whole dBFS of a 16-bit peak; "silent" when every sample was zero. */
         internal fun peakDbfs(peak: Int): String =
             if (peak <= 0) "silent" else Math.round(20 * kotlin.math.log10(peak / 32768.0)).toString()
+
+        private val SOURCE_NAMES = mapOf(
+            MediaRecorder.AudioSource.DEFAULT to "DEFAULT",
+            MediaRecorder.AudioSource.MIC to "MIC",
+            MediaRecorder.AudioSource.VOICE_UPLINK to "VOICE_UPLINK",
+            MediaRecorder.AudioSource.VOICE_DOWNLINK to "VOICE_DOWNLINK",
+            MediaRecorder.AudioSource.VOICE_CALL to "VOICE_CALL",
+            MediaRecorder.AudioSource.CAMCORDER to "CAMCORDER",
+            MediaRecorder.AudioSource.VOICE_RECOGNITION to "VOICE_RECOGNITION",
+            MediaRecorder.AudioSource.VOICE_COMMUNICATION to "VOICE_COMMUNICATION",
+            MediaRecorder.AudioSource.REMOTE_SUBMIX to "REMOTE_SUBMIX",
+            MediaRecorder.AudioSource.UNPROCESSED to "UNPROCESSED",
+            // Not public: the always-listening source of a car's own voice assistant.
+            1999 to "HOTWORD",
+        )
+
+        internal fun sourceName(source: Int): String = SOURCE_NAMES[source] ?: source.toString()
 
         private fun typeAndSource(audioType: String): Pair<String, String> = when (audioType) {
             "telephony" -> "telephony" to "VOICE_COMMUNICATION"

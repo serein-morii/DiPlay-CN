@@ -106,14 +106,15 @@ class ClusterMapPresentationTest {
     private fun withMeasuredPresentation(block: (ClusterMapPresentation) -> Unit) {
         val original = android.os.Build.FINGERPRINT
         org.robolectric.shadows.ShadowBuild.setFingerprint(DiLink51ClusterLayout.FINGERPRINT)
-        try { withPresentation(DiLink51ClusterLayout.FULL, DiLink51ClusterLayout.Theme.MAP, block) }
+        try { withPresentation(DiLink51ClusterLayout.FULL, DiLink51ClusterLayout.Theme.MAP, block = block) }
         finally { org.robolectric.shadows.ShadowBuild.setFingerprint(original) }
     }
 
     private fun withPresentation(name: String = DiLink51ClusterLayout.BASE,
         theme: DiLink51ClusterLayout.Theme = DiLink51ClusterLayout.Theme.SCENARIO,
+        spec: String = "w1920dp-h720dp-mdpi",
         block: (ClusterMapPresentation) -> Unit) {
-        val id = display(name, "w1920dp-h720dp-mdpi")
+        val id = display(name, spec)
         val presentation = ClusterMapPresentation(context, manager.getDisplay(id), theme) {}
         try { presentation.create(); block(presentation) }
         finally { presentation.dismiss(); ShadowDisplayManager.removeDisplay(id) }
@@ -130,6 +131,42 @@ class ClusterMapPresentationTest {
             setFlags(Display.FLAG_PRESENTATION)
         }
         return id
+    }
+
+    @Test fun sideMapViewportFollowsTheClusterWidth() {
+        assertSideViewport(DiLink51ClusterLayout.FINGERPRINT, "w1920dp-h720dp-mdpi", left = 1320, width = 600)
+        assertSideViewport(DiLink51ClusterLayout.DENZA_N9_FINGERPRINT, "w2560dp-h720dp-mdpi", left = 1760, width = 800)
+    }
+
+    private fun assertSideViewport(fingerprint: String, spec: String, left: Int, width: Int) {
+        val original = android.os.Build.FINGERPRINT
+        org.robolectric.shadows.ShadowBuild.setFingerprint(fingerprint)
+        try {
+            withPresentation(DiLink51ClusterLayout.SIDE, DiLink51ClusterLayout.Theme.SCENARIO, spec) { presentation ->
+                val video: android.view.View = org.robolectric.util.ReflectionHelpers.getField(presentation, "videoView")
+                assertTrue(video is android.view.TextureView)
+                val params = video.layoutParams as android.widget.FrameLayout.LayoutParams
+                assertEquals(left, params.leftMargin)
+                assertEquals(width, params.width)
+                assertEquals(720, params.height)
+            }
+        } finally {
+            org.robolectric.shadows.ShadowBuild.setFingerprint(original)
+        }
+    }
+
+    @Test fun theDenzaN9SelectsItsWideSharedLayers() {
+        val original = android.os.Build.FINGERPRINT
+        org.robolectric.shadows.ShadowBuild.setFingerprint(DiLink51ClusterLayout.DENZA_N9_FINGERPRINT)
+        val (base, full, side) = listOf(DiLink51ClusterLayout.BASE, DiLink51ClusterLayout.FULL, DiLink51ClusterLayout.SIDE)
+            .map { display(it, "w2560dp-h720dp-mdpi") }
+        try {
+            assertEquals(side, ClusterMapPresentation.findDisplay(context, DiLink51ClusterLayout.Theme.SCENARIO)?.displayId)
+            assertEquals(full, ClusterMapPresentation.findDisplay(context, DiLink51ClusterLayout.Theme.MAP)?.displayId)
+        } finally {
+            listOf(side, full, base).forEach { ShadowDisplayManager.removeDisplay(it) }
+            org.robolectric.shadows.ShadowBuild.setFingerprint(original)
+        }
     }
 
     @Test fun legacyFirmwareKeepsOriginalBaseDisplayPreference() {
@@ -268,6 +305,58 @@ class ClusterMapPresentationTest {
             org.mockito.Mockito.verify(surface, org.mockito.Mockito.never()).release()
         } finally {
             presentation.dismiss()
+            ShadowDisplayManager.removeDisplay(id)
+        }
+    }
+
+    @Test fun musicUpdatesAndFadesPreserveTheActiveMapSurface() {
+        val id = display("fission_bg_xdjaVirtualSurface", "w1280dp-h480dp-mdpi")
+        val reported = mutableListOf<android.view.Surface?>()
+        val presentation = ClusterMapPresentation(context, manager.getDisplay(id)) { reported += it }
+        val surface = org.mockito.Mockito.mock(android.view.Surface::class.java)
+        val holder = org.mockito.Mockito.mock(android.view.SurfaceHolder::class.java)
+        org.mockito.Mockito.`when`(holder.surface).thenReturn(surface)
+        fun find(view: android.view.View): android.view.SurfaceView? {
+            if (view is android.view.SurfaceView) return view
+            if (view is android.view.ViewGroup) for (child in 0 until view.childCount) {
+                find(view.getChildAt(child))?.let { return it }
+            }
+            return null
+        }
+        try {
+            presentation.show()
+            val view = find(presentation.window!!.decorView) ?: error("Legacy route must use SurfaceView")
+            val callbacks = (view.holder as org.robolectric.shadows.ShadowSurfaceView.FakeSurfaceHolder).callbacks
+            callbacks.forEach { it.surfaceCreated(holder) }
+            assertSame(surface, presentation.outputSurface)
+            assertSame(surface, reported.last())
+            presentation.setStreamActive(true)
+            ClusterMusicSettings.saveEnabled(context, true)
+            ClusterMusicSettings.savePermanent(context, true)
+            val count = reported.size
+            repeat(10) { index ->
+                val art = android.graphics.Bitmap.createBitmap(16, 16, android.graphics.Bitmap.Config.ARGB_8888)
+                ClusterMusicState.publish(com.shilapi.xcertplay.media.CarPlayNowPlaying(
+                    title = "Track $index", artworkTransferId = index), art)
+                ClusterMusicSettings.save(context, "size", 291 + index)
+                shadowOf(android.os.Looper.getMainLooper()).idleFor(java.time.Duration.ofMillis(200))
+                assertSame(surface, presentation.outputSurface)
+                assertTrue(presentation.isShowing)
+                assertTrue(presentation.mapVisible)
+                assertEquals(count, reported.size)
+            }
+            ClusterMusicSettings.saveEnabled(context, false)
+            shadowOf(android.os.Looper.getMainLooper()).idle()
+            assertSame(surface, presentation.outputSurface)
+            callbacks.forEach { it.surfaceDestroyed(holder) }
+            assertNull(presentation.outputSurface)
+            assertNull(reported.last())
+            org.mockito.Mockito.verify(surface, org.mockito.Mockito.never()).release()
+        } finally {
+            presentation.dismiss()
+            ClusterMusicState.publish(com.shilapi.xcertplay.media.CarPlayNowPlaying(), null)
+            context.getSharedPreferences("xcertplay_airplay", 0).edit().clear().commit()
+            shadowOf(android.os.Looper.getMainLooper()).idle()
             ShadowDisplayManager.removeDisplay(id)
         }
     }

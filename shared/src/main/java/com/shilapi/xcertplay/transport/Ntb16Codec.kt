@@ -16,6 +16,9 @@ object Ntb16Codec {
     private const val DATAGRAM_INDEX = 28
     private const val USB_PACKET_SIZE = 512
 
+    // Same bound as the bridge's frame queue, which fails the session past it.
+    private const val MAX_ENTRIES_PER_BLOCK = 256
+
     /** Wraps one Ethernet frame in one NTB16 block, padding an exact 512-byte boundary. */
     fun build(frame: ByteArray, sequence: Int): ByteArray {
         require(frame.isNotEmpty()) { "frame must not be empty" }
@@ -47,7 +50,9 @@ object Ntb16Codec {
      * Extracts the Ethernet frames carried by one NTB16 block.
      *
      * Wire garbage returns an empty list instead of throwing; malformed entries are skipped where
-     * a bounds check fails. A step guard stops a malformed NDP pointer chain from cycling.
+     * a bounds check fails. A block that repeats an NDP offset, lists more than
+     * [MAX_ENTRIES_PER_BLOCK] entries or yields more datagram bytes than its own length (entries
+     * that overlap) is dropped whole.
      */
     fun parse(block: ByteArray): List<ByteArray> = parse(block, 0, block.size)
 
@@ -61,10 +66,12 @@ object Ntb16Codec {
 
         val datagrams = ArrayList<ByteArray>(1)
         var ndpOffset = offset + readU16(block, offset + 10)
-        var hops = 0
-        val maxHops = maxOf(1, length / 4)
-        while (ndpOffset != 0 && hops < maxHops) {
+        val visitedNdps = HashSet<Int>()
+        var entries = 0
+        var totalBytes = 0
+        while (ndpOffset != 0) {
             if (ndpOffset < offset || ndpOffset + 12 > end) break
+            if (!visitedNdps.add(ndpOffset)) return emptyList()
             if (readU32(block, ndpOffset) and 0x00ffffff != NDP16_SIG and 0x00ffffff) break
             val ndpLength = readU16(block, ndpOffset + 4)
             val nextNdp = readU16(block, ndpOffset + 6)
@@ -74,15 +81,17 @@ object Ntb16Codec {
                 val datagramIndex = readU16(block, entry)
                 val datagramLength = readU16(block, entry + 2)
                 if (datagramIndex == 0 || datagramLength == 0) break
+                if (++entries > MAX_ENTRIES_PER_BLOCK) return emptyList()
                 val datagramStart = offset + datagramIndex
                 val datagramEnd = datagramStart + datagramLength
                 if (datagramStart >= offset && datagramStart <= end && datagramEnd <= end) {
+                    totalBytes += datagramLength
+                    if (totalBytes > length) return emptyList()
                     datagrams.add(block.copyOfRange(datagramStart, datagramEnd))
                 }
                 entry += 4
             }
             ndpOffset = if (nextNdp == 0) 0 else offset + nextNdp
-            hops++
         }
         return datagrams
     }

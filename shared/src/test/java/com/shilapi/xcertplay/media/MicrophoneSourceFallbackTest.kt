@@ -32,7 +32,7 @@ import org.robolectric.util.ReflectionHelpers
 
 /** Exercises the real sink/uplink, including creation, teardown and exported diagnostics. */
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [28, 33], manifest = Config.NONE, shadows = [MicrophoneSourceFallbackTest.RecorderBuilder::class])
+@Config(sdk = [28, 33], manifest = Config.NONE, shadows = [MicrophoneSourceFallbackTest.RecorderBuilder::class, ShadowAudioModeRequests::class])
 class MicrophoneSourceFallbackTest {
     private val context get() = RuntimeEnvironment.getApplication()
     private val id = AudioStreamId(100, "speechrecognition")
@@ -47,7 +47,8 @@ class MicrophoneSourceFallbackTest {
         RecorderBuilder.rejectSources = emptySet()
         RecorderBuilder.uninitializedSources = emptySet()
         shadowOf(context).grantPermissions(Manifest.permission.RECORD_AUDIO, Manifest.permission.MODIFY_AUDIO_SETTINGS)
-        context.getSystemService(AudioManager::class.java).mode = AudioManager.MODE_RINGTONE
+        ShadowAudioModeRequests.clearRequests()
+        ShadowAudioModeRequests.otherProcess(AudioManager.MODE_RINGTONE)
         sink = AndroidMediaSink(context = context, onAudioDiagnostic = diagnostics::add)
         ShadowAudioRecord.setSourceProvider { recorder ->
             captured.set(recorder)

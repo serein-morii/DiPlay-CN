@@ -143,6 +143,10 @@ object Iap2Endpoints {
                     field(2, "MaxCurrentRoadNameLength", Iap2WireType.U16),
                     field(4, "MaxAfterManeuverRoadNameLength", Iap2WireType.U16),
                     field(6, "MaxGuidanceManeuverStorageCapacity", Iap2WireType.U16),
+                    // Declared last because the phone only sends 0x5204 lane guidance when the
+                    // accessory says it can store it.
+                    field(7, "MaxLaneGuidanceDescriptionLength", Iap2WireType.U16),
+                    field(8, "MaxLaneGuidanceStorageCapacity", Iap2WireType.U16),
                 ),
             ),
         ),

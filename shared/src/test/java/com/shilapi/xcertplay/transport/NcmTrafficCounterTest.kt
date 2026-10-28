@@ -1,6 +1,8 @@
 package com.shilapi.xcertplay.transport
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class NcmTrafficCounterTest {
@@ -33,6 +35,19 @@ class NcmTrafficCounterTest {
             "fromIphone=6 ipv6=5 ipv4=1 tcpConnectToAirPlay=2 tcpConnectOther=5353:1 toIphone=1",
             counter.summary(7000),
         )
+    }
+
+    @Test fun remembersWhenTheIphoneLastTriedAPort() {
+        var now = 100L
+        val counter = NcmTrafficCounter { now }
+        assertFalse(counter.connectionAttemptSince(7000, 0))
+        counter.received(ipv6(6, tcp(7000, 0x02)))
+        now = 200
+        // A reply from the iPhone is not an attempt.
+        counter.received(ipv6(6, tcp(7000, 0x12)))
+        assertTrue(counter.connectionAttemptSince(7000, 100))
+        assertFalse(counter.connectionAttemptSince(7000, 101))
+        assertFalse(counter.connectionAttemptSince(5353, 0))
     }
 
     @Test fun shortAndForeignFramesAreCountedButNotParsed() {

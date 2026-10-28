@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="card_preview_title">Dönüş kartı yerleşimi önizlemesi</string>
+    <string name="card_preview_note">Gösterge panelindeki orantılı konum. Gerçek küçük pencere kenarı araca göre değişir.</string>
+    <string name="card_preview_full">Tam ekran</string>
+    <string name="card_preview_small">Küçük pencere</string>
+</resources>

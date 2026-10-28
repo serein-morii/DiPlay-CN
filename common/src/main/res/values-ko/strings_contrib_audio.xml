@@ -1,0 +1,11 @@
+<resources>
+    <string name="contrib_audio_home_channel_preview_unavailable">이 기기에서는 Android 오디오 스트림 %1$d을 미리 들을 수 없습니다.</string>
+    <string name="contrib_audio_home_choice_summary">%1$s · %2$s</string>
+    <string name="contrib_audio_home_media_channel_label">미디어 오디오 스트림</string>
+    <string name="contrib_audio_home_nav_channel_label">내비게이션 오디오 스트림</string>
+    <string name="contrib_audio_home_nav_channel_note">0 = 자동 라우팅. 1~20은 헤드 유닛에서 지원하는 경우 제조사별 출력을 포함한 레거시 오디오 스트림 ID를 선택합니다. 값을 탭해 미리 들어보세요. 변경 사항은 다시 연결할 때 적용됩니다.</string>
+    <string name="contrib_audio_home_toggle_audio_focus">오디오 포커스</string>
+    <string name="contrib_audio_home_toggle_audio_focus_desc">CarPlay 미디어가 오디오 포커스를 요청합니다. 활성화 중 소리가 사라지면(일부 헤드 유닛은 포커스를 제대로 처리하지 못함) 이 기능을 끄세요. 변경 사항은 다시 연결할 때 적용됩니다.</string>
+    <string name="audio_focus_auto_yield">일시적인 포커스 손실 시 미디어 음소거</string>
+    <string name="audio_focus_auto_yield_desc">오디오 포커스가 활성화된 경우 통화를 포함한 Android 오디오 중단 중에 미디어를 음소거합니다. 포커스가 돌아오면 오디오를 복원합니다. 헤드 유닛이 포커스를 돌려주지 않으면 끄세요. 변경 사항은 다시 연결할 때 적용됩니다.</string>
+</resources>

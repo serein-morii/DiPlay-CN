@@ -31,7 +31,7 @@ class DiPlaySessionService : Service() {
             @Suppress("DEPRECATION")
             Notification.Builder(this).setPriority(Notification.PRIORITY_LOW)
         }
-        val open = PendingIntent.getActivity(this, 0, Intent(this, CarPlayHostActivity::class.java), PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+        val open = PendingIntent.getActivity(this, 0, CarPlayScreen.intent(this), PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
         val stop = PendingIntent.getService(this, 1, Intent(this, DiPlaySessionService::class.java).setAction(ACTION_STOP), PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
         val notification = builder
             .setSmallIcon(R.drawable.ic_diplay_notification)

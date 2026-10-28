@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="platform21_cluster_mode">Platform 21 gösterge paneli görevi (deneysel)</string>
+    <string name="platform21_cluster_description">2023 Tang DM-i kontrolcü-21 uyarlaması içindir. Varsayılan olarak kapalıdır. Yalnızca doğrulanmış yansıtma ekranını kullanır, ortalanmış yarı genişlikte bir harita tutar ve orijinal gösterge paneli modlarını değiştirmez veya orijinal haritayı devre dışı bırakmaz. Önceden yetkilendirilmiş yerel ADB gerektirir. Bu ayarın uygulanması CarPlay\'i yeniden bağlar. Bu ana entegrasyon için park halinde araç testi gereklidir.</string>
+</resources>

@@ -221,8 +221,33 @@ class ExistingWifiManagerTest {
         assertThrows(IllegalArgumentException::class.java) { manager("short") }
     }
 
-    private fun manager(password: String = "pocket-password") = ExistingWifiManager(context,
-        "Pocket Wi-Fi", password, diagnostics::add, { changes++ })
+    @Test fun explicitInterfaceAttachesWithoutWifiTransportOrWifiInfo() {
+        // A USB NIC such as eth1 carries the LAN without a Wi-Fi transport and WifiInfo is unusable.
+        doReturn(capabilities(NetworkCapabilities.TRANSPORT_ETHERNET)).`when`(connectivity).getNetworkCapabilities(network)
+        `when`(wifi.connectionInfo).thenThrow(SecurityException("no Wi-Fi"))
+        manager(preferredInterface = iface.name).use {
+            val result = start(it)
+            assertEquals("192.0.2.10", result.hostAddress!!.hostAddress)
+            assertEquals(iface.name, result.interfaceName)
+            assertEquals(0, result.channel)
+            assertNull(result.accessPointBssid)
+            assertEquals(Iap2WirelessSecurity.WPA_WPA2, result.security)
+            val line = DiagnosticRedactor.redact(diagnostics.single { it.contains("Existing Wi-Fi attached") })!!
+            assertTrue(line.contains("configuredInterface=${iface.name}"))
+        }
+        verify(wifi, never()).connectionInfo
+    }
+
+    @Test fun missingConfiguredInterfaceIsNamedInTheTimeoutFailure() {
+        `when`(connectivity.allNetworks).thenReturn(emptyArray())
+        manager(preferredInterface = "eth9").use {
+            val error = assertThrows(IOException::class.java) { start(it, 1) }
+            assertTrue(error.message!!.contains("eth9"))
+        }
+    }
+
+    private fun manager(password: String = "pocket-password", preferredInterface: String? = null) =
+        ExistingWifiManager(context, "Pocket Wi-Fi", password, diagnostics::add, { changes++ }, preferredInterface)
 
     private fun link(address: String) = LinkProperties().apply {
         interfaceName = iface.name

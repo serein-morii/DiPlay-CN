@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="picture_surface_output_unavailable">Bu ekranın uyumlu video çıkışıyla görüntü ayarları kullanılamaz. Kaydedilen ayarlarınız korunur.</string>
+</resources>

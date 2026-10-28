@@ -19,6 +19,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 class VideoSettingsChannel(
     private val readKey: ByteArray,
     private val writeKey: ByteArray,
+    private val expectedPeer: InetAddress,
     private val log: (String) -> Unit,
 ) : Closeable {
     private val closed = AtomicBoolean(false)
@@ -39,7 +40,7 @@ class VideoSettingsChannel(
 
     private fun accept(bound: ServerSocket) {
         try {
-            val accepted = bound.accept()
+            val accepted = bound.acceptFrom(expectedPeer) { log("video settings channel rejected sender outside the control session") }
             socket = accepted
             log("video settings channel connected")
             run(accepted)

@@ -3,6 +3,7 @@ package com.shilapi.xcertplay.transport
 import android.util.Log
 import java.io.Closeable
 import java.util.ArrayDeque
+import java.util.concurrent.atomic.AtomicInteger
 
 /**
  * USBMUX version-2 host over an already claimed iPhone bulk pipe.
@@ -24,6 +25,8 @@ class Iap2UsbMuxHost private constructor(
     private var nextMuxSequence = 0
     private var nextMuxAcknowledgement = 0
     private var receivedFrames = 0
+    private val loggedControlFrames = AtomicInteger()
+    private val loggedLargeWrites = AtomicInteger()
     private var nextSourcePort = FIRST_SOURCE_PORT
     private lateinit var readerThread: Thread
     private val receiveFrames = UsbMuxFrameBuffer { line ->
@@ -84,7 +87,7 @@ class Iap2UsbMuxHost private constructor(
         flags: Int,
         payload: ByteArray,
     ) {
-        if (payload.size > 512) Log.i("xcertplay-usb", "usbmux TX source=$sourcePort destination=$destinationPort bytes=${payload.size} seq=$sequence ack=$acknowledgement")
+        if (payload.size > 512 && loggedLargeWrites.incrementAndGet() <= LOGGED_RX_FRAMES) Log.i("xcertplay-usb", "usbmux TX source=$sourcePort destination=$destinationPort bytes=${payload.size} seq=$sequence ack=$acknowledgement")
         val tcp = ByteArray(TCP_HEADER_BYTES + payload.size)
         putU16(tcp, 0, sourcePort)
         putU16(tcp, 2, destinationPort)
@@ -231,7 +234,7 @@ class Iap2UsbMuxHost private constructor(
             throw IphoneUsbException.Protocol("Invalid USBMUX TCP header length")
         }
         val destinationPort = readU16(frame, offset + 2)
-        if (length == tcpHeaderBytes) Log.i("xcertplay-usb", "usbmux TCP control destination=$destinationPort flags=${frame[13].toInt() and 0xff} ack=${readU32(frame, 8)} window=${readU16(frame, 14)}")
+        if (length == tcpHeaderBytes && (frame[13].toInt() and TCP_SYN_FIN_RST != 0 || loggedControlFrames.incrementAndGet() <= LOGGED_RX_FRAMES)) Log.i("xcertplay-usb", "usbmux TCP control destination=$destinationPort flags=${frame[13].toInt() and 0xff} ack=${readU32(frame, 8)} window=${readU16(frame, 14)}")
         val connection = synchronized(stateLock) { connections[destinationPort] } ?: return
         connection.onPacket(
             flags = frame[offset + 13].toInt() and 0xff,
@@ -279,6 +282,7 @@ class Iap2UsbMuxHost private constructor(
         private const val NANOS_PER_MILLISECOND = 1_000_000L
         private const val MUX_HEADER_BYTES = 16
         private const val TCP_HEADER_BYTES = 20
+        private const val TCP_SYN_FIN_RST = 0x07
         private const val TCP_WINDOW_FIELD = 512
         private const val FIRST_SOURCE_PORT = 1
         private const val HANDSHAKE_TIMEOUT_MILLIS = 60_000L

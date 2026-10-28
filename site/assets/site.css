@@ -5,3 +5,6 @@ figure:first-child{grid-column:auto}.brand img{border-radius:12px}html[dir=rtl] 
 
 /* Keep complete diagnostic URLs readable on narrow screens. */
 .card p{overflow-wrap:anywhere}
+
+/* Total downloads beside the version badge, filled in by downloads.js. */
+.meta{display:flex;flex-wrap:wrap;align-items:center;gap:10px}.downloads{font-size:13px;color:#b9c7db;padding:6px 12px;border:1px solid #263449;border-radius:8px}.downloads bdi{color:#eef3fb;font-weight:700;font-variant-numeric:tabular-nums}

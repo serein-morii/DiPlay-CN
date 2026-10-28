@@ -2,6 +2,7 @@ package com.shilapi.xcertplay.glance
 
 import com.shilapi.xcertplay.iap2.body.Iap2BodyBuilder
 import com.shilapi.xcertplay.iap2.message.Iap2Messages
+import com.shilapi.xcertplay.iap2.message.LaneGuidanceLane
 import com.shilapi.xcertplay.hud.BydHudRouteState
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -9,13 +10,17 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
 
+@RunWith(RobolectricTestRunner::class) // Lane guidance logs through android.util.Log.
 class CarPlayGlanceTest {
     private fun frame(id: Int, block: Iap2BodyBuilder.() -> Unit) = Iap2Messages.buildRaw(id, block)
 
     @Before
     fun reset() {
         CarPlayGlance.listener = null
+        CarPlayGlance.laneListener = null
         CarPlayGlance.setConnected(true)
         CarPlayGlance.setConnected(false)
     }
@@ -127,5 +132,28 @@ class CarPlayGlanceTest {
 
         assertEquals(before, CarPlayGlance.snapshot())
         assertEquals(0, calls)
+    }
+
+    @Test
+    fun laneGuidanceReachesTheLaneListenerWithoutTouchingTheGlance() {
+        CarPlayGlance.setConnected(true)
+        val before = CarPlayGlance.snapshot()
+        val strips = mutableListOf<List<LaneGuidanceLane>>()
+        CarPlayGlance.laneListener = { strips += it }
+
+        CarPlayGlance.onFrame(frame(0x5204) {
+            group(2) { u16(0, 0); u8(1, 0); i16(2, -90) }
+            group(2) { u16(0, 1); u8(1, 2); i16(2, 0); i16(3, 90) }
+        })
+        // The phone clears the strip with an empty payload when the overlap ends.
+        CarPlayGlance.onFrame(frame(0x5204) { })
+
+        assertEquals(2, strips.size)
+        assertEquals(listOf(0, 1), strips[0].map { it.index })
+        assertEquals(-90, strips[0][0].angle)
+        assertEquals(true, strips[0][1].recommended)
+        assertEquals(90, strips[0][1].highlightAngle)
+        assertTrue(strips[1].isEmpty())
+        assertEquals(before, CarPlayGlance.snapshot())
     }
 }

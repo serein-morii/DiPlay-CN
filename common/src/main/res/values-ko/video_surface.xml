@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="picture_surface_output_unavailable">이 화면의 호환 영상 출력에서는 화면 조정을 사용할 수 없습니다. 저장된 조정 값은 유지됩니다.</string>
+</resources>

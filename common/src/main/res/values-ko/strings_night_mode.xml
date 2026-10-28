@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="carplay_night_mode">CarPlay 주간/야간 모드</string>
+    <string name="settings_app_appearance">앱 모양</string>
+    <string name="settings_app_appearance_dark">어둡게</string>
+    <string name="settings_app_appearance_light">밝게</string>
+    <string name="settings_app_appearance_auto">자동</string>
+    <string name="settings_app_appearance_description">자동은 저장된 CarPlay 주간/야간 설정을 따르며, CarPlay가 열려 있으면 실시간 결과를 따릅니다. 밝게와 어둡게는 고정되며 다시 연결할 필요가 없습니다.</string>
+    <string name="settings_switch_to_light_appearance">밝은 모양으로 전환</string>
+    <string name="settings_switch_to_dark_appearance">어두운 모양으로 전환</string>
+    <string name="carplay_night_system">Android 시스템 설정 따르기</string>
+    <string name="carplay_night_ambient">주변 밝기 따르기</string>
+    <string name="carplay_night_day">항상 주간</string>
+    <string name="carplay_night_night">항상 야간</string>
+    <string name="carplay_night_schedule">예약</string>
+    <string name="carplay_night_start">야간 시작</string>
+    <string name="carplay_night_end">야간 종료</string>
+    <string name="carplay_night_schedule_hint">헤드 유닛의 현지 시간을 사용합니다. 시작 및 종료 시간을 다르게 설정하세요. 자정을 넘기는 시간 범위도 지원됩니다.</string>
+    <string name="carplay_night_schedule_same_time">시작 및 종료 시간이 달라야 합니다.</string>
+    <string name="carplay_night_hint">저장한 뒤 CarPlay로 돌아가 적용하세요.</string>
+    <string name="carplay_night_ambient_hint">아래 임계값과 지연 시간을 사용합니다. 조도 센서가 없으면 Android 설정을 따릅니다.</string>
+    <string name="carplay_night_time_note">CarPlay 설정에서 모양을 자동으로 설정하면 CarPlay는 iPhone 시간도 고려합니다. 항상 주간을 선택해도 밤에는 CarPlay가 어둡게 표시될 수 있습니다.</string>
+</resources>

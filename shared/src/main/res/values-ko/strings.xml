@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="carapp_hw_status_title">xcertplay 하드웨어 상태</string>
+    <string name="carapp_hw_not_configured">하드웨어 전송 방식이 구성되지 않았습니다. 보드 I2C에는 /dev/i2c-N 경로와 OS/SELinux 권한이 필요하며, CH341에는 배포된 VID/PID 구성이 필요합니다.</string>
+</resources>

@@ -1,7 +1,10 @@
 package com.shilapi.xcertplay.hud
 
 import android.annotation.SuppressLint
+import android.app.ActivityManager
 import android.content.Context
+import android.content.Intent
+import android.os.Looper
 import android.util.Base64
 import android.util.Log
 import com.shilapi.xcertplay.compat.Base64Compat
@@ -116,6 +119,12 @@ internal object BydClusterSong {
     private var announced: String? = null // the last song shown in the "only when it changes" mode
     private var shown: ClusterSong? = null // writer thread
     private var firstLogged = false // writer thread
+
+    @Volatile
+    private var sGateOpened = false
+    private const val GATE_PKG = "com.byd.mediacenter"
+    private const val GATE_ACT = "com.byd.mediacenter.main.MediaActivity"
+    private const val RETURN_DELAY_MS = 1000L
 
     fun attach(appContext: Context) {
         context = appContext.applicationContext
@@ -264,6 +273,9 @@ internal object BydClusterSong {
     private fun write(app: Context, song: ClusterSong) {
         // Only the newest song matters; older queued ones are skipped.
         if (synchronized(state) { wanted } != song || song == shown) return
+        // The gate makes BYD's music card appear, but it briefly covers the screen; only open it when
+        // the user asked for it (off keeps the write but the card may stay hidden).
+        if (BydOutputSettings.clusterSongGate(app)) ensureGateOpen(app)
         val text = Base64.encodeToString(song.text.toByteArray(Charsets.UTF_8), Base64.NO_WRAP)
         val playing = when {
             song == EMPTY -> STATE_STOPPED
@@ -278,6 +290,61 @@ internal object BydClusterSong {
             }
         }
     }
+
+    private fun ensureGateOpen(app: Context) {
+        if (sGateOpened) return
+        // write() runs on a background single thread (WRITER), so sleeping here is safe;
+        // if called on the main thread, skip to avoid an ANR.
+        if (Looper.myLooper() == Looper.getMainLooper()) {
+            sGateOpened = true
+            return
+        }
+
+        try {
+            // After the gate we return the driver to CarPlay, not to the DiPlay launcher or BYD's desktop.
+            // getRunningTasks is unreliable here (it reports BYD's desktop as foreground), so pick the
+            // CarPlay task from our own tasks by its activity classes (isCarPlayTask).
+            val carplayTask = (app.getSystemService(Context.ACTIVITY_SERVICE) as? ActivityManager)
+                ?.appTasks?.firstOrNull { task ->
+                    isCarPlayTask(task.taskInfo?.baseActivity?.className, task.taskInfo?.topActivity?.className)
+                }
+            // 1) Open the gate: launch the local music main UI to activate ECU display mode.
+            val gate = Intent().apply {
+                setClassName(GATE_PKG, GATE_ACT)
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            app.startActivity(gate)
+            // 2) Wait for a while so the ECU enters display mode and the property becomes true.
+            Thread.sleep(RETURN_DELAY_MS)
+
+            // 3) Return to the CarPlay task if it is running, otherwise fall back to the DiPlay launcher.
+            if (carplayTask != null) {
+                carplayTask.moveToFront()
+            } else {
+                val self = app.packageManager.getLaunchIntentForPackage(app.packageName)
+                if (self != null) {
+                    self.addFlags(
+                        Intent.FLAG_ACTIVITY_NEW_TASK
+                                or Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED
+                    )
+                    app.startActivity(self)
+                }
+            }
+        } catch (t: Throwable) {
+            Log.w(TAG, "gate open failed: $t")
+        }
+
+        // Mark as done regardless of success or failure, so this is only attempted once per app run;
+        // on failure, it will be retried the next time the app restarts.
+        sGateOpened = true
+    }
+
+    /**
+     * CarPlay runs in its own task (root com.shilapi.xcertplay.CarPlayHostActivity, affinity .carplay). With "Keep
+     * CarPlay in the launcher card" it runs on top of DiPlay's own task instead, as SameTaskCarPlayHostActivity.
+     */
+    internal fun isCarPlayTask(baseActivity: String?, topActivity: String?): Boolean =
+        listOfNotNull(baseActivity, topActivity).any { it.endsWith("CarPlayHostActivity") }
 
     private fun clear(app: Context) {
         if (shown == null || synchronized(state) { wanted } != null) return

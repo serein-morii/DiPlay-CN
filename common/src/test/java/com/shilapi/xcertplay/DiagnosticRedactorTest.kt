@@ -2,6 +2,9 @@ package com.shilapi.xcertplay
 
 import org.junit.Assert.*
 import org.junit.Test
+import com.shilapi.xcertplay.iap2.message.Iap2ControlMessages
+import com.shilapi.xcertplay.iap2.trace.Iap2FrameFormatter
+import com.shilapi.xcertplay.iap2.trace.Iap2TraceDirection
 import java.nio.file.Files
 
 class DiagnosticRedactorTest {
@@ -87,6 +90,7 @@ class DiagnosticRedactorTest {
             log.append("password=secret")
             repeat(1600) { log.append("connection state " + "x".repeat(690)) }
             log.append("CarPlay connected")
+            assertTrue(log.awaitIdle(10_000))
             log.close()
             assertTrue(folder.resolve("diplay.log").length() <= SessionLogFile.MAX_BYTES + 701)
             assertTrue(folder.resolve("previous.log").length() <= SessionLogFile.MAX_BYTES + 701)
@@ -139,5 +143,45 @@ class DiagnosticRedactorTest {
         )
         for (line in lines) assertEquals(line, line, DiagnosticRedactor.redact(line))
         assertNull(DiagnosticRedactor.redact("airplay rx POST /pair-verify body=secret"))
+    }
+
+    @Test fun hyphenatedIphoneUdidFromTransportIdentifierNeverReachesReports() {
+        val line = "iap2 rx=0x4e0e device-transport-identifier bluetooth=C0:A6:00:29:58:0A usb=00008110-001E2C3A0123401E; resending 0x5703"
+        val redacted = DiagnosticRedactor.redact(line)!!
+        assertFalse(redacted, redacted.contains("001E2C3A0123401E"))
+        assertFalse(redacted, redacted.contains("C0:A6"))
+        assertTrue(redacted, redacted.contains("device-transport-identifier"))
+        val folder = Files.createTempDirectory("diplay-udid-report").toFile()
+        try {
+            SessionLogFile(folder.resolve("diplay.log")).use { it.reset("started"); it.append(line) }
+            val report = folder.resolve("diplay.log").readText()
+            assertFalse(report, report.contains("001E2C3A0123401E"))
+            assertTrue(report, report.contains("resending 0x5703"))
+        } finally { folder.deleteRecursively() }
+    }
+
+    @Test fun legacyAndUuidIdentifiersStayRedacted() {
+        for (id in listOf("0123456789abcdef0123456789abcdef01234567", "123E4567-E89B-12D3-A456-426614174000")) {
+            assertEquals("usb=[identifier];", DiagnosticRedactor.redact("usb=$id;"))
+        }
+        assertEquals("fps=60-120 rev=deadbeef-1", DiagnosticRedactor.redact("fps=60-120 rev=deadbeef-1"))
+    }
+
+    @Test fun locationFramesWithNmeaAreDroppedBeforeReports() {
+        val nmea = "\$GPGGA,123519,3745.1234,N,12225.5678,W,1,08,0.9,545.4,M,46.9,M,,*47"
+        val trace = Iap2FrameFormatter.format(Iap2TraceDirection.TX, "wireless-tunnel", Iap2ControlMessages.locationInformation(nmea))
+        assertTrue(trace, trace.contains("NMEA"))
+        assertNull(DiagnosticRedactor.redact(trace))
+        val folder = Files.createTempDirectory("diplay-nmea-report").toFile()
+        try {
+            SessionLogFile(folder.resolve("diplay.log")).use { it.reset("started"); it.append(trace) }
+            assertFalse(folder.resolve("diplay.log").readText().contains("3745.1234"))
+        } finally { folder.deleteRecursively() }
+    }
+
+    @Test fun personalDataInControllerAndHotspotLinesIsAlreadyMasked() {
+        assertEquals("wireless RFCOMM connected address=[address]", DiagnosticRedactor.redact("wireless RFCOMM connected address=C0:A6:00:29:58:0A"))
+        assertNull(DiagnosticRedactor.redact("Manual hotspot SSID does not match the active local AP configuration: 'CarWifi-1234'"))
+        assertNull(DiagnosticRedactor.redact("WirelessHotspotInfo(backend=Wi-Fi P2P, ssid='DIRECT-xy-Car', passphrase=<redacted>, security=WPA2, channel=6)"))
     }
 }

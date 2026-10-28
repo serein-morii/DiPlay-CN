@@ -11,6 +11,7 @@ object BydOutputSettings {
     private const val PREFS = "diplay_byd_outputs"
     private const val KEY_ENABLED = "navigation_enabled"
     private const val KEY_CLUSTER_STREAM_PAUSE = "cluster_stream_pause"
+    private const val KEY_CLUSTER_PROJECTION_SHAPE = "cluster_projection_shape"
     private const val KEY_BATTERY_TO_IPHONE = "battery_to_iphone"
     private const val KEY_LOW_CHARGE_PERCENT = "low_charge_percent"
     private const val KEY_CHARGING_CONNECTORS = "charging_connectors"
@@ -18,6 +19,7 @@ object BydOutputSettings {
     private const val KEY_VIDEO_WHILE_PARKED = "video_while_parked"
     private const val KEY_CLUSTER_SONG = "cluster_song"
     private const val KEY_CLUSTER_SONG_ON_CHANGE = "cluster_song_on_change"
+    private const val KEY_CLUSTER_SONG_GATE = "cluster_song_gate"
     private const val KEY_HUD_SONG = "hud_song"
     private const val KEY_CARPLAY_CALLS = "carplay_calls"
     private const val KEY_CARPLAY_CALL_CONTROLS = "carplay_call_controls_experimental"
@@ -38,6 +40,26 @@ object BydOutputSettings {
 
     fun setClusterStreamPause(context: Context, enabled: Boolean) =
         prefs(context).edit().putBoolean(KEY_CLUSTER_STREAM_PAUSE, enabled).apply()
+
+    /**
+     * How the CarPlay map is projected on the cluster: half screen (default) keeps the cluster's own
+     * speed and status readouts beside the map, full screen lets the map fill it.
+     *
+     * DiPlay switches the cluster to half screen whenever the map appears, which overrides the shape
+     * picked on the car, so the choice lives here. The setting is not DiLink 3 specific: a DiLink 4.0
+     * cluster asks for the same one (#728).
+     */
+    fun clusterProjectionShape(context: Context): BydClusterProjectionShape {
+        val saved = prefs(context).getString(KEY_CLUSTER_PROJECTION_SHAPE, null)
+        return BydClusterProjectionShape.entries.firstOrNull { it.key == saved } ?: BydClusterProjectionShape.HALF
+    }
+
+    fun setClusterProjectionShape(context: Context, shape: BydClusterProjectionShape) =
+        prefs(context).edit().putString(KEY_CLUSTER_PROJECTION_SHAPE, shape.key).apply()
+
+    /** Head units whose cluster shape DiPlay can set today: DiLink 3 takes the AutoContainer commands. */
+    fun projectionShapeAvailable(context: Context): Boolean =
+        BydAmapAdapter.find { packageName -> installed(context, packageName) } == BydAmapAdapter.DILINK3
 
     /** Tell the iPhone the car's charge and range (needs ADB over network); applies on the next connection. */
     fun batteryToIphone(context: Context): Boolean = prefs(context).getBoolean(KEY_BATTERY_TO_IPHONE, false)
@@ -81,6 +103,18 @@ object BydOutputSettings {
 
     fun setClusterSong(context: Context, enabled: Boolean) =
         prefs(context).edit().putBoolean(KEY_CLUSTER_SONG, enabled).apply()
+
+    /**
+     * Open the gate so the dashboard music card appears. DiPlay writes the song to the instrument
+     * cluster (device 1007), but BYD's card stays hidden until the car's media stack has been opened
+     * once; opening the gate launches the media app, which briefly covers the screen and then returns
+     * to DiPlay. Off keeps the write but the card may stay hidden unless the media stack was already
+     * active. Applies at once. Defaults on so the song keeps showing as before.
+     */
+    fun clusterSongGate(context: Context): Boolean = prefs(context).getBoolean(KEY_CLUSTER_SONG_GATE, false)
+
+    fun setClusterSongGate(context: Context, enabled: Boolean) =
+        prefs(context).edit().putBoolean(KEY_CLUSTER_SONG_GATE, enabled).apply()
 
     /** Show CarPlay calls on the dashboard and HUD like BYD's CarPlay app (needs ADB over network); applies at once. */
     fun carPlayCalls(context: Context): Boolean = prefs(context).getBoolean(KEY_CARPLAY_CALLS, false)

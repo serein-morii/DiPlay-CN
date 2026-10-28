@@ -58,6 +58,7 @@ internal object BydWheelSpeedSource : VehicleSpeedSource {
     private val samples = ArrayList<VehicleSpeedSample>()
     private var gear: VehicleGear? = null
     private var reads = 0
+    private var readLog = WheelSpeedReads()
     private var firstSampleLogged = false
 
     fun attach(appContext: Context) = apply { context = appContext.applicationContext }
@@ -68,6 +69,7 @@ internal object BydWheelSpeedSource : VehicleSpeedSource {
         samples.clear()
         gear = null
         reads = 0
+        readLog = WheelSpeedReads()
         firstSampleLogged = false
         executor = Executors.newSingleThreadScheduledExecutor { runnable ->
             Thread(runnable, "diplay-wheel-speed").apply { isDaemon = true }
@@ -90,16 +92,25 @@ internal object BydWheelSpeedSource : VehicleSpeedSource {
         return VehicleSpeedReading(current, samples.toList()).also { samples.clear() }
     }
 
+    @Synchronized
+    override fun status(): String = readLog.describe(shell.lastAccess?.name ?: "untried", gear)
+
     private fun poll() {
         val app = context ?: return
         if (reads++ % GEAR_EVERY_READS == 0) {
-            BydWheelSpeed.gear(shell.run(app, BydWheelSpeed.gearCommand(app)))?.let { next ->
+            val reply = shell.run(app, BydWheelSpeed.gearCommand(app))
+            val read = BydWheelSpeed.gear(reply)
+            synchronized(this) { readLog.gear(reply, read) }
+            read?.let { next ->
                 val changed = synchronized(this) { (gear != next).also { gear = next } }
                 if (changed) Log.i(TAG, "gear $next")
             }
         }
         val before = SystemClock.elapsedRealtime()
-        val speed = BydWheelSpeed.metersPerSecond(shell.run(app, BydWheelSpeed.speedCommand(app))) ?: return
+        val reply = shell.run(app, BydWheelSpeed.speedCommand(app))
+        val read = BydWheelSpeed.metersPerSecond(reply)
+        synchronized(this) { readLog.speed(reply, read) }
+        val speed = read ?: return
         val sample = VehicleSpeedSample((before + SystemClock.elapsedRealtime()) / 2, speed)
         synchronized(this) {
             if (samples.size == MAX_SAMPLES) samples.removeAt(0)
@@ -109,5 +120,40 @@ internal object BydWheelSpeedSource : VehicleSpeedSource {
             firstSampleLogged = true
             Log.i(TAG, "first wheel speed ${"%.1f".format(speed * 3.6)} km/h")
         }
+    }
+}
+
+/**
+ * What the wheel-speed reads returned since the source started. A DiLink 4.0 sent no speed for a whole drive
+ * (#807) and the report could not say whether the speed or the gear read failed, or what the car answered.
+ */
+internal class WheelSpeedReads {
+    private var speedReads = 0
+    private var speedValues = 0
+    private var speedReply: String? = null
+    private var gearReply: String? = null
+
+    fun speed(reply: String?, value: Double?) {
+        speedReads++
+        if (value != null) speedValues++ else if (speedReply == null) speedReply = shown(reply)
+    }
+
+    fun gear(reply: String?, value: VehicleGear?) {
+        if (value == null && gearReply == null) gearReply = shown(reply)
+    }
+
+    /** [gear] is the latest gear read; the first unreadable reply of each read is kept, a missing one as none. */
+    fun describe(adb: String, gear: VehicleGear?): String = buildString {
+        append("adb=").append(adb).append(" speed=").append(speedValues).append('/').append(speedReads)
+        append(" gear=").append(gear?.letter ?: "none")
+        if (speedValues < speedReads) append(" speedReply=").append(speedReply)
+        if (gear == null) append(" gearReply=").append(gearReply ?: "none")
+    }
+
+    private fun shown(reply: String?): String =
+        reply?.replace(Regex("\\s+"), " ")?.trim()?.take(MAX_REPLY_CHARS)?.let { "\"$it\"" } ?: "none"
+
+    private companion object {
+        const val MAX_REPLY_CHARS = 80
     }
 }

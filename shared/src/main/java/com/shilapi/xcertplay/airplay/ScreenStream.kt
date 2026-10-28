@@ -19,7 +19,11 @@ enum class VideoCodec { H264, H265 }
  * (avcC/hvcC) or a ChaCha20-Poly1305 sealed VideoFrame. The key is the DataStream output key
  * and the per-frame nonce is an 8-byte little-endian counter.
  */
-class ScreenStream(private val key: ByteArray, private val onDiagnostic: (String) -> Unit = {}) : Closeable {
+class ScreenStream(
+    private val key: ByteArray,
+    private val expectedPeer: InetAddress,
+    private val onDiagnostic: (String) -> Unit = {},
+) : Closeable {
     interface Listener {
         fun onCodec(codec: VideoCodec) {}
         fun onConfig(codecData: ByteArray) {}
@@ -59,7 +63,7 @@ class ScreenStream(private val key: ByteArray, private val onDiagnostic: (String
 
     private fun accept(bound: ServerSocket) {
         try {
-            val accepted = bound.accept()
+            val accepted = bound.acceptFrom(expectedPeer) { onDiagnostic("Video: rejected sender outside the control session") }
             socket = accepted
             run(accepted)
         } catch (error: Exception) {
@@ -96,16 +100,11 @@ class ScreenStream(private val key: ByteArray, private val onDiagnostic: (String
     private fun onMessage(header: ByteArray, body: ByteArray, stats: StreamReceiveStats, arrivalNanos: Long) {
         when (header[OPCODE_OFFSET].toInt() and 0xff) {
             OP_VIDEO_FRAME -> {
-                val payload = if (body.size >= ScreenCodec.TAG_SIZE) {
-                    val start = System.nanoTime()
-                    ScreenCodec.decryptFrame(key, frameCounter.get(), header, body)
-                        .also {
-                            stats.decrypted(System.nanoTime() - start, body.size)
-                            frameCounter.incrementAndGet()
-                        }
-                } else {
-                    body
-                }
+                if (body.size < ScreenCodec.TAG_SIZE) return
+                val start = System.nanoTime()
+                val payload = ScreenCodec.decryptFrame(key, frameCounter.get(), header, body)
+                stats.decrypted(System.nanoTime() - start, body.size)
+                frameCounter.incrementAndGet()
                 if (firstFrameLogged.compareAndSet(false, true)) {
                     Log.i(
                         TAG,
@@ -166,8 +165,7 @@ object ScreenCodec {
     private const val SENDER_TIME_OFFSET = 8
 
     fun decryptFrame(key: ByteArray, counter: Long, header: ByteArray, body: ByteArray): ByteArray =
-        if (body.size < TAG_SIZE) body
-        else AirPlayCrypto.chachaOpen(key, AirPlayCrypto.nonce64(counter), body, header)
+        AirPlayCrypto.chachaOpen(key, AirPlayCrypto.nonce64(counter), body, header)
 
     /**
      * Replaces each four-byte NAL length with an Annex B start code in place.

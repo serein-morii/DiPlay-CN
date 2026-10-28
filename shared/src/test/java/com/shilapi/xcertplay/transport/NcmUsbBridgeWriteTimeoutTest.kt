@@ -5,6 +5,8 @@ import android.hardware.usb.UsbDeviceConnection
 import android.hardware.usb.UsbEndpoint
 import java.util.ArrayDeque
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -27,6 +29,15 @@ class NcmUsbBridgeWriteTimeoutTest {
         val short = NcmUsbBridge.NOT_READY_WRITE_TIMEOUT_MILLIS
         assertEquals(listOf(short, short, short, 2_000), NcmWriteReplay.timeouts)
         assertEquals(listOf("NCM bulk-out ready after 2 dropped frames"), diagnostics)
+    }
+
+    @Test fun theLinkOpensWithTheFirstFrameThePhoneTakes() {
+        NcmWriteReplay.results.addAll(listOf(-1, -1, NcmWriteReplay.ALL))
+        val opened = mutableListOf<Long?>()
+        withBridge { ncm -> repeat(3) { ncm.send(frame, 2_000); opened += ncm.linkOpenedAtNanos } }
+        assertNull(opened[0])
+        assertNull(opened[1])
+        assertNotNull(opened[2])
     }
 
     @Test fun aTimeoutAfterThePipeWasReadyKeepsTheCallersTimeout() {

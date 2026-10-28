@@ -25,7 +25,7 @@ object AirPlayHid {
     const val MEDIA_HID_UID = 0x2a2a2a2c
     const val TELEPHONY_HID_UID = 0x2a2a2a2d
 
-    private const val TOUCH_CONTACTS = 2
+    internal const val TOUCH_CONTACTS = 2
     private const val BYTES_PER_FINGER = 6
 
     fun touchHidDevice(xMax: Int, yMax: Int, displayUuid: String): Map<String, Any?> =
@@ -40,12 +40,13 @@ object AirPlayHid {
     fun telephonyHidDevice(displayUuid: String): Map<String, Any?> =
         hidDeviceEntry(TELEPHONY_HID_UID, "xcertplay Telephony", telephonyDescriptor, displayUuid)
 
+    /** Each contact goes in the slot named by its id; a slot with none is reported up. */
     fun touchReport(contacts: List<AirPlayContact>): ByteArray {
         val report = ByteArray(BYTES_PER_FINGER * TOUCH_CONTACTS)
         for (slot in 0 until TOUCH_CONTACTS) {
             val offset = slot * BYTES_PER_FINGER
             report[offset] = slot.toByte()
-            val contact = contacts.getOrNull(slot) ?: continue
+            val contact = contacts.firstOrNull { it.id == slot } ?: continue
             report[offset + 1] = if (contact.down) 0x01 else 0x00
             writeU16Le(report, offset + 2, Math.round(contact.x.coerceAtLeast(0.0)).toInt())
             writeU16Le(report, offset + 4, Math.round(contact.y.coerceAtLeast(0.0)).toInt())

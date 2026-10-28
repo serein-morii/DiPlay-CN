@@ -15,6 +15,8 @@ internal object UpdateClient {
         "https://api.github.com/repos/serein-morii/DiPlay-CN/releases?per_page=5"
     private const val CONNECT_TIMEOUT_MILLIS = 10_000
     private const val READ_TIMEOUT_MILLIS = 30_000
+    // Far above the release APKs (under 20 MB at v0.2.21). It stops a body that never ends.
+    internal const val MAXIMUM_DOWNLOAD_BYTES = 64L * 1024 * 1024
     private const val MAXIMUM_TEXT_BYTES = 4 * 1024 * 1024
     private const val BUFFER_BYTES = 64 * 1024
 
@@ -53,6 +55,7 @@ internal object UpdateClient {
             val statusCode = connection.responseCode
             if (statusCode !in 200..299) throw IOException("Download from $url failed: $statusCode")
             val total = connection.contentLengthLong.takeIf { it > 0 }
+            if (total != null && total > MAXIMUM_DOWNLOAD_BYTES) throw IOException("Download from $url is too large")
             var written = 0L
             connection.inputStream.use { input ->
                 destination.outputStream().use { output ->
@@ -62,6 +65,7 @@ internal object UpdateClient {
                         if (read < 0) break
                         output.write(buffer, 0, read)
                         written += read
+                        if (written > MAXIMUM_DOWNLOAD_BYTES) throw IOException("Download from $url is too large")
                         onProgress(written, total)
                     }
                 }

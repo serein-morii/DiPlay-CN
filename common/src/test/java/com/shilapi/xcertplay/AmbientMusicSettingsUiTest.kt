@@ -107,6 +107,20 @@ class AmbientMusicSettingsUiTest {
         assertFalse(AmbientMusicSettings.load(activity).carRhythm)
     }
 
+    @Test fun aCheckThatEndsAfterTheSwitchWentOffLeavesItOff() {
+        val pending = CompletableFuture<Boolean>()
+        activity.carRhythmSupportCheck = { pending }
+        val row = carRhythmSwitch()
+        row.isChecked = true
+        shadowOf(Looper.getMainLooper()).idle()
+        row.isChecked = false
+        shadowOf(Looper.getMainLooper()).idle()
+        pending.complete(true)
+        shadowOf(Looper.getMainLooper()).idle()
+        assertFalse(row.isChecked)
+        assertFalse(AmbientMusicSettings.load(activity).carRhythm)
+    }
+
     private fun carRhythmSwitch(): Switch {
         val card = android.widget.LinearLayout(activity)
         ReflectionHelpers.callInstanceMethod<Unit>(activity, "carRhythmControl",

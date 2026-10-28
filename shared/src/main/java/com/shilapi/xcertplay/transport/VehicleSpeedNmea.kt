@@ -18,6 +18,9 @@ interface VehicleSpeedSource {
 
     /** Readings since the previous call, or null when there are none. */
     fun drain(): VehicleSpeedReading?
+
+    /** What the reads returned, for a report minute that sent no speed; null when there is nothing to say. */
+    fun status(): String? = null
 }
 
 /**
@@ -101,10 +104,11 @@ class VehicleSpeedLocationProvider(
             lastKmh = reading.samples.last().metersPerSecond * 3.6
         }
         if (now - windowStart < SUMMARY_MILLIS) return
+        val reads = if (speedRequested && withSpeed == 0) speed.status()?.let { " wheelSpeedReads=[$it]" }.orEmpty() else ""
         log("Location: last ${(now - windowStart) / 1000} s updates=$updates withPosition=$withFix " +
             "withWheelSpeed=$withSpeed wheelSpeedSamples=$speedSamples " +
             "lastWheelSpeed=${lastKmh?.let { String.format(Locale.US, "%.1f", it) + " km/h" } ?: "none"} " +
-            "speedRequested=$speedRequested")
+            "speedRequested=$speedRequested$reads")
         windowStart = now
         updates = 0
         withFix = 0

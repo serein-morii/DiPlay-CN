@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_hide_byd_call_popup">BYD çağrı açılır penceresini gizle (deneysel)</string>
+    <string name="settings_hide_byd_call_popup_description">Yalnızca Android 10 veya üzerini çalıştıran BYD ana üniteleri içindir. Onaylanmış yerel ADB gerektirir. Bağlı CarPlay ön plandayken yerel çağrı açılır penceresini gizler; arka plandayken geri yükler. Bluetooth sesini değiştirmez veya tam telefon uygulamasını gizlemez.</string>
+</resources>

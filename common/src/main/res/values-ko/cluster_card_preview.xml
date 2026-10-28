@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="card_preview_title">턴 카드 배치 미리보기</string>
+    <string name="card_preview_note">전체 클러스터 패널에서의 비례 위치입니다. 실제 작은 창의 가장자리는 차량마다 다릅니다.</string>
+    <string name="card_preview_full">전체 화면</string>
+    <string name="card_preview_small">작은 창</string>
+</resources>

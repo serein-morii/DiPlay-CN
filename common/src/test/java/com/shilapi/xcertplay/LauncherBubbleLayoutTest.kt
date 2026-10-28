@@ -35,6 +35,29 @@ class LauncherBubbleLayoutTest {
         )
     }
 
+    @Test fun aDragStopsAtTheEdgeOfTheScreen() {
+        val origin = LauncherBubbleLayout.Box(108, 108, 1952, 486)
+        // A finger dragged into the corner leaves the whole bubble on the screen.
+        assertEquals(
+            LauncherBubbleLayout.Box(108, 108, 2015, 909),
+            LauncherBubbleLayout.drag(origin, 400, 900, 2123, 1017),
+        )
+        assertEquals(
+            LauncherBubbleLayout.Box(108, 108, 0, 0),
+            LauncherBubbleLayout.drag(origin, -3000, -900, 2123, 1017),
+        )
+        assertEquals(
+            LauncherBubbleLayout.Box(108, 108, 1852, 536),
+            LauncherBubbleLayout.drag(origin, -100, 50, 2123, 1017),
+        )
+    }
+
+    @Test fun theBarsAndTheCutoutAreNotPartOfTheScreen() {
+        // Galaxy Note20 in landscape: 2316 x 1080, cutout 67 on the left, status bar 63, navigation bar 126.
+        assertEquals(2123 to 1017, LauncherBubbleLayout.area(2316, 1080, 67, 63, 126, 0))
+        assertEquals(1 to 1, LauncherBubbleLayout.area(100, 100, 60, 60, 60, 60))
+    }
+
     @Test fun theHoldPromptSitsAboveTheBubbleAndCentresOnIt() {
         assertEquals(
             LauncherBubbleLayout.Box(200, 40, 1720, 276),

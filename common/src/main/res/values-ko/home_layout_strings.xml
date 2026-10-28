@@ -1,0 +1,4 @@
+<resources>
+    <string name="settings_force_full_settings">전체 설정 레이아웃 사용</string>
+    <string name="settings_force_full_settings_hint">가로 모드에서는 카테고리 사이드바가 있는 전체 설정 레이아웃을 사용하고, 세로 모드에서는 레이아웃을 자동으로 선택합니다. 홈 화면이나 CarPlay에는 영향을 주지 않습니다.</string>
+</resources>

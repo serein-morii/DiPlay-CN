@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="contrib_audio_home_channel_preview_unavailable">Bu cihazda Android ses akışı %1$d önizlenemiyor.</string>
+    <string name="contrib_audio_home_choice_summary">%1$s · %2$s</string>
+    <string name="contrib_audio_home_media_channel_label">Medya ses akışı</string>
+    <string name="contrib_audio_home_nav_channel_label">Navigasyon ses akışı</string>
+    <string name="contrib_audio_home_nav_channel_note">0 = otomatik yönlendirme. 1–20 arası değerler, ana ünite tarafından desteklenen üreticiye özel çıkışlar dahil olmak üzere eski ses akışı kimliklerini seçer. Önizlemek için bir değere dokunun. Değişiklikler yeniden bağlanıldığında uygulanır.</string>
+    <string name="contrib_audio_home_toggle_audio_focus">Ses odağı</string>
+    <string name="contrib_audio_home_toggle_audio_focus_desc">CarPlay medyası ses odağını talep eder. Etkinken ses kaybolursa (bazı ana üniteler odağı hatalı işler), bunu kapatın. Değişiklikler yeniden bağlanıldığında uygulanır.</string>
+    <string name="audio_focus_auto_yield">Geçici odak kaybında medyayı sessize al</string>
+    <string name="audio_focus_auto_yield_desc">Ses odağı etkinken aramalar dahil Android ses kesintileri sırasında medyayı sessize alır. Odak geri geldiğinde sesi geri yükler. Ana üniteniz odağı geri vermiyorsa devre dışı bırakın. Değişiklikler yeniden bağlanıldığında uygulanır.</string>
+</resources>

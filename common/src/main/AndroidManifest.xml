@@ -91,6 +91,18 @@
                 android:resource="@xml/usb_device_filter" />
         </activity>
 
+        <!-- The same CarPlay screen in DiPlay's own task, declared as it was up to 0.2.11, for launchers that show
+             that task in a card or picture-in-picture window (#463). CarPlayScreen chooses between the two. -->
+        <activity
+            android:name="com.shilapi.xcertplay.SameTaskCarPlayHostActivity"
+            android:configChanges="density|keyboardHidden|orientation|screenLayout|screenSize|smallestScreenSize|uiMode"
+            android:exported="false"
+            android:launchMode="singleTask"
+            android:resizeableActivity="true"
+            android:screenOrientation="fullSensor"
+            android:theme="@style/Theme.Xcertplay"
+            android:windowSoftInputMode="adjustResize" />
+
         <activity
             android:name="com.shilapi.xcertplay.AdbClusterActivity"
             android:label="@string/adb_cluster_activity_label"

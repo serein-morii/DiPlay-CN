@@ -142,7 +142,7 @@ internal object BydCarMusicRhythmDirect : BydCarMusicRhythmCall {
 
     private fun call(start: Boolean): Boolean = runCatching {
         val audio = BydCarMusicRhythmTool.audio()
-        (if (start) audio.start else audio.stop).invoke(audio.service, BydCarMusicRhythmTool.MEDIA_CENTRE, token)
+        if (start) audio.startRhythm(token) else audio.stopRhythm(token)
     }.onFailure { Log.w(TAG, "direct ${if (start) "start" else "stop"} failed: ${describe(it)}") }.isSuccess
 
     private fun describe(error: Throwable): String = (error.cause ?: error).let { "${it.javaClass.simpleName}: ${it.message}" }
@@ -229,7 +229,19 @@ object BydCarMusicRhythmTool {
     /** BYD's media centre: the head unit starts its music rhythm only for its own music apps. */
     const val MEDIA_CENTRE = "com.byd.mediacenter"
 
-    internal class Audio(val service: Any, val start: Method, val stop: Method)
+    internal class Audio(val service: Any, val start: Method, val stop: Method) {
+        /** Names the media centre, as BYD's own music apps do. */
+        fun startRhythm(token: IBinder) { start.invoke(service, MEDIA_CENTRE, token) }
+
+        /**
+         * The 2024 Tang's `stopAudioOutput` takes the start's token; the 2023 Han's takes only the package and
+         * stops the session that package opened.
+         */
+        fun stopRhythm(token: IBinder) {
+            if (stop.parameterTypes.size == 2) stop.invoke(service, MEDIA_CENTRE, token)
+            else stop.invoke(service, MEDIA_CENTRE)
+        }
+    }
 
     @JvmStatic
     fun main(args: Array<String>) {
@@ -253,10 +265,14 @@ object BydCarMusicRhythmTool {
             .invoke(null, "audio") as IBinder
         val service = checkNotNull(Class.forName("android.media.IAudioService\$Stub")
             .getMethod("asInterface", IBinder::class.java).invoke(null, binder))
-        return Audio(service,
-            service.javaClass.getMethod("startAudioOutput", String::class.java, IBinder::class.java),
-            service.javaClass.getMethod("stopAudioOutput", String::class.java, IBinder::class.java))
+        return find(service)
     }
+
+    /** BYD's calls on [service]: `startAudioOutput(String, IBinder)` and either form of `stopAudioOutput`. */
+    internal fun find(service: Any): Audio = Audio(service,
+        service.javaClass.getMethod("startAudioOutput", String::class.java, IBinder::class.java),
+        runCatching { service.javaClass.getMethod("stopAudioOutput", String::class.java, IBinder::class.java) }
+            .getOrElse { service.javaClass.getMethod("stopAudioOutput", String::class.java) })
 
     private fun serve() {
         val audio = audio()
@@ -269,12 +285,12 @@ object BydCarMusicRhythmTool {
             val reply = when {
                 request == "ping" -> "ready"
                 request == "start" -> {
-                    if (!started) audio.start.invoke(audio.service, MEDIA_CENTRE, token)
+                    if (!started) audio.startRhythm(token)
                     started = true
                     "started"
                 }
                 request == "stop" -> {
-                    if (started) audio.stop.invoke(audio.service, MEDIA_CENTRE, token)
+                    if (started) audio.stopRhythm(token)
                     started = false
                     "stopped"
                 }
@@ -293,7 +309,7 @@ object BydCarMusicRhythmTool {
             println("done")
             System.out.flush()
         }
-        if (started) audio.stop.invoke(audio.service, MEDIA_CENTRE, token)
+        if (started) audio.stopRhythm(token)
     }
 }
 

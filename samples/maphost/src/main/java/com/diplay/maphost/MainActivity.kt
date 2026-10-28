@@ -103,7 +103,7 @@ class MainActivity : Activity() {
     override fun onStart() {
         super.onStart()
         val intent = Intent(ACTION)
-        val info = packageManager.queryIntentServices(intent, 0).firstOrNull()?.serviceInfo
+        val info = packageManager.queryIntentServices(intent, 0).firstOrNull { it.serviceInfo.packageName in DIPLAY_PACKAGES }?.serviceInfo
         if (info == null) {
             show(getString(R.string.maphost_not_installed))
             return
@@ -183,6 +183,9 @@ class MainActivity : Activity() {
     private companion object {
         // DiPlay's protocol (MapEmbedService); copy these into your launcher.
         const val ACTION = "com.shihab.diplay.action.EMBED_MAP"
+
+        // Any app can declare the service and would receive the SurfaceView host token. Bind only DiPlay.
+        val DIPLAY_PACKAGES = setOf("com.shihab.diplay", "com.shihab.diplay.hudtest", "com.shilapi.xcertplay")
         const val MSG_ATTACH = 1
         const val MSG_RESIZE = 2
         const val MSG_DETACH = 3

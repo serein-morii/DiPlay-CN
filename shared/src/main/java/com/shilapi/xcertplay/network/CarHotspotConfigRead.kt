@@ -32,13 +32,17 @@ object CarHotspotConfigRead {
         val access: LocalAdb.Access? = null,
     )
 
-    fun read(context: Context, sdk: Int = Build.VERSION.SDK_INT, log: (String) -> Unit): Outcome {
+    /**
+     * [mayAsk]: an unknown DiPlay key is offered to adbd, which shows the car's approval prompt, and
+     * the read waits for the driver's answer. Only for a read the driver started themselves.
+     */
+    fun read(context: Context, sdk: Int = Build.VERSION.SDK_INT, mayAsk: Boolean = false, log: (String) -> Unit): Outcome {
         if (!CarHotspotConfigWrite.supported(sdk)) {
             log("car hotspot config: unsupported Android $sdk")
             return Outcome(reason = Reason.UNSUPPORTED_SDK)
         }
         return if (sdk <= Build.VERSION_CODES.N_MR1) readWithApp(context, log)
-        else readWithAdb(context, log)
+        else readWithAdb(LocalAdb(AdbKeys.load(context)), context.applicationInfo.sourceDir, mayAsk, log)
     }
 
     private fun readWithApp(context: Context, log: (String) -> Unit): Outcome {
@@ -68,22 +72,21 @@ object CarHotspotConfigRead {
         Outcome(reason = Reason.UNAVAILABLE)
     }
 
-    private fun readWithAdb(context: Context, log: (String) -> Unit): Outcome {
-        val client = AtomicReference<LocalAdb?>()
+    /** Uses and closes [adb]. Asking adds the driver's approval time to the read's 15 s. */
+    internal fun readWithAdb(adb: LocalAdb, apk: String, mayAsk: Boolean, log: (String) -> Unit): Outcome {
         val outcome = AtomicReference<Outcome?>()
-        val deadline = System.nanoTime() + 15_000_000_000L
+        val approval = if (mayAsk) LocalAdb.APPROVAL_TIMEOUT_MS * 1_000_000L else 0L
+        val deadline = System.nanoTime() + 15_000_000_000L + approval
         CarHotspotAdbFallback.bounded(deadline, { false },
-            abort = { client.get()?.cancelPendingOperations() }) {
-            val adb = LocalAdb(AdbKeys.load(context))
-            client.set(adb)
+            abort = { adb.cancelPendingOperations() }) {
             adb.use {
-                val access = if (System.nanoTime() >= deadline) null else adb.connect(mayAsk = false)
+                val access = if (System.nanoTime() >= deadline) null else adb.connect(mayAsk = mayAsk)
                 if (access != LocalAdb.Access.READY) {
                     outcome.set(Outcome(reason = Reason.ADB_UNAVAILABLE, access = access))
                     false
                 } else {
                     val timeout = ((deadline - System.nanoTime()) / 1_000_000L).coerceIn(1_000, 30_000).toInt()
-                    outcome.set(readAdb(adb::shell, context.applicationInfo.sourceDir, timeout, log))
+                    outcome.set(readAdb(adb::shell, apk, timeout, log))
                     outcome.get()?.credentials != null
                 }
             }

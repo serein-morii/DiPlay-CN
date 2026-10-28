@@ -29,6 +29,10 @@ data class MicrophoneConfig(
             maxOf(1, sampleRate * frameMillis / 1000)
         }
 
+    /** The clock the RTP timestamps count in: the Opus format's rate, or the PCM sample rate. */
+    val rtpClockRate: Int
+        get() = if (codec == AudioCodecKind.OPUS) opusClockRate else sampleRate
+
     /** How far each packet moves the RTP timestamp, on the negotiated clock. */
     val rtpSamplesPerPacket: Int
         get() = if (codec == AudioCodecKind.OPUS) opusClockRate * OPUS_FRAME_MILLIS / 1000 else samplesPerPacket
@@ -48,6 +52,22 @@ data class MicrophoneConfig(
             formatBits and 0x10000000L != 0L -> 16_000
             else -> OPUS_CAPTURE_RATE
         }
+
+        /**
+         * Milliseconds of PCM per packet when the iPhone names no framesPerPacket: the longest of 20, 10 and 5 ms whose
+         * sealed packet still fits one 1,500-byte link MTU with its IPv6 and UDP headers. 20 ms of 48 kHz mono is a
+         * 1,956-byte packet that leaves as IP fragments. Over USB every 48 kHz recording in the #1094 reports came out
+         * silent while 24 kHz Siri packets (996 bytes) worked, and wireless sends small Opus packets instead (#718,
+         * #1017). 48 kHz mono therefore sends 10 ms, the 480 samples a 24 kHz Siri packet already carries.
+         */
+        fun pcmFrameMillis(sampleRate: Int, channels: Int): Int = PCM_FRAME_MILLIS.firstOrNull { millis ->
+            MicrophonePacketizer.SEAL_OVERHEAD + sampleRate * millis / 1000 * channels * 2 <= MAX_UDP_PAYLOAD
+        } ?: PCM_FRAME_MILLIS.last()
+
+        private val PCM_FRAME_MILLIS = listOf(20, 10, 5)
+
+        /** A 1,500-byte link MTU less the 40-byte IPv6 and 8-byte UDP headers. */
+        private const val MAX_UDP_PAYLOAD = 1500 - 40 - 8
     }
 }
 
@@ -68,6 +88,9 @@ object MicrophonePacketizer {
     const val RTP_HEADER_LEN = 12
     const val TAG_LEN = 16
     const val NONCE_LEN = 8
+
+    /** Bytes a sealed packet adds to its samples: the RTP header, the Poly1305 tag and the nonce. */
+    const val SEAL_OVERHEAD = RTP_HEADER_LEN + TAG_LEN + NONCE_LEN
 
     fun sealPacket(
         key: ByteArray,

@@ -103,6 +103,7 @@ class SettingsBackupServer(
         closed = true
         runCatching { server?.close() }
         server = null
+        val accepting = thread
         thread = null
         connections?.shutdown()
         connections = null
@@ -110,6 +111,12 @@ class SettingsBackupServer(
         // Walked in place: connection threads drop their own entry at any moment, and a copy taken
         // with toList() can fail when one goes between its size check and its read.
         for (socket in open) runCatching { socket.close() }
+        // close() can leave the listener open until loop()'s accept() returns. Until then the port still
+        // takes connections and the next start() cannot have it again, so wait for loop() to end (it
+        // wakes at least every ACCEPT_POLL_MILLIS). Not from loop() itself, which stops on idle.
+        if (accepting != null && accepting !== Thread.currentThread()) {
+            runCatching { accepting.join(2L * ACCEPT_POLL_MILLIS) }
+        }
     }
 
     private fun loop() {

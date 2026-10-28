@@ -44,7 +44,7 @@ internal class NowPlayingArtworkQueue<Image : Any>(
     }
 
     fun submit(expected: Any, id: Int, bytes: ByteArray) {
-        if (id !in 0..255 || bytes.size > Iap2FileTransferReceiver.DEFAULT_MAXIMUM_ARTWORK_BYTES) return
+        if (bytes.isEmpty() || id !in 0..255 || bytes.size > Iap2FileTransferReceiver.DEFAULT_MAXIMUM_ARTWORK_BYTES) return
         val schedule = synchronized(lock) {
             if (owner !== expected) return
             latest[id] = ++version

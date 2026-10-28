@@ -60,6 +60,17 @@ internal object LauncherBubbleLayout {
         y = box.y.coerceIn(0, (screenHeightPx - box.height).coerceAtLeast(0)),
     )
 
+    /** A drag follows the finger, but no further than the screen, where the bubble can still be reached. */
+    fun drag(origin: Box, dx: Int, dy: Int, screenWidthPx: Int, screenHeightPx: Int): Box =
+        clamp(origin.copy(x = origin.x + dx, y = origin.y + dy), screenWidthPx, screenHeightPx)
+
+    /**
+     * The screen the bubble's place counts in: the overlay sits inside the visible system bars and the
+     * cutout, so a place that reaches under a bar would leave the bubble where a touch goes to the bar.
+     */
+    fun area(screenWidthPx: Int, screenHeightPx: Int, left: Int, top: Int, right: Int, bottom: Int): Pair<Int, Int> =
+        (screenWidthPx - left - right).coerceAtLeast(1) to (screenHeightPx - top - bottom).coerceAtLeast(1)
+
     /** The hold prompt centred over the bubble, above it when it fits and below it when it does not. */
     fun labelBox(bubble: Box, labelWidthPx: Int, labelHeightPx: Int, gapPx: Int, screenWidthPx: Int): Box = Box(
         width = labelWidthPx,

@@ -1,8 +1,10 @@
 package com.shilapi.xcertplay
 
 import android.content.Context
+import androidx.annotation.StringRes
 import com.shilapi.xcertplay.adb.AdbKeys
 import com.shilapi.xcertplay.adb.LocalAdb
+import com.shilapi.xcertplay.host.R
 
 /**
  * Some firmware ships no VPN consent dialog (Geely Galaxy E8, #604), so wired CarPlay could never
@@ -14,5 +16,13 @@ internal object VpnPreConsent {
         val access = it.connect(mayAsk = false)
         if (access == LocalAdb.Access.READY) it.shell("appops set ${context.packageName} ACTIVATE_VPN allow")
         access
+    }
+
+    /** Why [grant] left the VPN without consent, for the CarPlay screen. */
+    @StringRes
+    fun stage(access: LocalAdb.Access): Int = when (access) {
+        LocalAdb.Access.READY -> R.string.vpn_authorization_adb_did_not_allow
+        LocalAdb.Access.NOT_APPROVED -> R.string.vpn_authorization_adb_not_approved
+        LocalAdb.Access.UNREACHABLE, LocalAdb.Access.UNSUPPORTED -> R.string.vpn_authorization_adb_unusable
     }
 }

@@ -34,7 +34,25 @@ class BydAmapAdapterTest {
         assertEquals("service call AutoContainer 2 i32 1000 i32 39 s16 \"\"", BydDiLink3ClusterMode.Mode.SIMPLE_NAVIGATION.command)
         assertEquals("service call AutoContainer 2 i32 1000 i32 16 s16 \"\"", BydDiLink3ClusterMode.Mode.PROJECTION.entryCommand)
         assertEquals("service call AutoContainer 2 i32 1000 i32 17 s16 \"\"", BydDiLink3ClusterMode.Mode.PROJECTION.command)
+        // Full screen needs no entry command: 16 is the projection itself, not a way into 17.
+        assertNull(BydDiLink3ClusterMode.Mode.FULL_PROJECTION.entryCommand)
+        assertEquals("service call AutoContainer 2 i32 1000 i32 16 s16 \"\"", BydDiLink3ClusterMode.Mode.FULL_PROJECTION.command)
         assertEquals("service call AutoContainer 2 i32 1000 i32 18 s16 \"\"", BydDiLink3ClusterMode.Mode.STOCK.command)
+    }
+
+    @Test
+    fun theChosenProjectionShapeIsRequestedWhileTheMapIsShown() {
+        val mode = BydDiLink3ClusterMode
+        assertEquals(BydDiLink3ClusterMode.Mode.FULL_PROJECTION, mode.desired(true, false, null, fullScreen = true))
+        assertEquals(BydDiLink3ClusterMode.Mode.PROJECTION, mode.desired(true, false, null, fullScreen = false))
+        // Guidance still falls back to the simple-navigation card, whatever shape is configured.
+        assertEquals(BydDiLink3ClusterMode.Mode.SIMPLE_NAVIGATION, mode.desired(false, true, null, fullScreen = true))
+        assertEquals(BydDiLink3ClusterMode.Mode.STOCK, mode.desired(false, false, BydDiLink3ClusterMode.Mode.FULL_PROJECTION, fullScreen = true))
+        // Both projection modes count as a map, so recovery must not restore the stock view instead.
+        assertTrue(BydDiLink3ClusterMode.Mode.PROJECTION.showsMap)
+        assertTrue(BydDiLink3ClusterMode.Mode.FULL_PROJECTION.showsMap)
+        assertFalse(BydDiLink3ClusterMode.Mode.SIMPLE_NAVIGATION.showsMap)
+        assertFalse(BydDiLink3ClusterMode.Mode.STOCK.showsMap)
     }
 
     @Test

@@ -61,7 +61,7 @@ The optional centre-screen map card mirrors that same dashboard stream. **Keep t
 
 ### DiLink 5.1 theme profile
 
-The exact Android 13 firmware `BYD-AUTO/IVI/IVI:13/TP1A.220624.014/eng.build20260722.221155:user/release-keys` has a separate profile for its measured 1920×720 cluster. Other firmware retains the original PR display selection, renderer and settings.
+The exact Android 13 firmware `BYD-AUTO/IVI/IVI:13/TP1A.220624.014/eng.build20260722.221155:user/release-keys` has a separate profile for its measured 1920×720 cluster. The Leopard 5 Ultra firmware `…/eng.build20260705.021352` uses it unchanged, and the Denza N9 firmware `…/eng.build20260705.011226` uses it on a 2560×720 cluster with every position below scaled by 4/3 across and a 2560×720 stream (inferred from photos, not measured; see [compatibility](COMPATIBILITY.md)). Other firmware retains the original PR display selection, renderer and settings.
 
 - Map uses shared display `_0`, with a 1920×480 viewport at y=144 and contrast bands behind the instrument readouts.
 - Scenario and Simple use shared display `_1`, with a 600×720 side viewport at x=1320. Everything outside the side map is transparent. No white mini-map shading is added.
@@ -199,6 +199,8 @@ Any app may register a self-managed Telecom call with the normal permission `MAN
 Log tag `DiPlay-PhoneAudio` shows when the state is entered and left. If the car's hands-free link is connected, Telecom already holds a managed call for the iPhone and may refuse a second one; pausing the car's Bluetooth radio during CarPlay avoids that.
 
 While the CarPlay call holds the state, DiPlay records the call from `VOICE_RECOGNITION` instead of `VOICE_COMMUNICATION`, which clipped. The stock CarPlay service opens its microphone stream without an input preset, which AAudio treats as `VOICE_RECOGNITION`. Geely/Lynk head units, where that source records silence, keep `VOICE_COMMUNICATION`. One Han owner described the call voice with `VOICE_COMMUNICATION` as very bassy with far too much gain; after listening to recordings of each source on a PC, they preferred `VOICE_RECOGNITION`, which they described as clear and natural.
+
+**Calls at the call's own rate** (Settings → Advanced, experimental, off by default, applies at the next connection) changes what DiPlay offers for the call stream. On the same Han the iPhone's SETUP for a call reported `vocoderInfo={sampleRate=8000.0}`, a narrowband call, and DiPlay still chose `audioFormat=0x40000000`, 48 kHz Opus, so the call was decoded and played at 48 kHz. The stock CarPlay service sets up its audio processing for the vocoder rate (8, 16, 24 or 32 kHz) and applies receive-side tuning for it. With the setting on, the call's output and microphone offers are both PCM mono at those four rates only, so the iPhone picks the call's own rate; every other stream is unchanged. The microphone offer has to be restricted too: on the call stream the iPhone chooses one `audioFormat` for both directions, so a 48 kHz microphone offer let it keep choosing 48 kHz. On a Geely Monjaro (ECARX KX11, Android 9, wired CarPlay) with the output restricted alone, a WhatsApp call still arrived as 48 kHz (`audioFormat=16384`) and was torn down and set up again every 3.5 to 4 s; restricting both gave one stable 32 kHz call (`formatBits=0x100`) that the other person could hear (reported and tested by kuanysh-baltagarayev, #898). Whether a wireless iPhone accepts a PCM-only call offer is not established; if a call has no sound, turn the setting off.
 
 ## ADB vehicle-data settings and firmware scope
 

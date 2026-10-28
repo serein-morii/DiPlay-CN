@@ -394,6 +394,10 @@ class Iap2IdentificationClient(private val session: Iap2Session) {
                     u16(2, 64) // MaxCurrentRoadNameLength
                     u16(4, 64) // MaxAfterManeuverRoadNameLength
                     u16(6, 8)
+                    // The iPhone only sends 0x5204 lane guidance when the accessory says it can
+                    // store it; without these two it stays silent and no lane data arrives at all.
+                    u16(7, 64) // MaxLaneGuidanceDescriptionLength
+                    u16(8, 8) // MaxLaneGuidanceStorageCapacity
                 }
             }
         }

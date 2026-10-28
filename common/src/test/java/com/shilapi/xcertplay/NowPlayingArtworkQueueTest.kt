@@ -126,14 +126,16 @@ class NowPlayingArtworkQueueTest {
         assertTrue(decoded.isEmpty())
     }
 
-    @Test fun emptyArtworkCanClearThePublishedImage() {
-        val images = mutableListOf<Int?>()
-        val emptyQueue = NowPlayingArtworkQueue<Int>(worker, main, { null },
-            { _, _, image -> images += image }, {})
-        emptyQueue.submit(emptyQueue.newSession(), 1, ByteArray(0))
+    @Test fun emptyArtworkDoesNotCancelPendingOrDecodedValidTransfer() {
+        val owner = queue.newSession()
+        queue.submit(owner, 7, byteArrayOf(42))
+        queue.submit(owner, 7, ByteArray(0))
         worker.runNext()
+        queue.submit(owner, 7, ByteArray(0))
         main.runNext()
-        assertEquals(listOf<Int?>(null), images)
+        assertEquals(listOf(7 to 42), published)
+        assertTrue(discarded.isEmpty())
+        assertEquals(0, worker.size)
     }
 
     private class ManualExecutor : Executor {

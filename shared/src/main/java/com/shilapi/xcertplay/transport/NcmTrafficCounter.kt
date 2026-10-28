@@ -5,12 +5,13 @@ package com.shilapi.xcertplay.transport
  * iPhone that never tried (no frames, or no TCP connection attempt) from one whose packets arrive but do not reach
  * DiPlay's listener (#889, #890). Only headers are read, never payloads. Free of Android types for JVM tests.
  */
-internal class NcmTrafficCounter {
+internal class NcmTrafficCounter(private val nanoTime: () -> Long = System::nanoTime) {
     private var fromIphone = 0L
     private var ipv6 = 0L
     private var ipv4 = 0L
     private var toIphone = 0L
     private val synsByPort = LinkedHashMap<Int, Int>()
+    private val lastSynNanosByPort = HashMap<Int, Long>()
 
     @Synchronized fun received(frame: ByteArray) {
         fromIphone++
@@ -30,8 +31,15 @@ internal class NcmTrafficCounter {
         val flags = u8(frame, tcp + TCP_FLAGS_OFFSET) ?: return
         if (flags and TCP_SYN == 0 || flags and TCP_ACK != 0) return
         val port = u16(frame, tcp + TCP_DESTINATION_PORT_OFFSET) ?: return
-        if (port in synsByPort || synsByPort.size < MAX_PORTS) synsByPort[port] = (synsByPort[port] ?: 0) + 1
+        if (port in synsByPort || synsByPort.size < MAX_PORTS) {
+            synsByPort[port] = (synsByPort[port] ?: 0) + 1
+            lastSynNanosByPort[port] = nanoTime()
+        }
     }
+
+    /** Whether the iPhone tried to connect to [port] at or after [sinceNanos] ([System.nanoTime] time). */
+    @Synchronized fun connectionAttemptSince(port: Int, sinceNanos: Long): Boolean =
+        lastSynNanosByPort[port]?.let { it - sinceNanos >= 0 } == true
 
     @Synchronized fun sent() {
         toIphone++

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="picture_adjustments">Görüntü ayarları</string>
+    <string name="picture_live_hint">Ana CarPlay videosu üzerinde canlı uygulanır. Değişiklikler anında kaydedilir. Orijinal, geçici bir karşılaştırmadır.</string>
+    <string name="picture_show_original">Orijinali göster</string>
+    <string name="picture_done">Bitti</string>
+    <string name="picture_brightness">Parlaklık</string>
+    <string name="picture_contrast">Kontrast</string>
+    <string name="picture_saturation">Doygunluk</string>
+    <string name="picture_warmth">Sıcaklık</string>
+    <string name="picture_reset">Görüntüyü sıfırla</string>
+</resources>

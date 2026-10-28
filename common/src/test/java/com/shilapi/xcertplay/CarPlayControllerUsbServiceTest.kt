@@ -6,7 +6,9 @@ import android.content.ContextWrapper
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.ServiceConnection
+import android.hardware.usb.UsbConstants
 import android.hardware.usb.UsbDevice
+import android.hardware.usb.UsbInterface
 import android.hardware.usb.UsbManager
 import android.os.Looper
 import com.shilapi.xcertplay.airplay.*
@@ -145,6 +147,53 @@ class CarPlayControllerUsbServiceTest {
         assertTrue(statuses.contains(CarPlayStatus.RequestingIphonePermission))
     }
 
+    // #763, #953, #1038: "Connect your iPhone with a USB cable" stayed for minutes, whether Android listed anything or not.
+    @Test fun after20SecondsWithoutAnIphoneTheWaitSaysWhetherAndroidListsAnotherDevice() {
+        val context = UsbContext(true)
+        val usb = context.getSystemService(UsbManager::class.java)
+        val looper = shadowOf(Looper.getMainLooper())
+        val logs = mutableListOf<String>()
+        val controller = controller(context, CarPlayTransport.WIRED, MfiTarget.LOCAL, logs)
+        ReflectionHelpers.callInstanceMethod<Unit>(controller, "startIphone")
+        looper.idleFor(Duration.ofSeconds(19))
+        assertEquals(CarPlayStatus.WaitingForIphone, statuses.last())
+
+        looper.idleFor(Duration.ofSeconds(2))
+        assertEquals(CarPlayStatus.IphoneNotListed(nonHubDeviceListed = false), statuses.last())
+
+        shadowOf(usb).addOrUpdateUsbDevice(usbDevice(0x0424, 0x2514, "/dev/bus/usb/001/002", UsbConstants.USB_CLASS_HUB), false)
+        looper.idleFor(Duration.ofSeconds(2))
+        assertEquals(CarPlayStatus.IphoneNotListed(nonHubDeviceListed = false), statuses.last())
+
+        shadowOf(usb).addOrUpdateUsbDevice(usbDevice(0x0781, 0x5567, "/dev/bus/usb/001/003",
+            UsbConstants.USB_CLASS_PER_INTERFACE, UsbConstants.USB_CLASS_MASS_STORAGE), false)
+        looper.idleFor(Duration.ofSeconds(2))
+        assertEquals(CarPlayStatus.IphoneNotListed(nonHubDeviceListed = true), statuses.last())
+        val shown = logs.filter { it.contains("not listed after") }
+        assertEquals(listOf("STEP usb/wait: wired iPhone not listed after 20 s; other USB devices=false",
+            "STEP usb/wait: wired iPhone not listed after 20 s; other USB devices=true"), shown)
+        shown.forEach { assertEquals(it, DiagnosticRedactor.redact(it)) }
+    }
+
+    @Test fun aWaitAfterTheIphoneWasFoundAsksForTheCableAgainFirst() {
+        val context = UsbContext(true)
+        val usb = context.getSystemService(UsbManager::class.java)
+        val looper = shadowOf(Looper.getMainLooper())
+        val controller = controller(context, CarPlayTransport.WIRED, MfiTarget.LOCAL)
+        ReflectionHelpers.callInstanceMethod<Unit>(controller, "startIphone")
+        looper.idleFor(Duration.ofSeconds(21))
+        assertEquals(CarPlayStatus.IphoneNotListed(nonHubDeviceListed = false), statuses.last())
+
+        val iphone = usbDevice(0x05ac, 0x12a8, "/dev/bus/usb/001/004")
+        shadowOf(usb).addOrUpdateUsbDevice(iphone, false)
+        looper.idleFor(Duration.ofSeconds(2))
+        assertTrue(statuses.contains(CarPlayStatus.RequestingIphonePermission))
+        shadowOf(usb).removeUsbDevice(iphone)
+        ReflectionHelpers.callInstanceMethod<Unit>(controller, "startIphone")
+        looper.idle()
+        assertEquals(CarPlayStatus.WaitingForIphone, statuses.last())
+    }
+
     // #335: after Save and reconnect an iPhone still in CarPlay mode ignored the mode request, and only a USB
     // attach ended the wait, so wired CarPlay sat on "waiting for the CarPlay USB configuration" for minutes.
     @Test fun anUnansweredModeRequestLooksAtTheIphoneAgainAfterTheWait() {
@@ -198,11 +247,16 @@ class CarPlayControllerUsbServiceTest {
         return controller
     }
 
-    private fun usbDevice(vendor: Int, product: Int, node: String): UsbDevice =
+    private fun usbDevice(vendor: Int, product: Int, node: String,
+        deviceClass: Int = UsbConstants.USB_CLASS_PER_INTERFACE, vararg interfaceClasses: Int): UsbDevice =
         ReflectionHelpers.newInstance(UsbDevice::class.java).apply {
             ReflectionHelpers.setField(this, "mName", node)
             ReflectionHelpers.setField(this, "mVendorId", vendor)
             ReflectionHelpers.setField(this, "mProductId", product)
+            ReflectionHelpers.setField(this, "mClass", deviceClass)
+            ReflectionHelpers.setField(this, "mInterfaces", interfaceClasses.map { interfaceClass ->
+                ReflectionHelpers.newInstance(UsbInterface::class.java).apply { ReflectionHelpers.setField(this, "mClass", interfaceClass) }
+            }.toTypedArray())
         }
 
     private fun missingServiceFailsNormally(transport: CarPlayTransport, target: MfiTarget) {
@@ -238,6 +292,15 @@ class CarPlayControllerUsbServiceTest {
         override fun registerReceiver(receiver: BroadcastReceiver?, filter: IntentFilter): Intent? {
             if (receiver != null) receivers[receiver] = filter
             return super.registerReceiver(receiver, filter)
+        }
+        // The USB permission receiver registers with a sender permission before Android 13 and with RECEIVER_NOT_EXPORTED after.
+        override fun registerReceiver(receiver: BroadcastReceiver?, filter: IntentFilter, broadcastPermission: String?, scheduler: android.os.Handler?): Intent? {
+            if (receiver != null) receivers[receiver] = filter
+            return super.registerReceiver(receiver, filter, broadcastPermission, scheduler)
+        }
+        override fun registerReceiver(receiver: BroadcastReceiver?, filter: IntentFilter, flags: Int): Intent? {
+            if (receiver != null) receivers[receiver] = filter
+            return super.registerReceiver(receiver, filter, flags)
         }
         override fun unregisterReceiver(receiver: BroadcastReceiver) {
             if (receivers.remove(receiver) != null) unregistered++

@@ -1,7 +1,10 @@
 package com.shilapi.xcertplay
 
+import android.content.ContextWrapper
 import android.content.Intent
 import android.os.Bundle
+import android.os.Looper
+import com.shilapi.xcertplay.orchestration.WirelessHotspotMode
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.After
@@ -39,6 +42,17 @@ class LauncherIntentTest {
         CarPlayBackgroundSession.clear()
     }
     private fun launcher() = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)
+
+    private fun bootLaunch(): Intent {
+        val app = RuntimeEnvironment.getApplication()
+        AirPlayPersistence.saveAutoStartOnBoot(app, true)
+        var launch: Intent? = null
+        val context = object : ContextWrapper(app) {
+            override fun startActivity(intent: Intent) { launch = intent }
+        }
+        BootReceiver().onReceive(context, Intent(Intent.ACTION_BOOT_COMPLETED))
+        return launch!!
+    }
 
     @Test
     fun onlyAPlainLauncherIntentReturnsToCarPlay() {
@@ -86,5 +100,47 @@ class LauncherIntentTest {
         assertEquals("settings", ReflectionHelpers.getField<String>(activity, "page"))
         assertNull(shadowOf(activity).nextStartedActivity)
         assertEquals(0, stops)
+    }
+
+    @Test fun bootStartReturnsToTheBackgroundSessionWithoutStoppingIt() {
+        controller = Robolectric.buildActivity(DiPlayActivity::class.java, bootLaunch()).create()
+        val activity = controller!!.get()
+        assertEquals(CarPlayHostActivity::class.java.name,
+            shadowOf(activity).nextStartedActivity?.component?.className)
+        assertTrue(activity.isFinishing)
+        assertTrue(CarPlayBackgroundSession.hasSession())
+        assertEquals(0, stops)
+    }
+
+    @Test fun bootStartDeliveredToAnOpenHomeReturnsToTheBackgroundSession() {
+        controller = Robolectric.buildActivity(DiPlayActivity::class.java, Intent()).create()
+        val activity = controller!!.get()
+        controller!!.newIntent(bootLaunch())
+        assertEquals(CarPlayHostActivity::class.java.name,
+            shadowOf(activity).nextStartedActivity?.component?.className)
+        assertEquals("home", ReflectionHelpers.getField<String>(activity, "page"))
+        assertEquals(0, stops)
+    }
+
+    @Test fun bootStartWithoutASessionStaysOnHomeAndAutoConnectsOnlyWhenOn() {
+        CarPlayBackgroundSession.clear()
+        val app = RuntimeEnvironment.getApplication()
+        DiPlayPreferences.savePhone(app, "00:11:22:33:44:55", "Test iPhone")
+        AirPlayPersistence.saveWirelessHotspotMode(app, WirelessHotspotMode.WIFI_P2P)
+        app.getSharedPreferences("diplay", 0).edit().putBoolean("notification_asked", true).commit()
+        for (autoConnect in listOf(false, true)) {
+            DiPlayPreferences.saveAutoConnect(app, autoConnect)
+            val home = Robolectric.buildActivity(DiPlayActivity::class.java, bootLaunch()).create()
+            val activity = home.get()
+            // Source-only test builds have no authentication assets; exercise the startup decision.
+            ReflectionHelpers.setField(activity, "setupError", null)
+            home.start().resume()
+            shadowOf(Looper.getMainLooper()).idle()
+            assertFalse(activity.isFinishing)
+            assertEquals("home", ReflectionHelpers.getField<String>(activity, "page"))
+            assertEquals("autoConnect=$autoConnect", if (autoConnect) CarPlayHostActivity::class.java.name else null,
+                shadowOf(activity).nextStartedActivity?.component?.className)
+            home.pause().stop().destroy()
+        }
     }
 }

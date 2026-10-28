@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="hotspot_join_title">Otomatik erişim noktasına bağlanma (deneysel)</string>
+    <string name="hotspot_join_description">Android 13+ ve yalnızca 5 GHz araç erişim noktasına sahip desteklenen donanım yazılımları için isteğe bağlı onarım. Kontrol işlemi, erişim noktasını değiştirmeden özel bir geri alma yedeklemesi hazırlar. localhost:5555 üzerinde yetkilendirilmiş yerel ADB gerektirir; TLS kablosuz hata ayıklama eşleştirmesi desteklenmez.</string>
+    <string name="hotspot_join_check">Erişim noktası onarımını kontrol et</string>
+    <string name="hotspot_join_apply">Otomatik bağlanma bilgilerini ekle</string>
+    <string name="hotspot_join_restore">Kaydedilen erişim noktasını geri yükle</string>
+    <string name="hotspot_join_working">Kontrol ediliyor veya güncelleniyor… İptal durumunda sonucu doğrulamak için yeni bir kontrol gerekebilir.</string>
+    <string name="hotspot_join_confirm">Park halindeyken, önce CarPlay bağlantısını kesin ve araç ayarlarından erişim noktasını kapatın. Bu işlem yalnızca kaydedilen erişim noktası yapılandırmasını değiştirir ve geri okumayı doğrular. Yayınları güncellemek için daha sonra erişim noktasını kendiniz açın. Kapattığınızda mevcut istemcilerin bağlantısı kesilecektir. Geri alma için özel yedeklemeyi saklayın.</string>
+    <string name="hotspot_join_disconnect">Erişim noktasını değiştirmeden önce CarPlay bağlantısını kesin.</string>
+    <string name="hotspot_join_ready">Desteklenen 5 GHz yapılandırması. Özel tam yedekleme hazırlandı; henüz erişim noktası değişikliği yapılmadı.</string>
+    <string name="hotspot_join_present">Test edilen bilgiler zaten mevcut. Çift kayıt eklenmedi; DiPlay mevcut bir ögenin geri alma sahipliğine sahip değildir.</string>
+    <string name="hotspot_join_applied">Kaydedilen yapılandırma doğrulandı. Yayınları güncellemek için araç ayarlarından erişim noktasını açın, ardından otomatik bağlanmayı test edin. Yayın ve CarPlay başarısı yine de bir cihaz testi gerektirir.</string>
+    <string name="hotspot_join_restored">Kaydedilen tam yapılandırma geri yüklendi ve doğrulandı. Araç ayarlarından erişim noktasını açın.</string>
+    <string name="hotspot_join_unsupported">Desteklenmeyen API, donanım yazılımı, bant veya çakışan üretici bilgisi. Onarım uygulanmadı. Desteklenen yalnızca 5 GHz yapılandırmasını kullanın; diğer bantlar doğrulanmamıştır.</string>
+    <string name="hotspot_join_off_required">Erişim noktasının kapalı olduğu onaylanmalıdır. İstemcilerin bağlantısını kesin ve araç ayarlarından kapatın, ardından tekrar deneyin. DiPlay bunu otomatik olarak yeniden başlatmaz.</string>
+    <string name="hotspot_join_drift">Yapılandırma yedeklemeden bu yana değişti. Hiçbir şeyin üzerine yazılmadı. Tekrar kontrol edin; bekleyen geri alma yedeklemesi korunur.</string>
+    <string name="hotspot_join_firmware_changed">Donanım yazılımı değişti. Özel yedekleme korunur ancak bu donanım yazılımında güvenle geri yüklenemez.</string>
+    <string name="hotspot_join_cancelled">Yazma işleminden önce iptal edildi. Korunan geri alma durumunu incelemek için tekrar kontrol edin.</string>
+    <string name="hotspot_join_failed_restored">Onarım başarısız oldu veya yazma işleminden sonra iptal edildi. Orijinal yapılandırma geri yüklendi ve geri okuma doğrulandı.</string>
+    <string name="hotspot_join_busy">Başka bir erişim noktası işlemi hala çalışıyor. Bekleyin, ardından tekrar kontrol edin.</string>
+    <string name="hotspot_join_adb_required">localhost:5555 üzerinde onaylanmış düz yerel ADB gerektirir. Desteklenen araç kurulumunuzu kullanarak bunu etkinleştirin ve yetkilendirin. Yalnızca Android TLS kablosuz hata ayıklama eşleştirmesi çalışmaz.</string>
+    <string name="hotspot_join_recovery">Sonuç veya yedekleme doğrulaması belirsiz. Devam etmeden önce erişim noktasını kapatın ve tekrar kontrol edin. Mevcut bir özel yedekleme korunur; geri yüklemeye yalnızca yapılandırma hala eşleştiğinde izin verilir.</string>
+</resources>

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="ambient_light_threshold_title">Parlaklık eşiği</string>
+    <string name="ambient_light_threshold_summary">%1$d lüks</string>
+    <string name="ambient_light_threshold_value">Geçiş eşiği (lüks)</string>
+    <string name="ambient_light_threshold_hint">Eşiğin (lüks) altı gece modunu; eşik veya üzeri gündüz modunu seçer. Değerler seçilen gecikme süresi boyunca yeni tarafta kalmalıdır. 1 ile 200000 arasında bir tam sayı girin.</string>
+    <string name="ambient_light_threshold_error">1 ile 200000 arasında bir tam sayı girin.</string>
+    <string name="ambient_light_reset_defaults">Varsayılana sıfırla</string>
+</resources>

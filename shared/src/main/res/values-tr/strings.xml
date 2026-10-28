@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="carapp_hw_status_title">xcertplay donanım durumu</string>
+    <string name="carapp_hw_not_configured">Donanım aktarımı yapılandırılmamış. Kart I2C bağlantısı için bir /dev/i2c-N yolu ve OS/SELinux izni gerekir; CH341 için atanmış VID/PID yapılandırması gerekir.</string>
+</resources>

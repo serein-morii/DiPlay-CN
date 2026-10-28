@@ -35,17 +35,14 @@ object ClusterSpeedometerOverlay {
 
         val size = snap(sizePercent, sizePercents)
 
-        // Compact portrait-style speed card. Size is relative to panel height so it
-        // behaves consistently on different dashboard aspect ratios.
-        val height = (panelHeight * 0.30f * size / DEFAULT_SIZE_PERCENT)
+        // Square card, with the same height-based sizing and corner proportions as album art.
+        // Clamp both dimensions together so narrow projection areas remain square too.
+        val side = (panelHeight * 0.30f * size / DEFAULT_SIZE_PERCENT)
             .toInt()
             .coerceAtLeast(80)
-            .coerceAtMost(panelHeight)
-
-        val width = (height * 1.10f)
-            .toInt()
-            .coerceAtLeast(90)
-            .coerceAtMost(panelWidth)
+            .coerceAtMost(minOf(panelWidth, panelHeight))
+        val width = side
+        val height = side
 
         val x = snap(xPercent, xPercents)
         val y = snap(yPercent, yPercents)

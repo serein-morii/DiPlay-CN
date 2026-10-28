@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="custom_resolution_hint">Yüzde 30–160 arası bir değer girin. CarPlay\'i yeniden bağlamak için uygulayın.</string>
+    <string name="resolution_number_error">%1$d ile %2$d arasında bir tam sayı girin.</string>
+    <string name="custom_resolution_summary">%%%1$d</string>
+    <string name="resolution_reset_defaults">Varsayılana sıfırla</string>
+    <string name="resolution_canvas_unsupported" formatted="false">Bu ana ünite büyütülen çözünürlüğü çözemiyor. %100 kullanılıyor.</string>
+</resources>

@@ -55,7 +55,10 @@ var L = {
     fail:"تعذّر الوصول إلى وحدة القيادة. تحقق من الاتصال وأعد المحاولة."},
   ja: {prompt:"車載端末に表示されているコードを入力してください。",open:"開く",wrong:"コードが違います。残り %1 回です。",
     locked:"間違ったコードが多すぎます。車載端末でこのページを閉じてもう一度開くと、新しいコードが表示されます。",
-    fail:"車載端末に接続できませんでした。接続を確認してもう一度お試しください。"}
+    fail:"車載端末に接続できませんでした。接続を確認してもう一度お試しください。"},
+  it: {prompt:"Inserisci il codice mostrato sulla head unit.",open:"Apri",wrong:"Codice errato. Tentativi rimasti: %1.",
+    locked:"Troppi codici errati. Sulla head unit esci dalla pagina e riaprila per ottenere un nuovo codice.",
+    fail:"Impossibile raggiungere la head unit. Controlla la connessione e riprova."}
 };
 var lang = (navigator.language || "en").toLowerCase();
 var key = lang in L ? lang
@@ -64,7 +67,8 @@ var key = lang in L ? lang
   : lang.indexOf("ru") === 0 ? "ru"
   : lang.indexOf("uk") === 0 ? "uk"
   : lang.indexOf("ar") === 0 ? "ar"
-  : lang.indexOf("ja") === 0 ? "ja" : "en";
+  : lang.indexOf("ja") === 0 ? "ja"
+  : lang.indexOf("it") === 0 ? "it" : "en";
 var t = L[key];
 var $ = function(id) { return document.getElementById(id); };
 document.documentElement.lang = key;

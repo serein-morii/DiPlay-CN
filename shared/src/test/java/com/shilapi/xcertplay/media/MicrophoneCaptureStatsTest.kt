@@ -1,5 +1,6 @@
 package com.shilapi.xcertplay.media
 
+import android.media.MediaRecorder
 import com.shilapi.xcertplay.airplay.AudioCodecKind
 import com.shilapi.xcertplay.airplay.MicrophoneConfig
 import java.net.InetAddress
@@ -107,11 +108,31 @@ class MicrophoneCaptureStatsTest {
         assertTrue(reports.single().contains("routedDeviceType=unknown"))
     }
 
+    @Test fun onlyASilentWindowAsksWhatElseIsRecording() {
+        var now = 0L
+        var asked = 0
+        val reports = mutableListOf<String>()
+        val stats = MicrophoneCaptureStats(config, reports::add) { now }
+        stats.level(byteArrayOf(0x00, 0xc0.toByte()))
+        now = 5_000_000_000
+        stats.flush(silence = { asked++; "audioMode=3 otherRecordings=none" })
+        assertEquals(0, asked)
+        assertTrue(reports.last().endsWith("peakDbfs=-6 ended=false"))
+        stats.level(ByteArray(960))
+        now += 5_000_000_000
+        stats.flush(silence = { asked++; "audioMode=3 otherRecordings=none" })
+        assertEquals(1, asked)
+        assertTrue(reports.last().endsWith("peakDbfs=silent audioMode=3 otherRecordings=none ended=false"))
+        stats.flush(ended = true, silence = { throw SecurityException("audio service refused") })
+        assertTrue(reports.last().endsWith("peakDbfs=silent ended=true"))
+    }
+
     @Test fun fallbackSourceIsReportedAfterTheRefusedSource() {
         val reports = mutableListOf<String>()
         val stats = MicrophoneCaptureStats(config.copy(audioType = "speechrecognition"), reports::add) { 0 }
+        stats.useSource(MediaRecorder.AudioSource.VOICE_RECOGNITION)
         stats.failure(MicrophoneFailureStage.RECORDER_CREATION, UnsupportedOperationException())
-        stats.useVoiceCommunicationSource()
+        stats.useSource(MediaRecorder.AudioSource.VOICE_COMMUNICATION)
         stats.started(15)
         stats.flush(ended = true)
         assertTrue(reports[0].contains("type=speechrecognition source=VOICE_RECOGNITION"))

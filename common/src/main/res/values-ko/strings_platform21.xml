@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="platform21_cluster_mode">플랫폼 21 클러스터 작업 (실험 기능)</string>
+    <string name="platform21_cluster_description">2023 Tang DM-i 컨트롤러 21 개조용입니다. 기본적으로 꺼져 있습니다. 검증된 프로젝션 디스플레이만 사용하고 중앙에 절반 너비의 지도를 유지하며 기본 클러스터 모드를 변경하거나 기본 지도를 비활성화하지 않습니다. 사전에 승인된 로컬 ADB가 필요합니다. 이 설정을 적용하면 CarPlay가 다시 연결됩니다. 업스트림 통합은 주차 상태에서 테스트해야 합니다.</string>
+</resources>

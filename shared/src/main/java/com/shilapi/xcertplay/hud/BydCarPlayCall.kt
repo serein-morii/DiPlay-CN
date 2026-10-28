@@ -301,12 +301,11 @@ object BydCarPlayCall {
         val appPid = android.os.Process.myPid().toString()
         if (watcherRunning && probe(app, token, appPid)) return true
         watcherRunning = false
-        val apk = app.applicationInfo.sourceDir
-        val tool = "CLASSPATH=$apk app_process /system/bin ${BydCarPlayCallTool::class.java.name} watch $token ${app.packageName} $appPid"
+        val tool = toolCommand(app, "watch $token ${app.packageName} $appPid")
         // adbd's legacy shell: stream kills its process group when the command returns, which
         // takes a plain nohup child with it before it initializes; setsid moves it out of that
         // group. The parent reply/exit status says nothing about child initialization.
-        shell.run(app, "setsid nohup sh -c '$tool' >/dev/null 2>&1 </dev/null &")
+        shell.run(app, "setsid nohup sh -c ${shellQuote(tool)} >/dev/null 2>&1 </dev/null &")
         // The child is a fresh app_process that initializes BYD's vehicle API before it reports ready;
         // on DiLink 3 that took up to several seconds while CarPlay streamed, longer than three probes.
         val deadline = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(watcherReadyMillis)
@@ -319,17 +318,19 @@ object BydCarPlayCall {
         return false
     }
 
+    private fun toolCommand(app: Context, args: String) =
+        "CLASSPATH=${shellQuote(app.applicationInfo.sourceDir.orEmpty())} app_process /system/bin ${BydCarPlayCallTool::class.java.name} $args"
+
+    private fun shellQuote(value: String) = "'" + value.replace("'", "'\"'\"'") + "'"
+
     private fun probe(app: Context, token: String, appPid: String): Boolean {
-        val apk = app.applicationInfo.sourceDir
-        val output = shell.run(app, "CLASSPATH=$apk app_process /system/bin ${BydCarPlayCallTool::class.java.name} probe - $token $appPid") ?: return false
+        val output = shell.run(app, toolCommand(app, "probe - $token $appPid")) ?: return false
         val lines = output.lineSequence().map { it.trim() }.toList()
         return "watch=0" in lines && lines.none { it.startsWith("watch=") && it != "watch=0" }
     }
 
     private fun run(app: Context, args: String): Boolean {
-        val apk = app.applicationInfo.sourceDir
-        val output = shell.run(app, "CLASSPATH=$apk app_process /system/bin ${BydCarPlayCallTool::class.java.name} $args")
-            ?: return false
+        val output = shell.run(app, toolCommand(app, args)) ?: return false
         // Missing features remain optional. Only the tool's explicit completion confirms a
         // show/end; empty or partial replies leave recovery ownership pending.
         val failed = output.lineSequence().map { it.trim() }.filter { it.contains('=') }

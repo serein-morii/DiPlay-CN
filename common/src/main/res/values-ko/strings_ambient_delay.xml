@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="ambient_delay_title">전환 지연 시간</string>
+    <string name="ambient_delay_hint">0~60초를 입력하세요. 0이면 즉시 전환됩니다.</string>
+    <string name="custom_number_error">%1$d에서 %2$d 사이의 정수를 입력하세요.</string>
+    <string name="ambient_delay_summary">%1$d초</string>
+</resources>

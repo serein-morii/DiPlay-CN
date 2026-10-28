@@ -20,6 +20,7 @@ import java.util.concurrent.atomic.AtomicLong
  */
 class IapTunnel(
     private val readKey: ByteArray,
+    private val expectedPeer: InetAddress,
     bindAddress: InetAddress = InetAddress.getByName("0.0.0.0"),
 ) : Closeable {
     interface Listener {
@@ -119,6 +120,11 @@ class IapTunnel(
                 safeClose(accepted)
                 return
             }
+            if (accepted.inetAddress != expectedPeer) {
+                safeClose(accepted)
+                listener.onDebug("AirPlay iAP tunnel rejected sender outside the control session")
+                continue
+            }
             accepted.setSoLinger(true, 0)
             socket = accepted
             readCounter.set(0)
@@ -184,7 +190,7 @@ class IapTunnel(
         var offset = 0
         while (buffer.size - offset >= PACKAGE_HEADER_LEN) {
             val size = readU32Be(buffer, offset)
-            if (size < PACKAGE_HEADER_LEN || size > MAX_PACKAGE) break
+            if (size < PACKAGE_HEADER_LEN || size > MAX_PACKAGE) throw IllegalStateException("bad package size $size")
             if (buffer.size - offset < size) break
             val messageType = readU32Be(buffer, offset + MESSAGE_TYPE_OFFSET)
             if (messageType == MSG_TYPE_COMM) {

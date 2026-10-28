@@ -85,7 +85,7 @@ internal class ManualHotspotInterfaces(
             explicit != null -> (observed ?: emptySet()) + explicit
             // Only when the hotspot is reported on and no tethered Wi-Fi interface exists. An
             // unobservable set stays unobservable, so the fallback evidence keeps working.
-            apEnabled == true && observed.isNullOrEmpty() -> {
+            apEnabled == true && observed?.isEmpty() == true -> {
                 val discovered = hotspotCarrierCandidates(interfaces, upstreams.orEmpty(), defaultInterface)
                 if (discovered.isEmpty()) observed else discovered
             }
@@ -114,7 +114,7 @@ internal class ManualHotspotInterfaces(
         val eligible = interfaces.filter { iface ->
             iface.up && iface.index > 0 && !iface.wireless &&
                 iface.name !in upstreams && iface.name != defaultInterface &&
-                iface.name !in EXCLUDED_INTERFACES &&
+                iface.name !in EXCLUDED_INTERFACES && !mobileDataInterfaceName(iface.name) &&
                 iface.addresses.any(::publishesHotspotAddress)
         }.map { it.name }
         if (eligible.isEmpty()) return emptySet()
@@ -188,6 +188,14 @@ internal fun legacyHotspotInterfaces(tethered: List<String>, wifiRegexes: List<S
     // 厂商可能动态使用 wlan0，而静态配置仍写 softap0；匹配失败不能证明没有热点。
     return matched.takeUnless { tethered.isNotEmpty() && it.isEmpty() }
 }
+
+/**
+ * The modem's mobile-data interfaces: Qualcomm's rmnet… (rmnet_data0 to rmnet_data8, rmnet_ipa0 and r_rmnet_data… on
+ * BYD units, #921) and MediaTek's ccmni…. Several of them hold an address while the car is online, and none carries
+ * the hotspot an iPhone joins.
+ */
+internal fun mobileDataInterfaceName(name: String): Boolean =
+    name.startsWith("rmnet") || name.startsWith("r_rmnet") || name.startsWith("ccmni")
 
 internal fun wirelessInterfaceName(name: String): Boolean =
     name.startsWith("wlan") || name.startsWith("swlan") || name.startsWith("ap") ||

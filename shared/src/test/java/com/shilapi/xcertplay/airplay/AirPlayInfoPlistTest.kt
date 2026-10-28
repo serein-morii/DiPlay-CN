@@ -443,4 +443,32 @@ class AirPlayInfoPlistTest {
         assertEquals(outputs(base, 100, "telephony"), outputs(on, 100, "telephony"))
         assertEquals(outputs(base, 100, "media"), outputs(on, 100, "media"))
     }
+
+    @Test
+    fun callAtCallRateOffersTelephonyOnlyAsPcmAtTheVocoderRates() {
+        val base = AirPlayConfig(
+            deviceName = "test",
+            deviceId = "02:00:00:00:00:02",
+            btMac = "02:00:00:00:00:02",
+            sourceVersion = "366.0",
+            main = AirPlayDisplayConfig(widthPixels = 1280, heightPixels = 720),
+            microphone = true,
+        )
+        fun format(config: AirPlayConfig, audioType: String) =
+            (AirPlayInfoPlist.build(config)["audioFormats"] as List<*>).map { it as Map<*, *> }
+                .single { it["type"] == 100 && it["audioType"] == audioType }
+        val on = base.copy(callAtCallRate = true)
+        // Default: PCM mono 8/16/24/32/48 kHz plus the three Opus rates.
+        assertEquals(0x70004154, format(base, "telephony")["audioOutputFormats"])
+        // On: PCM mono 8, 16, 24 and 32 kHz; no Opus, no 44.1 or 48 kHz.
+        assertEquals(0x154, format(on, "telephony")["audioOutputFormats"])
+        // The call microphone is offered at the same rates; every other stream is untouched.
+        assertEquals(0x70004154, format(base, "telephony")["audioInputFormats"])
+        assertEquals(0x154, format(on, "telephony")["audioInputFormats"])
+        // Without a microphone there is still no input offer.
+        assertFalse(format(on.copy(microphone = false), "telephony").containsKey("audioInputFormats"))
+        for (audioType in listOf("default", "alert", "media", "speechRecognition", "compatibility")) {
+            assertEquals(format(base, audioType), format(on, audioType))
+        }
+    }
 }

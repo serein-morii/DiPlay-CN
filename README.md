@@ -1,6 +1,6 @@
 # DiPlay CN
 
-> 简体中文说明见 [README.zh-CN.md](README.zh-CN.md)。本仓库基于上游 DiPlay `v0.2.21`。
+> 简体中文说明见 [README.zh-CN.md](README.zh-CN.md)。本仓库基于上游 DiPlay `v0.2.22`。
 
 **CarPlay for compatible BYD Android head units.** Wired and wireless, with the familiar DiAuto interface. Independent app: `com.shihab.diplay.cn`; installs alongside official DiPlay.
 
@@ -8,7 +8,7 @@
 >
 > **Tested vehicle: 2025 BYD Han DM-i, DiLink 5.0.** Other models and other head-unit systems are not guaranteed. Test on your own car, or fork the source and adapt it.
 
-[Download the latest CN build](https://github.com/serein-morii/DiPlay-CN/releases/latest) · [Gitee](https://gitee.com/oneeyear/DiPlay-CN/releases/latest) · [CN optimization log](docs/CN_OPTIMIZATIONS.md) · [All CN releases](https://github.com/serein-morii/DiPlay-CN/releases) · [Upstream DiPlay](https://github.com/shihabal3amri/DiPlay/releases/tag/v0.2.21)
+[Download the latest CN build](https://github.com/serein-morii/DiPlay-CN/releases/latest) · [Gitee](https://gitee.com/oneeyear/DiPlay-CN/releases/latest) · [CN optimization log](docs/CN_OPTIMIZATIONS.md) · [All CN releases](https://github.com/serein-morii/DiPlay-CN/releases) · [Upstream DiPlay](https://github.com/shihabal3amri/DiPlay/releases/tag/v0.2.22)
 
 **Signing warning:** The CN release signing key is public. A matching Android signature does not prove an APK came from this project. Use only the linked release pages; see [the signing limitation](SECURITY.md). The package name is retained for existing users’ in-place updates.
 
@@ -16,7 +16,7 @@
 
 ## What CN adds on top of upstream
 
-Every CN change is written down in the **[CN optimization log](docs/CN_OPTIMIZATIONS.md)** — each release, what changed and why. Current base: upstream `v0.2.21`.
+Every CN change is written down in the **[CN optimization log](docs/CN_OPTIMIZATIONS.md)** — each release, what changed and why. Current base: upstream `v0.2.22`.
 
 - Custom dashboard turn card, CN edition: size 30–95 % and opacity 20–100 % sliders, day/night glass following the head unit, a trip info strip (arrival · duration · distance), and the card survives wireless session drops.
 - In-app updates since `0.2.10-cn.8`: About → Check for updates downloads and installs the next CN build over the current one, settings kept. Four channels: Gitee (default), GitHub, gh-proxy.com, ghproxy.net.
@@ -27,7 +27,7 @@ Every CN change is written down in the **[CN optimization log](docs/CN_OPTIMIZAT
 - DiLink 5 full/small cluster-map reconciliation, a proportional turn-card placement preview, connection-stage hints, and optional reconnect when the selected iPhone rejoins Bluetooth.
 - Release APK built as a release variant with the official identity, sized like the official package, signed with one stable CN key since `0.2.10-cn.4` so updates overlay-install.
 
-## 0.2.21 — CN synchronized preview
+## 0.2.22 — CN synchronized preview
 
 Install on the **car**, not the iPhone. No jailbreak, dongle, Mac, account or authentication server is required for use. Core CarPlay does not require ADB; optional dashboard, battery, wheel-speed and parked-video features do. Your head unit must permit APK installation. The CN build supports Android 7.1+ (API 25); Android 7.1–8.1 support is not yet confirmed on a vehicle. Wireless supports Wi-Fi Direct, the car’s existing hotspot or Existing Wi-Fi / Same LAN. Android 7.1–9 Wi-Fi Direct uses a firmware-dependent legacy path with generated group credentials and unverified requested frequency; see [Android 9 Wi-Fi Direct](docs/ANDROID9_WIFI_DIRECT.md). Android 10+ verifies its negotiated group frequency.
 
@@ -43,19 +43,19 @@ This is **not an Apple-certified product**. The APK bundles an experimental acce
 
 **Trademarks and liability**: this project has no affiliation with or authorization from Apple Inc. or BYD; "CarPlay" and "BYD" are trademarks of their owners, used here only descriptively for compatibility; the optional in-app display names are the user's own local personalization. The software is provided free of charge, as-is, contains no Apple proprietary code and circumvents no technical protection measures; use at your own risk. See each release's disclaimer.
 
-## What’s new in 0.2.21
+## What’s new in 0.2.22
 
-- Music plays in step with the iPhone again: on 0.2.20, pause, skip and track changes could come seconds late, and the speed could wobble.
-- Wired CarPlay recovers by itself when the iPhone never opens CarPlay, no longer waits forever after **Disconnect**, and keeps a connection that has already recovered.
-- DiPlay no longer closes when the microphone is used on head units without Android's own Opus encoder, and music comes back after a call or a short interruption.
-- Wireless CarPlay says why it cannot start; on BYD head units the dashboard is handed back to the car when CarPlay ends, and DiPlay no longer closes from the DiYou desktop card.
-- DiPlay installs on Android 7.0 and is available in Italian.
-- New options, off by default: temporary system bars, black rounded corners, a play/pause wheel key, double press for Siri, importing the car hotspot details, a home-screen bubble and the car's own music rhythm.
+- Wireless CarPlay over the car hotspot connects again on BYD DiLink 3.0 and 4.0 head units where 0.2.21 stayed on "Opening CarPlay"; the **Hotspot interface (optional)** workaround can be cleared.
+- Music plays at the iPhone's speed over Wi-Fi again, from the first second of every song, without the 0.2.21 speed-up and stutter.
+- Over USB, WeChat voice messages, Voice Memos and dictation record your voice instead of silence.
+- Wired CarPlay connects on the first attempt after a replug, and the CarPlay screen and Home say why a connection failed and what to change.
+- DiPlay is available in Korean and Turkish.
+- New options, off by default: keep CarPlay in the launcher card, navigation prompts that ask for audio focus, calls at the call's own rate, a full-screen DiLink 3.0 dashboard map and the dashboard map on the Denza N9.
 - CN keeps its four-channel updater, verified cached APK reuse, full swipe-down settings menu, DiLink 5 small/full cluster-map handling and every documented CN addition on top of this official base.
 
-See [0.2.21 release notes](docs/RELEASE-NOTES-0.2.21.md) and [validation](docs/VALIDATION.md) for contribution links and remaining physical tests. General stutter, calls/Siri, decoder and model-specific reports still need current-device evidence. [0.2.20 notes](docs/RELEASE-NOTES-0.2.20.md) remain available as historical guidance.
+See [0.2.22 release notes](docs/RELEASE-NOTES-0.2.22.md) and [validation](docs/VALIDATION.md) for contribution links and remaining physical tests. General stutter, calls/Siri, decoder and model-specific reports still need current-device evidence. [0.2.21 notes](docs/RELEASE-NOTES-0.2.21.md) remain available as historical guidance.
 
-If a problem remains, reproduce it on **0.2.21-cn.1**, then use **Settings → Diagnostics → Save diagnostic report**. Android 10+ normally saves to **Downloads/DiPlay**; Android 7.1–9 asks for storage access and saves there too. If unavailable, use **View report** or **Share** from the confirmation, which identifies external/private fallback storage. Review the `.txt` and add it to a matching [existing CN issue](https://github.com/serein-morii/DiPlay-CN/issues), or [create one](https://github.com/serein-morii/DiPlay-CN/issues/new). Include vehicle/head-unit model, exact firmware and Android/DiLink, phone/iOS, connection backend, relevant settings, steps and failure time. Reports are shared only when you choose; never post your hotspot password.
+If a problem remains, reproduce it on **0.2.22-cn.1**, then use **Settings → Diagnostics → Save diagnostic report**. Android 10+ normally saves to **Downloads/DiPlay**; Android 7.1–9 asks for storage access and saves there too. If unavailable, use **View report** or **Share** from the confirmation, which identifies external/private fallback storage. Review the `.txt` and add it to a matching [existing CN issue](https://github.com/serein-morii/DiPlay-CN/issues), or [create one](https://github.com/serein-morii/DiPlay-CN/issues/new). Include vehicle/head-unit model, exact firmware and Android/DiLink, phone/iOS, connection backend, relevant settings, steps and failure time. Reports are shared only when you choose; never post your hotspot password.
 
 ## Documentation
 

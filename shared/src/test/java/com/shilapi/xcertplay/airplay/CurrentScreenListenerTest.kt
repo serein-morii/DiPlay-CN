@@ -5,6 +5,7 @@ import java.net.Socket
 import java.util.Collections
 import java.util.concurrent.atomic.AtomicBoolean
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNotSame
 import org.junit.Assert.assertTrue
@@ -157,8 +158,53 @@ class CurrentScreenListenerTest {
         ScreenStream::class.java.getDeclaredField("listener").apply { isAccessible = true }
             .get(screen) as ScreenStream.Listener
 
-    private fun testSession(): AirPlaySession = AirPlaySession(
-        socket = Socket(),
+    @Test fun onlyTheCurrentMainStreamsRenderedFrameMarksTheSessionReady() {
+        val diagnostics = mutableMapOf<Int, (String) -> Unit>()
+        val sink = object : MediaSink {
+            override fun setVideoDiagnosticHandler(type: Int, handler: (String) -> Unit) {
+                diagnostics[type] = handler
+            }
+        }
+        val rendered = mutableListOf<AirPlaySession>()
+        val session = testSession(object : AirPlaySessionListener {
+            override fun onVideoFrameRendered(session: AirPlaySession) { rendered += session }
+        })
+        val engine = CarPlayMediaEngine(sink)
+        try {
+            withSharedSecret(session)
+            engine.onScreen(session, 111, mapOf("streamConnectionID" to 1L))
+            diagnostics.getValue(111)("first frame rendered")
+            assertFalse(session.hasRenderedMainFrame)
+            assertTrue(rendered.isEmpty())
+
+            engine.onScreen(session, 110, mapOf("streamConnectionID" to 2L))
+            val replaced = diagnostics.getValue(110)
+            engine.onScreen(session, 110, mapOf("streamConnectionID" to 3L))
+            replaced("first frame rendered")
+            assertFalse(session.hasRenderedMainFrame)
+            diagnostics.getValue(110)("decoder configured")
+            assertFalse(session.hasRenderedMainFrame)
+            diagnostics.getValue(110)("first frame rendered")
+            assertTrue(session.hasRenderedMainFrame)
+            assertEquals(listOf(session), rendered)
+
+            session.close()
+            assertFalse(session.hasRenderedMainFrame)
+            diagnostics.getValue(110)("first frame rendered")
+            assertEquals(listOf(session), rendered)
+        } finally {
+            engine.onSessionClosed(session)
+            session.close()
+        }
+    }
+
+    // onScreen needs the control peer's address.
+    private fun connectedSocket(): Socket = java.net.ServerSocket(0, 1, java.net.InetAddress.getLoopbackAddress()).use { server ->
+        Socket(server.inetAddress, server.localPort)
+    }
+
+    private fun testSession(listener: AirPlaySessionListener = object : AirPlaySessionListener {}): AirPlaySession = AirPlaySession(
+        socket = connectedSocket(),
         config = AirPlayConfig(
             deviceName = "test",
             deviceId = "02:00:00:00:00:02",
@@ -169,7 +215,7 @@ class CurrentScreenListenerTest {
         identity = AirPlayIdentity.generate(),
         pairings = PairingStore(),
         mfi = null,
-        listener = object : AirPlaySessionListener {},
+        listener = listener,
         media = object : AirPlayMediaHandler {},
     )
 }

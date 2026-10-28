@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_navigation_wheel_volume">Navigasyon yönlendirmesi sırasında direksiyon ses kontrolü (deneysel)</string>
+    <string name="settings_navigation_wheel_volume_description">Sesli CarPlay yönlendirmesi sırasında ses tuşları seçilen navigasyon ses akışını ayarlar. Diğer durumlarda tuşlar ana üniteyi takip eder. Direksiyon tuşları erişilebilirlik izni gerektirir. Çağrılar, harita yakınlaştırma ve kumanda kolu önceliğini korur. Yerel olarak bir Tang platform-21 ana ünitesinde test edilmiştir; araç içi test beklenmektedir. Otomatik veya medya yönlendirmesi engellenmez.</string>
+    <string name="settings_navigation_wheel_service_required">Android ayarlarında direksiyon tuşları erişilebilirlik hizmetine izin verin veya mevcut ADB yetkilendirme düğmesini kullanın.</string>
+</resources>

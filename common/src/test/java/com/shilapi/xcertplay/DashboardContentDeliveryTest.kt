@@ -136,6 +136,15 @@ class DashboardContentDeliveryTest {
         }
     }
 
+    @Test fun theLiveSessionIsAvailableForActivityReattachment() {
+        Fixture().use { f ->
+            val phone = f.phone(setup = false)
+            assertNull(f.controller.activeAirPlaySession())
+            f.activate(phone)
+            assertSame(phone, f.controller.activeAirPlaySession())
+        }
+    }
+
     @Test fun anEnqueuedSwitchReportsActualFailureAndKeepsTurnCardZoomIneligible() {
         Fixture().use { f ->
             val phone = f.phone()

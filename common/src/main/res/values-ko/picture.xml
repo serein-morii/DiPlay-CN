@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="picture_adjustments">화면 조정</string>
+    <string name="picture_live_hint">기본 CarPlay 영상에 실시간 적용됩니다. 변경 사항은 즉시 저장됩니다. 원본은 임시 비교용입니다.</string>
+    <string name="picture_show_original">원본 보기</string>
+    <string name="picture_done">완료</string>
+    <string name="picture_brightness">밝기</string>
+    <string name="picture_contrast">대비</string>
+    <string name="picture_saturation">채도</string>
+    <string name="picture_warmth">따뜻함</string>
+    <string name="picture_reset">화면 설정 초기화</string>
+</resources>

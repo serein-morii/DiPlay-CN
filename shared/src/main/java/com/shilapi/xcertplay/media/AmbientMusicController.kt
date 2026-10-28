@@ -276,9 +276,11 @@ object AmbientMusicController {
         BydCarMusicRhythm.setPlaying(app, playing)
         if (!settings.carRhythmFeed) return
         val (head, headPlaying) = playbackState ?: return
-        val bands = envelope?.playedBands(head, playing && headPlaying)
         val now = android.os.SystemClock.uptimeMillis()
-        if (!playing || bands == null || now - lastBandsMillis < BAND_INTERVAL_MILLIS) return
+        // Not read between two sends: what plays then stays in the envelope's peak for the next send.
+        if (playing && now - lastBandsMillis < BAND_INTERVAL_MILLIS) return
+        val bands = envelope?.playedBands(head, playing && headPlaying)
+        if (!playing || bands == null) return
         lastBandsMillis = now
         BydCarMusicRhythm.sendBands(app, bands)
     }

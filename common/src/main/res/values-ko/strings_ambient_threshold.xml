@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="ambient_light_threshold_title">밝기 임계값</string>
+    <string name="ambient_light_threshold_summary">%1$d lux</string>
+    <string name="ambient_light_threshold_value">전환 임계값(lux)</string>
+    <string name="ambient_light_threshold_hint">임계값 미만(lux)이면 야간 모드, 같거나 높으면 주간 모드가 선택됩니다. 선택한 지연 시간 동안 새 기준을 계속 충족해야 합니다. 1~200000 사이의 정수를 입력하세요.</string>
+    <string name="ambient_light_threshold_error">1~200000 사이의 정수를 입력하세요.</string>
+    <string name="ambient_light_reset_defaults">기본값으로 초기화</string>
+</resources>

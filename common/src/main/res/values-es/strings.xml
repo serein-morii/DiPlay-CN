@@ -56,6 +56,10 @@
     <string name="preview_oem_label">Etiqueta OEM:\u0020</string>
     <string name="preview_empty">(vacío)</string>
     <string name="preview_frame_rate">Frecuencia de imágenes:\u0020</string>
+    <string name="preview_transport_hevc">HEVC (H.265, %1$s)</string>
+    <string name="preview_decoder_hardware">hardware</string>
+    <string name="preview_decoder_software">software</string>
+    <string name="preview_list_separator">,\u0020</string>
     <string name="preview_detected_maximum">Máximo detectado:\u0020</string>
     <string name="preview_physical_reference">Referencia física:\u0020</string>
     <string name="basis_widest_width">ancho máximo</string>
@@ -88,7 +92,7 @@
     <string name="audio_stream_unavailable">El tipo de flujo %1$d no está disponible aquí (estado=%2$s)</string>
     <string name="resolution_handshake_prefix">Resolución del enlace:\u0020</string>
     <string name="safe_area_full_screen_at">Zona segura: pantalla completa en\u0020</string>
-    <string name="settings_android9_compat">Los siguientes ajustes no están disponibles y están ocultos en Android 9 (API 28):\n• Wi-Fi P2P (5 GHz) — se usa LocalOnlyHotspot en su lugar.\n• Decodificador por software HEVC — se usa la decodificación por hardware en su lugar.</string>
+    <string name="settings_android9_compat">Los siguientes ajustes no están disponibles y están ocultos en Android 9 (API 28):\n• Decodificador por software HEVC — se usa la decodificación por hardware en su lugar.</string>
     <string name="settings_mfi_address_hint">La dirección debe empezar por http:// o https://. El token es opcional y se envía como Authorization bearer token.</string>
     <string name="language_section_title">Idioma</string>
     <string name="language_app_language">Idioma de la aplicación</string>
@@ -197,7 +201,7 @@
     <string name="rect_fill_disable_safe_area_description">Pide al iPhone una imagen a pantalla completa con esquinas rectas. Pruébalo si CarPlay deja una franja en un borde o muestra el color del fondo en sus esquinas redondeadas. Mientras esté activado no se usa la zona segura de arriba. Se aplica tras Guardar y reconectar.</string>
     <string name="safe_area_disabled_rect_fill_summary">Zona segura: desactivada (esquinas rectas, pantalla completa)</string>
     <string name="driving_side">Lado de conducción</string>
-    <string name="efficient_video">Vídeo eficiente</string>
+    <string name="efficient_video">Vídeo eficiente (HEVC)</string>
     <string name="enable_the_car_s_bluetooth_and_pair_your_iphone_first">Activa primero el Bluetooth del coche y empareja tu iPhone.</string>
     <string name="error">Error</string>
     <string name="exit_application">SALIR DE LA APLICACIÓN</string>
@@ -272,6 +276,7 @@
     <string name="open_connection_setup">Abrir configuración de conexión</string>
     <string name="open_this_setting_from_your_car_s_settings_app">Abre este ajuste desde la aplicación Ajustes de tu coche.</string>
     <string name="opening_carplay">Abriendo CarPlay…</string>
+    <string name="iphone_sent_no_picture">El iPhone no ha enviado ninguna imagen desde que se inició CarPlay. Reinicia el iPhone (apágalo y vuelve a encenderlo) y vuelve a conectarlo.</string>
     <string name="opening_usb_data_paths">Abriendo rutas de datos USB</string>
     <string name="pair_another">Emparejar otro</string>
     <string name="pair_your_iphone">Empareja tu iPhone</string>
@@ -383,6 +388,10 @@
     <string name="use_software_hevc_decoder">Usar decodificador por software HEVC</string>
     <string name="use_usage_content_type_routing_instead_of_stream_type">Usar enrutamiento por uso/tipo de contenido en lugar del tipo de flujo</string>
     <string name="use_your_last_connection_type_and_selected_iphone">Usa tu último tipo de conexión y el iPhone seleccionado.</string>
+    <string name="vpn_authorization_adb_unusable">Esta unidad no puede abrir la autorización de VPN, y DiPlay no puede usar su ADB por red para permitir la VPN por sí mismo.</string>
+    <string name="vpn_authorization_adb_not_approved">Esta unidad no puede abrir la autorización de VPN, y su ADB aún no ha autorizado a DiPlay, así que DiPlay no puede permitir la VPN por sí mismo.</string>
+    <string name="vpn_authorization_adb_did_not_allow">Esta unidad no puede abrir la autorización de VPN, y permitir la VPN mediante su ADB no funcionó.</string>
+    <string name="vpn_authorization_adb_command">Ejecuta una vez este comando ADB desde un ordenador conectado a la unidad y vuelve a conectar el iPhone por USB:\nadb shell appops set %1$s ACTIVATE_VPN allow</string>
     <string name="vpn_authorization_unavailable">Esta unidad no puede abrir la autorización de VPN. Vuelve a DiPlay para revisar los permisos de conexión o usa la conexión inalámbrica.</string>
     <string name="vpn_consent_was_denied">Se denegó el consentimiento de VPN</string>
     <string name="waiting_for_iphone_over_usb">Esperando iPhone por USB</string>
@@ -411,6 +420,8 @@
     <string name="option_size_large">Grande</string>
     <string name="option_size_medium">Mediano</string>
     <string name="option_size_small">Pequeño</string>
+    <string name="option_size_custom">Personalizado</string>
+    <string name="size_option_millimeters">%1$s · %2$d mm</string>
     <string name="option_theme_scenario">Escenario · mapa lateral</string>
     <string name="option_theme_map">Mapa · mapa completo</string>
     <string name="option_theme_simple">Simple · mapa lateral</string>
@@ -441,6 +452,7 @@
     <string name="adb_dashboard_does_not_send_map">Panel: %1$s, así que el iPhone no envía el mapa.</string>
     <string name="adb_not_approved">DiPlay aún no está autorizado. Toca «Comprobar acceso ADB» y permite DiPlay en la pantalla del coche.</string>
     <string name="adb_off">ADB por red está desactivado. Actívalo en las opciones de desarrollador de la unidad principal.</string>
+    <string name="adb_network_not_answering">La depuración USB está activada, pero ADB por red no responde. Activa ADB por red en las opciones de desarrollador de la unidad principal. Si ya está activado, desactívalo y vuelve a activarlo.</string>
     <string name="adb_pairing_only">Esta unidad principal solo ofrece depuración inalámbrica con emparejamiento, que DiPlay aún no admite.</string>
     <string name="navi_mode_off">Apagado</string>
     <string name="navi_mode_turn_on_by_navi">Activar con la navegación</string>
@@ -498,6 +510,8 @@
     <string name="video_while_parked_description">iOS 27: el vídeo que envías a CarPlay desde el iPhone se reproduce en la pantalla del coche mientras está en P. El reproductor se cierra al salir de P; sin ADB el vídeo queda desactivado y el iPhone solo reproduce el audio. El vídeo HTTPS normal (por ejemplo, de Safari) funciona; el vídeo protegido con FairPlay, como Apple TV+, necesita un receptor con licencia y aquí no se reproduce. Vuelve a conectar CarPlay. Requiere ADB por red en la unidad principal.</string>
     <string name="cluster_song">Canción en el cuadro</string>
     <string name="cluster_song_description">El título y el artista de la canción de CarPlay aparecen en la tarjeta de música del cuadro de instrumentos, con reproducción y pausa. La tarjeta se muestra como la fuente de música «otra» de BYD, porque el cuadro no dibuja la fuente propia de CarPlay. Se aplica al instante. Requiere ADB por red en la unidad principal.</string>
+    <string name="cluster_song_gate">Activar la tarjeta de música automáticamente</string>
+    <string name="cluster_song_gate_description">La tarjeta no se muestra hasta que la pila multimedia del coche se ha abierto. Abrir la puerta hace eso, lo que muestra brevemente la pantalla multimedia y luego vuelve a DiPlay. Déjalo desactivado para evitar el parpadeo. Se aplica al instante.</string>
     <string name="video_back_to_carplay">Volver a CarPlay</string>
     <string name="video_play">Reproducir</string>
     <string name="video_pause">Pausa</string>
@@ -794,9 +808,10 @@
     <string name="setup_iphone_title">Empareja tu iPhone</string>
     <string name="setup_iphone_none">Aún no hay iPhone elegido</string>
     <string name="setup_features_title">Funciones</string>
-    <string name="setup_features_description">Sugerido para %1$s. Activa lo que quieras ahora; todo queda en Ajustes y puede cambiarse luego.</string>
-    <string name="setup_cluster_route_conflict">La ruta del clúster de DiLink 4 está activada. En DiLink 3 impide el mapa de CarPlay en el cuadro de instrumentos.</string>
-    <string name="setup_cluster_route_turn_off">Desactívala</string>
+    <string name="setup_features_description">Sugeridas para %1$s. Activa ahora lo que quieras; todo sigue en Ajustes y se puede cambiar después.</string>
+    <string name="setup_features_description_unknown">Activa ahora lo que quieras; todo sigue en Ajustes y se puede cambiar después.</string>
+    <string name="setup_cluster_route_conflict">La ruta de cuadro de DiLink 4 está activada. En DiLink 3 impide el mapa de CarPlay en el cuadro.</string>
+    <string name="setup_cluster_route_turn_off">Desactivarla</string>
     <string name="setup_badge_tested">Probado en algunos coches</string>
     <string name="setup_badge_experimental">Experimental</string>
     <string name="setup_badge_adb">Requiere ADB por red</string>
@@ -874,6 +889,8 @@
     <string name="settings_ambient_car_rhythm_feed_description">En algunas unidades (como un Han de 2023) el ritmo del coche arranca pero las luces quedan apagadas, porque el coche no genera un espectro propio para la música de CarPlay. Esto envía las 16 bandas de frecuencia de la música reproducida al controlador de luces del coche, de modo que el ritmo del coche, incluido el salpicadero del pasajero, la siga. Solo tiene efecto con el ritmo musical del coche activado arriba y requiere el ADB de red del coche.</string>
     <string name="settings_disable_media_key_audio_focus">Desactivar el foco de audio de las teclas multimedia (experimental)</string>
     <string name="settings_disable_media_key_audio_focus_description">Impide que DiPlay solicite el foco de audio multimedia mientras se reproduce música de CarPlay. Actívalo si la unidad dirige los botones físicos de volumen a DiPlay y dejan de ajustar el volumen. Los controles del volante para reproducir, pausar y cambiar de pista pueden dejar de funcionar en unidades que requieren el foco. Se aplica en la próxima conexión de CarPlay.</string>
+    <string name="settings_navigation_prompt_audio_focus">Las indicaciones de navegación piden el foco de audio</string>
+    <string name="settings_navigation_prompt_audio_focus_description">Durante cada indicación de navegación de CarPlay, DiPlay solicita un foco de audio temporal que permite bajar los demás sonidos y lo libera al terminar la indicación. Pruébalo si las indicaciones no se oyen hasta que suena música, o si la música debe bajar durante las indicaciones. El audio propio de la unidad puede bajar o pausarse durante las indicaciones. Se aplica en la próxima conexión de CarPlay.</string>
     <string name="settings_ambient_album">Seguir la portada del álbum</string>
     <string name="settings_ambient_album_description">Usa el color de la portada o colores cercanos disponibles del vehículo. Las portadas grises, negras o ausentes usan los 31 colores; las mayormente blancas pueden usar blanco o blanco frío.</string>
     <string name="settings_cluster_speedometer">Velocímetro del cluster (experimental)</string>
@@ -884,9 +901,13 @@
     <string name="settings_cluster_speedometer_opacity">Opacidad del velocímetro</string>
     <string name="settings_harman_fullscreen_experimental">Pantalla completa Harman (experimental)</string>
     <string name="settings_harman_fullscreen_experimental_description">Permite que CarPlay ocupe el panel lateral original en unidades Harman compatibles. Se aplica al abrir de nuevo la ventana de CarPlay; otros firmwares podrían mostrarse incorrectamente.</string>
+    <string name="settings_carplay_same_task">Mantener CarPlay en la tarjeta del launcher (experimental)</string>
+    <string name="settings_carplay_same_task_description">Para launchers que muestran DiPlay en una tarjeta o en una ventana PiP, como el escritorio DiYou de BYD. CarPlay se abre en la propia ventana de DiPlay, como en la versión 0.2.11 y anteriores, en lugar de en otra a pantalla completa. Se aplica la próxima vez que se abra CarPlay, sin desconectar.</string>
     <string name="settings_hotspot_name_non_english">Con caracteres chinos u otros no ingleses en el nombre, CarPlay puede quedarse en «Preparando CarPlay…»: algunas unidades emiten ese nombre de una forma que el iPhone no encuentra. Si pasa, cambia el nombre del punto de acceso del coche a letras inglesas y números.</string>
     <string name="settings_speech_without_low_rates">Voz de navegación más clara por USB (experimental)</string>
     <string name="settings_speech_without_low_rates_description">Por USB, el iPhone puede enviar las indicaciones de navegación y las respuestas habladas de Siri con calidad telefónica de 8 kHz. Esta opción deja de ofrecer 8 y 16 kHz para ese audio y el iPhone elige una frecuencia mayor. Si las indicaciones dejan de oírse, desactívala. Reconecta CarPlay.</string>
+    <string name="settings_call_at_call_rate">Llamadas a su propia frecuencia (experimental)</string>
+    <string name="settings_call_at_call_rate_description">Ofrece las llamadas como PCM a su propia frecuencia (8, 16, 24 o 32 kHz) en lugar de Opus a 48 kHz, como el receptor CarPlay original. Se aplica en la próxima conexión. Si una llamada no tiene sonido, desactívalo.</string>
     <string name="bluetooth_connections_not_real">El Bluetooth de Android de esta unidad principal indica una conexión, pero nada llega al iPhone: incluso la conexión a un servicio que no existe tiene éxito. Aquí el Bluetooth lo gestiona un módulo propio del fabricante que las apps no pueden usar, por lo que CarPlay inalámbrico no puede funcionar en esta unidad principal. Prueba una conexión USB.</string>
     <string name="bluetooth_cannot_open_connections">El Bluetooth de Android de esta unidad principal no puede abrir conexiones para las apps: al firmware le falta la parte por la que se conectan las apps. Las llamadas y la música por el Bluetooth del coche no se ven afectadas, pero CarPlay inalámbrico no puede funcionar en esta unidad principal. Prueba una conexión USB.</string>
     <string name="bluetooth_will_not_stay_on_hint">Si el Bluetooth no se queda activado ahí, esta unidad principal reserva el Bluetooth para sus propias llamadas y música, y las apps no pueden usarlo. En ese caso CarPlay inalámbrico no puede funcionar: usa un cable USB.</string>
@@ -918,6 +939,21 @@
     <string name="connection_help_bluetooth_unusable">Esta unidad no puede enviar datos Bluetooth al iPhone. CarPlay inalámbrico no funcionará aquí. Usa un cable USB de datos.</string>
     <string name="connection_help_wifi_direct_beside_hotspot">Desactiva el punto de acceso del coche y vuelve a intentarlo, o elige «Punto de acceso integrado del coche» en «Configuración de conexión» y guarda su nombre y contraseña.</string>
     <string name="wifi_direct_refused_beside_hotspot">El punto de acceso del coche está activado y Wi-Fi Direct no puede iniciarse a la vez</string>
+    <string name="chosen_iphone_not_paired">El iPhone elegido en DiPlay ya no está emparejado con el coche</string>
+    <string name="connection_help_chosen_iphone_not_paired">Vuelve a emparejar el iPhone con el Bluetooth del coche, o regresa a DiPlay y toca «Elegir iPhone» para elegir otro. Después reintenta.</string>
+    <string name="connection_help_choose_iphone">Hay varios dispositivos emparejados con el coche. Regresa a DiPlay, toca «Elegir iPhone», elige el tuyo y reintenta.</string>
+    <string name="wifi_direct_channel_unavailable">Wi-Fi Direct no puede usar el canal preferido</string>
+    <string name="connection_help_wifi_direct_channel">En «Configuración de conexión», pon «Canal preferido de Wi-Fi Direct» en «Auto» y reintenta.</string>
+    <string name="car_sees_no_usb_device">El coche aún no detecta ningún dispositivo USB</string>
+    <string name="car_sees_usb_device_not_iphone">El coche detecta un dispositivo USB, pero no un iPhone</string>
+    <string name="connection_help_no_usb_device">Usa un cable de datos USB (algunos cables solo cargan), conéctalo al puerto de datos USB o de CarPlay del coche y desbloquea el iPhone.</string>
+    <string name="connection_help_usb_device_not_iphone">Usa un cable de datos USB en el puerto de datos USB o de CarPlay del coche, desconecta otros dispositivos USB y desbloquea el iPhone.</string>
+    <string name="car_hotspot_details_differ">Los ajustes del punto de acceso del coche no coinciden con los guardados en DiPlay</string>
+    <string name="connection_help_car_hotspot_details_differ">En «Configuración de conexión», toca «Editar punto de acceso guardado», copia el nombre y la contraseña de los ajustes del punto de acceso del coche y reintenta.</string>
+    <string name="hotspot_interface_not_found">La interfaz del punto de acceso guardada en DiPlay no existe en este coche</string>
+    <string name="connection_help_hotspot_interface_not_found">En «Configuración de conexión», toca «Editar punto de acceso guardado», borra «Interfaz del punto de acceso (opcional)» y reintenta.</string>
+    <string name="connection_help_car_hotspot_off">Activa el punto de acceso del coche en la configuración del coche y reintenta.</string>
+    <string name="last_connection_attempt">Último intento de conexión (%1$s): %2$s</string>
     <string name="connection_help_hotspot">Comprueba que el punto de acceso del coche esté activo y que su nombre y contraseña coincidan con DiPlay. Si es posible, usa 5 GHz y reintenta.</string>
     <string name="connection_help_iphone_wifi">Mantén Wi-Fi y Bluetooth activos. Conecta el iPhone al punto de acceso del coche y activa la conexión automática. Reintenta o guarda un informe de diagnóstico.</string>
     <string name="connection_help_permissions">Concede a DiPlay los permisos necesarios de USB, dispositivos cercanos o ubicación en la unidad y reintenta.</string>
@@ -962,4 +998,12 @@
 
     <string name="settings_hotspot_interface">Interfaz del punto de acceso (opcional)</string>
     <string name="settings_hotspot_interface_description">Solo para unidades que ejecutan su punto de acceso en una interfaz de red que Android no informa como punto de acceso Wi-Fi, por ejemplo eth0.3 en algunas unidades Geely, Lynk &amp; Co y otros Qualcomm. Déjalo vacío para encontrarla automáticamente.</string>
+    <string name="settings_existing_wifi_interface">Interfaz de red (opcional)</string>
+    <string name="settings_existing_wifi_interface_description">Solo para unidades cuya conexión LAN usa una interfaz que Android no informa como Wi-Fi, por ejemplo un adaptador USB en eth1. Déjalo vacío para elegirla automáticamente.</string>
+    <string name="cluster_projection_shape">Forma del mapa del panel</string>
+    <string name="cluster_projection_shape_half">Pantalla partida</string>
+    <string name="cluster_projection_shape_full">Pantalla completa</string>
+    <string name="cluster_projection_shape_description">La pantalla partida mantiene junto al mapa la velocidad y el estado que el panel muestra normalmente; la pantalla completa deja que el mapa ocupe todo el panel. DiPlay fija la forma cada vez que aparece el mapa de CarPlay, que de lo contrario anula la forma elegida en el coche. Requiere ADB por red en la unidad principal.</string>
+    <string name="settings_cluster_speedometer_album_color">Usar el color del álbum en el fondo del velocímetro</string>
+    <string name="settings_cluster_speedometer_album_color_description">Iguala el color del borde del álbum con transiciones suaves. Conserva la opacidad elegida.</string>
 </resources>

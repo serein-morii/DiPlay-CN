@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="default_connection_mode">기본 연결 모드</string>
+    <string name="default_connection_last_used">마지막 사용</string>
+    <string name="default_connection_wireless">무선</string>
+    <string name="default_connection_usb">USB</string>
+    <string name="default_connection_description">DiPlay를 열 때 기본 연결 모드와 선택된 iPhone을 사용합니다. 수동 연결 버튼은 선택한 모드를 사용합니다.</string>
+</resources>

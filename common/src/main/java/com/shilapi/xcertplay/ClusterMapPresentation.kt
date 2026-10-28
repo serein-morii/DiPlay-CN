@@ -14,6 +14,8 @@ import android.view.WindowManager
 import android.graphics.Point
 import android.hardware.display.DisplayManager
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import android.view.Display
 import android.view.Gravity
@@ -52,6 +54,18 @@ internal class ClusterMapPresentation(
     var mapVisible = true
         private set
 
+    private val projectionHandler = Handler(Looper.getMainLooper())
+    private val projectionWatchdog = ClusterProjectionWatchdog()
+    private val projectionTick = object : Runnable {
+        override fun run() {
+            if (projectionWatchdog.onStatus(GeelyClusterProjection.status())) {
+                Log.i(TAG, "cluster projection was taken away; asking for it again")
+                if (GeelyClusterProjection.set(true, context)) projectionWatchdog.assertedProjection()
+            }
+            projectionHandler.postDelayed(this, PROJECTION_TICK_MILLIS)
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val size = sizeOf(display)
@@ -76,14 +90,13 @@ internal class ClusterMapPresentation(
             val textureView = TextureView(context)
             fun transform() {
                 textureView.setTransform(Matrix().apply {
-                    setScale(DiLink51ClusterLayout.STREAM_WIDTH.toFloat() / plan.width,
-                        DiLink51ClusterLayout.STREAM_HEIGHT.toFloat() / plan.height)
+                    setScale(plan.streamWidth.toFloat() / plan.width, plan.streamHeight.toFloat() / plan.height)
                     postTranslate(-plan.sourceLeft.toFloat(), -plan.sourceTop.toFloat())
                 })
             }
             textureView.surfaceTextureListener = object : TextureView.SurfaceTextureListener {
                 override fun onSurfaceTextureAvailable(texture: SurfaceTexture, width: Int, height: Int) {
-                    texture.setDefaultBufferSize(DiLink51ClusterLayout.STREAM_WIDTH, DiLink51ClusterLayout.STREAM_HEIGHT)
+                    texture.setDefaultBufferSize(plan.streamWidth, plan.streamHeight)
                     transform()
                     outputSurface = Surface(texture).also(onSurface)
                 }
@@ -151,6 +164,34 @@ internal class ClusterMapPresentation(
         setContentView(root)
     }
 
+    override fun onStart() {
+        super.onStart()
+        // On the Geely head unit the cluster keeps its factory layer over Android's display 2
+        // until the DIM service is asked to project; the stock map does the same.
+        if (!GeelyClusterDisplay.supported()) return
+        projectionWatchdog.reset()
+        if (GeelyClusterProjection.set(true, context)) projectionWatchdog.assertedProjection()
+        // That switch belongs to the head unit, not to DiPlay: waking the stock map moves the
+        // projection there and its session end turns the switch off, with no display callback and
+        // no onStop here to notice. Watch the state for as long as this presentation is up.
+        projectionHandler.removeCallbacks(projectionTick)
+        projectionHandler.postDelayed(projectionTick, PROJECTION_TICK_MILLIS)
+    }
+
+    override fun onStop() {
+        if (GeelyClusterDisplay.supported()) {
+            projectionHandler.removeCallbacks(projectionTick)
+            // Hand the projection back only while DiPlay still holds it. The switch is head-unit-wide
+            // and the stock map drives it too, so when the map owns the cluster (the wheel key woke
+            // it) switching it off here would take the map off the cluster as well. Read it back
+            // first: the last readings decide, and this final one is the freshest evidence.
+            val handBack = projectionWatchdog.shouldHandBack(GeelyClusterProjection.status())
+            if (handBack) GeelyClusterProjection.set(false, context)
+            projectionWatchdog.reset()
+        }
+        super.onStop()
+    }
+
     /**
      * Cross-fades the waiting placeholder over the live map. TextureView can also fade the
      * video; legacy SurfaceView stays visible under the placeholder to preserve its surface.
@@ -204,6 +245,12 @@ internal class ClusterMapPresentation(
     companion object {
         const val TAG = "DiPlay-Cluster"
 
+        /**
+         * How often the Geely projection state is read. One binder transaction, and the watchdog needs
+         * two off readings anyway, so the cluster is back within ~4 s of the stock map releasing it.
+         */
+        const val PROJECTION_TICK_MILLIS = 2_000L
+
         /** Keep the 5/5.1 selection order, then try the measured DiLink 4 projection display. */
         fun findDisplay(context: Context, theme: DiLink51ClusterLayout.Theme = DiLink51ClusterLayout.theme(context)): Display? {
             val displays = context.getSystemService(DisplayManager::class.java)
@@ -214,6 +261,12 @@ internal class ClusterMapPresentation(
             if (name == null) {
                 // Never replace a missing 5.1 side layer with a full-screen display.
                 if (DiLink51ClusterLayout.supported()) return null
+                if (GeelyClusterDisplay.supported()) {
+                    return displays.firstOrNull { display ->
+                        val size = sizeOf(display)
+                        GeelyClusterDisplay.matches(display, size.x, size.y)
+                    }
+                }
                 return displays.firstOrNull { display ->
                     val size = sizeOf(display)
                     DiLink4ClusterDisplay.accepts(display.name, size.x, size.y)
@@ -274,8 +327,10 @@ private class InstrumentContrastView(
             fade(left, top, left, top + 64, background, clear, left, top, right, top + 64)
             fade(left, bottom - 48, left, bottom, clear, background, left, bottom - 48, right, bottom)
             // The trip/menu readouts occupy the outer panels; keep the route and marker in the clear center.
-            fade(left, top, left + 460, top, soft, clear, left, top, left + 460, bottom)
-            fade(right - 460, top, right, top, clear, soft, right - 460, top, right, bottom)
+            // They are 460 px wide on the measured 1920 px cluster and assumed to scale with a wider one.
+            val panel = 460f * plan.width / DiLink51ClusterLayout.STREAM_WIDTH
+            fade(left, top, left + panel, top, soft, clear, left, top, left + panel, bottom)
+            fade(right - panel, top, right, top, clear, soft, right - panel, top, right, bottom)
         }
         paint.shader = null
     }

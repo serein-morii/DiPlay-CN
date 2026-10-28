@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_navigation_wheel_volume">안내 중 스티어링 휠 볼륨 조절 (실험 기능)</string>
+    <string name="settings_navigation_wheel_volume_description">음성 CarPlay 안내 중에는 볼륨 키가 선택된 내비게이션 오디오 스트림의 볼륨을 조절합니다. 그 외에는 헤드 유닛 설정을 따릅니다. 스티어링 휠 키 접근성 권한이 필요합니다. 통화, 지도 확대/축소 및 조이스틱이 우선됩니다. Tang 플랫폼 21 헤드 유닛에서 로컬 테스트를 마쳤으며, 차량 내 업스트림 테스트는 진행 전입니다. 자동 또는 미디어 라우팅은 가로채지 않습니다.</string>
+    <string name="settings_navigation_wheel_service_required">Android 설정에서 스티어링 휠 키 접근성 서비스를 허용하거나 기존 ADB 승인 버튼을 사용하세요.</string>
+</resources>

@@ -70,6 +70,8 @@ class CarPlayRuntimeConfig(
     val wifiP2pPreferredChannel: Int = WifiP2pChannels.AUTO,
     val existingWifiSsid: String = "",
     val existingWifiPassphrase: String = "",
+    /** Interface override for units whose station LAN runs on an interface Android does not report as Wi-Fi, e.g. a USB NIC on eth1. */
+    val existingWifiInterface: String? = null,
 ) {
     init {
         require(iphoneDevices.all { it.vendorId == APPLE_VENDOR_ID }) {

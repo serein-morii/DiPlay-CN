@@ -40,6 +40,10 @@ class NcmUsbBridge internal constructor(
     private var loggedWriteTimeout = false
     private var bulkOutAccepted = false
     private var notReadyFrames = 0
+
+    /** [System.nanoTime] when the iPhone first took a frame on bulk OUT, or null while it still NAKs the pipe. */
+    @Volatile var linkOpenedAtNanos: Long? = null
+        private set
     private val frames = ArrayDeque<ByteArray>()
     private var queuedBytes = 0
     private var buffered = ByteArray(0)
@@ -102,6 +106,7 @@ class NcmUsbBridge internal constructor(
         }
         if (!bulkOutAccepted) {
             bulkOutAccepted = true
+            linkOpenedAtNanos = System.nanoTime()
             runCatching { onDiagnostic("NCM bulk-out ready after $notReadyFrames dropped frames") }
         }
         if (transferred != block.size) {
@@ -118,6 +123,9 @@ class NcmUsbBridge internal constructor(
 
     /** Frames to and from the iPhone so far, for a report line; see [NcmTrafficCounter]. */
     fun trafficSummary(airPlayPort: Int?): String = traffic.summary(airPlayPort)
+
+    /** Whether the iPhone tried to connect to [port] at or after [sinceNanos]; see [NcmTrafficCounter]. */
+    fun connectionAttemptSince(port: Int, sinceNanos: Long): Boolean = traffic.connectionAttemptSince(port, sinceNanos)
 
     /**
      * Returns the next complete Ethernet frame, or null when [timeoutMillis] elapses without one.

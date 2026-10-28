@@ -16,6 +16,7 @@ import com.shilapi.xcertplay.media.CarPlayNowPlaying
 import com.shilapi.xcertplay.media.CarPlayVideoLayout
 import com.shilapi.xcertplay.orchestration.CarPlayController
 import com.shilapi.xcertplay.orchestration.CarPlayRuntimeConfig
+import com.shilapi.xcertplay.orchestration.CarPlayStatus
 import com.shilapi.xcertplay.orchestration.MfiTarget
 import com.shilapi.xcertplay.orchestration.WirelessHotspotMode
 import com.shilapi.xcertplay.transport.Iap2IdentificationConfig
@@ -506,6 +507,39 @@ class CarPlayHostDisplaySizeTest {
         assertEquals(false, getField("touchOutsideContent"))
     }
 
+    // Galaxy Note20: after a language change, or Back and then Open CarPlay, the quick menu's connection
+    // page said only "Wireless hotspot: active". The new host never saw the session's HotspotReady.
+    @Test fun aHostThatAdoptsTheSessionStillNamesItsHotspot() {
+        val display = CarPlaySessionDisplay(1920, 990, Surface.ROTATION_0, true, true, 1920, 990)
+        val sink = AndroidMediaSink()
+        val controller = CarPlayController(activity,
+            CarPlayRuntimeConfig(mfiTarget = MfiTarget.LOCAL, identification = Iap2IdentificationConfig(
+                name = "test", modelIdentifier = "test", manufacturer = "test", serialNumber = "test",
+                firmwareVersion = "1", hardwareVersion = "1", carPlayUsbInterfaceNumber = 3)),
+            AirPlayConfig(deviceName = "test", deviceId = "02:00:00:00:00:02", btMac = "02:00:00:00:00:01",
+                sourceVersion = "1", main = AirPlayDisplayConfig(widthPixels = 1920, heightPixels = 990)),
+            AirPlayIdentity.generate(), PairingStore(), object : AirPlaySessionListener {},
+            object : AirPlayMediaHandler {}, {})
+        try {
+            CarPlayBackgroundSession.store(controller, sink, 1920, 990, Any(), display) {}
+            val starter = Robolectric.buildActivity(CarPlayHostActivity::class.java).get()
+            starter.javaClass.getDeclaredField("wirelessEnabled").apply { isAccessible = true }.set(starter, true)
+            starter.javaClass.getDeclaredMethod("updateHotspotStatus", CarPlayStatus::class.java)
+                .apply { isAccessible = true }
+                .invoke(starter, CarPlayStatus.HotspotReady("DIRECT-dp-test", "5 GHz", 36, "", "192.168.49.1", "Wi-Fi P2P"))
+            val adopted = activity.javaClass.getDeclaredMethod("adoptBackgroundSession")
+                .apply { isAccessible = true }.invoke(activity)
+            assertEquals(true, adopted)
+            val status = getField("hotspotStatus").toString()
+            assertTrue(status, status.contains("ssid=DIRECT-dp-test") && status.contains("band=5 GHz") &&
+                status.contains("channel=36") && status.contains("backend=Wi-Fi P2P"))
+        } finally {
+            controller.close()
+            CarPlayBackgroundSession.clear()
+        }
+        assertNull(CarPlayBackgroundSession.hotspotReady)
+    }
+
     @Test fun adoptingABackgroundSessionPreservesItsCanvasOnResize() {
         val display = CarPlaySessionDisplay(1536, 792, Surface.ROTATION_0, true, true, 1920, 990)
         val sink = AndroidMediaSink()
@@ -558,6 +592,28 @@ class CarPlayHostDisplaySizeTest {
             }
         } finally {
             AirPlayPersistence.saveAdbClusterEnabled(activity, false)
+            sink.close()
+        }
+    }
+
+    @Test fun anAdoptedSessionStillGetsDayAndNight() {
+        // A recreated host (for example after a change of the app language) adopts the running stream and
+        // gets no session-active callback; day/night must still reach the iPhone.
+        val session = org.mockito.Mockito.mock(AirPlaySession::class.java)
+        val controller = org.mockito.Mockito.mock(CarPlayController::class.java)
+        org.mockito.Mockito.`when`(controller.nowPlayingSnapshot()).thenReturn(CarPlayNowPlaying())
+        org.mockito.Mockito.`when`(controller.activeAirPlaySession()).thenReturn(session)
+        val sink = AndroidMediaSink()
+        try {
+            CarPlayBackgroundSession.store(controller, sink, 1920, 990, Any(),
+                CarPlaySessionDisplay(1920, 990, Surface.ROTATION_0, true, true, 1920, 990)) {}
+            assertEquals(true, invoke("adoptBackgroundSession"))
+            assertSame(session, getField("activeAirPlaySession"))
+            setField("darkMode", true)
+            activity.javaClass.getDeclaredMethod("syncAirPlayDarkMode", ThemeModeDiagnostics.Source::class.java)
+                .apply { isAccessible = true }.invoke(activity, ThemeModeDiagnostics.Source.CARPLAY_MODE)
+            org.mockito.Mockito.verify(session, org.mockito.Mockito.timeout(2_000)).setNightMode(true)
+        } finally {
             sink.close()
         }
     }
