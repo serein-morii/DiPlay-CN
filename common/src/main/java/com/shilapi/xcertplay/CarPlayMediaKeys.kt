@@ -65,6 +65,10 @@ internal object CarPlayMediaKeys {
     private var transientFocusInterrupted = false
     private var appContext: Context? = null
     private var mediaAudioActive = false
+    /** "CarPlay audio over the car's Bluetooth" was on when the controller attached. */
+    private var carBluetoothAudio = false
+    /** The session only shows what is playing: no audio focus, no callback, no transport actions. */
+    private var displayOnly = false
     private var nowPlaying = CarPlayNowPlaying()
     private var elapsedUpdatedAt = 0L
     private var artwork: Bitmap? = null
@@ -79,6 +83,8 @@ internal object CarPlayMediaKeys {
         }
         appContext = context.applicationContext
         controller = next
+        // Read once per connection, as the session's audio setup reads it.
+        carBluetoothAudio = AirPlayPersistence.loadCarBluetoothAudio(context.applicationContext)
         GeelyWheelKeys.start(context)
         com.shilapi.xcertplay.media.AmbientMusicController.claimPlaybackOwner(next)
         next.playbackListener = { playing ->
@@ -145,6 +151,7 @@ internal object CarPlayMediaKeys {
                 if (nowPlaying.elapsedMillis != update.elapsedMillis) elapsedUpdatedAt = SystemClock.elapsedRealtime()
                 val metadataChanged = metadataChanged(nowPlaying, update) || artwork !== previousArtwork
                 nowPlaying = update
+                ensureDisplayOnlyLocked()
                 if (metadataChanged) ClusterMusicState.publish(update, artwork)
                 updateInitialAlbumRecovery(expected)
                 // The iPhone repeats NowPlayingUpdate about twice a second for the position alone.
@@ -288,8 +295,38 @@ internal object CarPlayMediaKeys {
         val context = appContext ?: return
         if (controller == null) return
         mediaAudioActive = active
+        // Media audio after all: the full session, with focus and keys, takes over.
+        if (active && displayOnly) dropSessionLocked()
         if (active && session == null) start(context) else if (active) regainFocusLocked()
         publishPlaybackStateLocked()
+    }
+
+    /**
+     * With "CarPlay audio over the car's Bluetooth" the iPhone opens no media audio stream, so [start]
+     * never runs and other apps saw no session at all, while DiPlay still received the title and the
+     * cover (#1257). This session only shows what is playing, from the first title on: it requests no
+     * audio focus, has no callback and lists no transport actions, so play, pause and skip stay with the
+     * car's own Bluetooth (AVRCP) session.
+     */
+    private fun ensureDisplayOnlyLocked() {
+        if (!carBluetoothAudio || session != null || nowPlaying.title.isNullOrBlank()) return
+        val context = appContext ?: return
+        displayOnly = true
+        session = MediaSession(context, "DiPlay CarPlay").apply {
+            setMetadata(androidMetadata(nowPlaying, shownArtworkLocked()))
+            isActive = true
+        }
+        Log.i(TAG, "display-only session active (car Bluetooth audio)")
+        WheelKeyLog.note("display-only session active (car Bluetooth audio)")
+    }
+
+    private fun dropSessionLocked() {
+        session?.let {
+            it.isActive = false
+            it.release()
+        }
+        session = null
+        displayOnly = false
     }
 
     private fun start(context: Context) {
@@ -381,11 +418,8 @@ internal object CarPlayMediaKeys {
         initialAlbumRecovery = InitialAlbumRecovery()
         ambientColorCache.clear()
         artworkQueue.clear()
-        session?.let {
-            it.isActive = false
-            it.release()
-        }
-        session = null
+        dropSessionLocked()
+        carBluetoothAudio = false
         mediaAudioActive = false
         nowPlaying = CarPlayNowPlaying()
         artwork = null
@@ -398,24 +432,28 @@ internal object CarPlayMediaKeys {
     }
 
     private fun publishPlaybackStateLocked() {
-        val playing = if (nowPlaying.elapsedMillis != null || nowPlaying.title != null) {
-            nowPlaying.playing
-        } else {
-            mediaAudioActive
-        }
-        session?.setPlaybackState(
-            PlaybackState.Builder()
-                .setActions(ACTIONS)
-                .setState(
-                    if (playing) PlaybackState.STATE_PLAYING else PlaybackState.STATE_PAUSED,
-                    nowPlaying.elapsedMillis ?: PlaybackState.PLAYBACK_POSITION_UNKNOWN,
-                    if (playing) 1f else 0f,
-                    // The iPhone sends elapsed time only on play, pause or seek, so Android must
-                    // extrapolate from when it arrived, not from this republish.
-                    elapsedUpdatedAt,
-                )
-                .build(),
-        )
+        session?.setPlaybackState(playbackState(nowPlaying, mediaAudioActive, displayOnly, elapsedUpdatedAt))
+    }
+
+    /** The session's state; a display-only session lists no actions, so apps offer no buttons for it. */
+    internal fun playbackState(
+        info: CarPlayNowPlaying,
+        mediaAudioActive: Boolean,
+        displayOnly: Boolean,
+        elapsedUpdatedAt: Long,
+    ): PlaybackState {
+        val playing = if (info.elapsedMillis != null || info.title != null) info.playing else mediaAudioActive
+        return PlaybackState.Builder()
+            .setActions(if (displayOnly) 0L else ACTIONS)
+            .setState(
+                if (playing) PlaybackState.STATE_PLAYING else PlaybackState.STATE_PAUSED,
+                info.elapsedMillis ?: PlaybackState.PLAYBACK_POSITION_UNKNOWN,
+                if (playing) 1f else 0f,
+                // The iPhone sends elapsed time only on play, pause or seek, so Android must
+                // extrapolate from when it arrived, not from this republish.
+                elapsedUpdatedAt,
+            )
+            .build()
     }
 
     private fun send(index: Int, source: String) {
