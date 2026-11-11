@@ -181,7 +181,7 @@ class Iap2WiredControlClient(
                 val available = availability?.available
                 val transport = availability?.identifier
                 "iap2 4300 wiredAvailable=$available usbTransport=${transport ?: "none"}"
-            } catch (error: RuntimeException) {
+            } catch (error: Exception) {
                 "iap2 4300 decode failed: ${error.message}"
             }
         }
