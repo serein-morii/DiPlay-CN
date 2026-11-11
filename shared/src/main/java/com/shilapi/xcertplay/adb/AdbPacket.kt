@@ -52,6 +52,7 @@ internal class AdbPacket(val command: Int, val arg0: Int, val arg1: Int, val pay
             while (offset < count) {
                 val read = input.read(bytes, offset, count - offset)
                 if (read < 0) throw EOFException("ADB stream ended")
+                if (read == 0) throw IOException("ADB stream made no progress")
                 offset += read
             }
             return bytes
