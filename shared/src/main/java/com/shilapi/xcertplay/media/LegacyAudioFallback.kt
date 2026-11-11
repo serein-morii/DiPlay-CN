@@ -12,7 +12,7 @@ internal object LegacyAudioFallback {
         release: (T) -> Unit,
         createFallback: () -> T,
     ): T {
-        val candidate = try { createLegacy() } catch (_: RuntimeException) { null }
+        val candidate = try { createLegacy() } catch (_: Exception) { null }
         if (candidate != null) {
             if (isInitialized(candidate)) return candidate
             release(candidate)

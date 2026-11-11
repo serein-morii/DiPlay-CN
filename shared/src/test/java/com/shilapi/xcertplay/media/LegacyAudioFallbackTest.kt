@@ -45,4 +45,15 @@ class LegacyAudioFallbackTest {
         assertFalse(AudioChannelMapper.usesNavigationStream("unknown", 102, false))
         assertTrue(AudioChannelMapper.usesNavigationStream("unknown", 100, false))
     }
+
+@Test fun aCheckedExceptionFromTheRomStillCreatesUsageTrack() {
+        val fallback = Any()
+        val result = LegacyAudioFallback.build(
+            createLegacy = { throw java.io.IOException("ROM rejected the legacy stream") },
+            isInitialized = { _: Any -> fail("No candidate should exist"); false },
+            release = { fail("No candidate should exist") },
+            createFallback = { fallback },
+        )
+        assertSame(fallback, result)
+    }
 }
