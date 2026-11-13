@@ -67,7 +67,7 @@ internal object CarPlayMediaKeys {
     private var mediaAudioActive = false
     /** "CarPlay audio over the car's Bluetooth" was on when the controller attached. */
     private var carBluetoothAudio = false
-    /** The session only shows what is playing: no audio focus, no callback, no transport actions. */
+    /** The session only shows what is playing: no audio focus, no transport actions, keys only logged. */
     private var displayOnly = false
     private var nowPlaying = CarPlayNowPlaying()
     private var elapsedUpdatedAt = 0L
@@ -305,14 +305,15 @@ internal object CarPlayMediaKeys {
      * With "CarPlay audio over the car's Bluetooth" the iPhone opens no media audio stream, so [start]
      * never runs and other apps saw no session at all, while DiPlay still received the title and the
      * cover (#1257). This session only shows what is playing, from the first title on: it requests no
-     * audio focus, has no callback and lists no transport actions, so play, pause and skip stay with the
-     * car's own Bluetooth (AVRCP) session.
+     * audio focus and lists no transport actions, and its callback only logs what arrives, so play,
+     * pause and skip stay with the car's own Bluetooth (AVRCP) session.
      */
     private fun ensureDisplayOnlyLocked() {
         if (!carBluetoothAudio || session != null || nowPlaying.title.isNullOrBlank()) return
         val context = appContext ?: return
         displayOnly = true
         session = MediaSession(context, "DiPlay CarPlay").apply {
+            setCallback(displayOnlyCallback, mainHandler)
             setMetadata(androidMetadata(nowPlaying, shownArtworkLocked()))
             isActive = true
         }
@@ -488,6 +489,20 @@ internal object CarPlayMediaKeys {
         notUsed = ::notUsed,
         send = ::send,
     )
+
+    /**
+     * The display-only session sends nothing to the iPhone. A key or a launcher's button that the head
+     * unit hands it anyway is logged, so a report can tell it from a key the car kept (#610, #1257).
+     */
+    private val displayOnlyCallback = CarPlayMediaCallback(
+        experimentalDiLink3Keys = { appContext?.let(BydOutputSettings::carPlayCallControls) == true },
+        notUsed = ::notUsed,
+    ) { _, source -> leftToCar(source) }
+
+    private fun leftToCar(source: String) {
+        Log.i(TAG, "media key $source reached the display-only session; left to the car")
+        WheelKeyLog.note("media key $source reached the display-only session; left to the car")
+    }
 
     /** Whether [next] changes what the media session's metadata shows; position and play state do not. */
     internal fun metadataChanged(previous: CarPlayNowPlaying, next: CarPlayNowPlaying): Boolean =

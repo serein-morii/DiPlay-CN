@@ -1,8 +1,10 @@
 package com.shilapi.xcertplay
 
+import android.content.Intent
 import android.media.session.MediaSession
 import android.media.session.PlaybackState
 import android.os.Looper
+import android.view.KeyEvent
 import com.shilapi.xcertplay.media.CarPlayNowPlaying
 import com.shilapi.xcertplay.orchestration.CarPlayController
 import org.junit.After
@@ -16,7 +18,10 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.mockito.ArgumentMatchers.anyInt
 import org.mockito.Mockito.mock
+import org.mockito.Mockito.never
+import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
@@ -119,6 +124,27 @@ class CarPlayDisplayOnlySessionTest {
 
         assertNotEquals(0L, state.actions and PlaybackState.ACTION_SKIP_TO_NEXT)
         assertNotEquals(0L, state.actions and PlaybackState.ACTION_PLAY_PAUSE)
+    }
+
+    @Test fun keysThatReachTheDisplayOnlySessionAreLoggedAndNeverSentToTheIphone() {
+        WheelKeyLog.reset()
+        val controller = attach(song)
+        val callback: MediaSession.Callback = ReflectionHelpers.getField(CarPlayMediaKeys, "displayOnlyCallback")
+
+        // A wheel key, and a launcher's buttons.
+        val next = Intent(Intent.ACTION_MEDIA_BUTTON)
+            .putExtra(Intent.EXTRA_KEY_EVENT, KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_MEDIA_NEXT))
+        assertTrue(callback.onMediaButtonEvent(next))
+        callback.onPlay()
+        callback.onPause()
+        callback.onSkipToNext()
+        callback.onSkipToPrevious()
+
+        verify(controller, never()).sendMediaButton(anyInt())
+        val report = WheelKeyLog.report(bound = true).joinToString("\n")
+        // The wheel key, named as Android names it, and the four calls a launcher can make.
+        assertEquals(report, 5, Regex("reached the display-only session; left to the car").findAll(report).count())
+        assertTrue(report, report.contains("media key pause reached the display-only session; left to the car"))
     }
 
     private fun attach(nowPlaying: CarPlayNowPlaying): CarPlayController {
