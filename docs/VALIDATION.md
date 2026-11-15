@@ -1,3 +1,7 @@
+# DiPlay CN 0.2.22-cn.2 — 2026-11-15
+
+- Cherry-picked five community fixes from the official repository onto 0.2.22-cn.1: display-only now-playing for car-Bluetooth audio (#1291), silence fill for lost Wi-Fi music packets (#1206), ADB no-progress fail-fast (#1300), tolerant wired 0x4300 decode (#1301), legacy-audio checked-exception fallback (#1295). versionCode 121→122; no user-visible strings added. Local repository workflow verification recorded in the release; physical vehicle acceptance still pending.
+
 # DiPlay CN 0.2.22-cn.1 — 2026-10-28
 
 - Merged the official `v0.2.22` release into the CN app; package ID remains `com.shihab.diplay.cn` and versionCode advances from 120 (Codex cn.3) to 121. Also carries the Codex cn.2/cn.3 line: own turn side-view implementation (experimental, off), following-turn preview on the turn card, music over the car Bluetooth (experimental). Preserved every documented CN feature (four-channel updater, classification-based swipe menu, custom turn card, DiLink 5 dashboard modes) while taking upstream fixes: DiLink 3.0/4.0 hotspot connection, Wi-Fi music speed, USB microphone capture, first-attempt wired reconnect, the security hardening series, Korean and Turkish, and the new optional features whose CN menu integration follows separately.
